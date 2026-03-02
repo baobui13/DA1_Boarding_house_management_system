@@ -1,0 +1,52 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Backend_Boarding_house_management_system.Entities
+{
+    public class Contract
+    {
+        [Key]
+        [StringLength(50)]
+        public string Id { get; set; } = null!;
+
+        [Required]
+        [StringLength(50)]
+        public string RoomId { get; set; } = null!;
+
+        [Required]
+        [StringLength(50)]
+        public string TenantId { get; set; } = null!;
+
+        [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
+        public DateTime EndDate { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Deposit { get; set; }
+
+        public string? Terms { get; set; }
+
+        [StringLength(255)]
+        public string? ContractFileUrl { get; set; }
+
+        [Required]
+        public string Status { get; set; } = "Active";  // Active, Expired, Terminated
+
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [ForeignKey(nameof(RoomId))]
+        public Property Room { get; set; } = null!;
+
+        [ForeignKey(nameof(TenantId))]
+        public User Tenant { get; set; } = null!;
+
+        public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
+    }
+}
