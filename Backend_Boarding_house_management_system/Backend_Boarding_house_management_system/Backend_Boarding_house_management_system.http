@@ -1,0 +1,6 @@
+@Backend_Boarding_house_management_system_HostAddress = http://localhost:5046
+
+GET {{Backend_Boarding_house_management_system_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
