@@ -1,6 +1,15 @@
 using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Plainquire.Filter.Mvc;
+using Plainquire.Filter.Swashbuckle;
+using Plainquire.Page.Mvc;
+using Plainquire.Page.Swashbuckle;
+using Plainquire.Sort.Mvc;
+using Plainquire.Sort.Swashbuckle;
+using System.Text.Json.Serialization;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,12 +18,24 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddApplicationServices();
 
-builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddControllers()
+    .AddFilterSupport()
+    .AddSortSupport()
+    .AddPageSupport()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddFilterSupport();
+    options.AddSortSupport();
+    options.AddPageSupport();
+});
 
 var app = builder.Build();
 

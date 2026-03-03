@@ -13,6 +13,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Plainquire.Filter" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Filter.Mvc" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Filter.Swashbuckle" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Page" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Page.Mvc" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Page.Swashbuckle" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Sort" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Sort.Mvc" Version="7.1.0" />
+    <PackageReference Include="Plainquire.Sort.Swashbuckle" Version="7.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
   </ItemGroup>
 
