@@ -9,6 +9,9 @@
 
     public enum PropertyStatus
     {
+        PendingApproval, 
+        Approved,
+        Rejected, 
         Available,
         Rented,
         Unavailable

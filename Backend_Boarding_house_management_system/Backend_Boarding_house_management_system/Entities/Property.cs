@@ -21,9 +21,20 @@ namespace Backend_Boarding_house_management_system.Entities
         [StringLength(50)]
         public string PropertyName { get; set; } = null!;
 
+        [StringLength(255)]
+        public string? Address { get; set; }
+
+
+        [Column(TypeName = "decimal(10,6)")]
+        public decimal? Latitude { get; set; }
+
+        [Column(TypeName = "decimal(10,6)")]
+        public decimal? Longitude { get; set; }
+
         [Required]
         [Column(TypeName = "decimal(5,2)")]
         public decimal Size { get; set; }
+        public string? Description { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
@@ -32,16 +43,7 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         public string Status { get; set; } = "Available";  // Available, Rented, Unavailable
 
-        public string? Description { get; set; }
-
-        [StringLength(255)]
-        public string? Address { get; set; }
-
-        [Column(TypeName = "decimal(10,6)")]
-        public decimal? Latitude { get; set; }
-
-        [Column(TypeName = "decimal(10,6)")]
-        public decimal? Longitude { get; set; }
+        public string? RejectionReason { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
