@@ -46,6 +46,26 @@ namespace Backend_Boarding_house_management_system.Entities
         [ForeignKey(nameof(TenantId))]
         public User Tenant { get; set; } = null!;
 
+
+        // Trong class Contract
+        public DateOnly? ActualEndDate { get; set; }
+
+        public string? HandoverNote { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal DeductionAmount { get; set; } = 0m;
+
+        public string? DeductionReason { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal RefundAmount { get; set; } = 0m;
+
+        public string? HandoverConfirmedBy { get; set; }
+
+        public DateTime? HandoverConfirmedAt { get; set; }
+
+
+
         public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
         public ICollection<Message> Messages { get; set; } = new List<Message>();
     }
