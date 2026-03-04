@@ -1,15 +1,17 @@
 ﻿using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Extensions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend_Boarding_house_management_system.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         //khai báo database
-        public DbSet<User> Users { get; set; }
+
+        // IdentityDbContext có sẵn bảng User
         public DbSet<Area> Areas { get; set; }
         public DbSet<Property> Properties { get; set; }
         public DbSet<PropertyImage> PropertyImages { get; set; }

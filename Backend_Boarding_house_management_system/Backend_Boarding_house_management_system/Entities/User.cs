@@ -1,37 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.Contracts;
 
 namespace Backend_Boarding_house_management_system.Entities
 {
-    public class User
+    public class User : IdentityUser
     {
-        [Key]
-        [StringLength(50)]
-        public string Id { get; set; } = null!;
-
-        [Required]
-        [StringLength(255)]
-        [EmailAddress]
-        public string Email { get; set; } = null!;
-
-        [StringLength(255)]
-        public string? PasswordHash { get; set; }
+        // Các trường sau ĐÃ CÓ trong IdentityUser:
+        // Id, Email, PasswordHash, PhoneNumber, EmailConfirmed
 
         [Required]
         [StringLength(100)]
         public string FullName { get; set; } = null!;
-
-        [StringLength(20)]
-        public string? PhoneNumber { get; set; }
 
         [StringLength(255)]
         public string? Address { get; set; }
 
         [Required]
         public string Role { get; set; } = null!;  // "Admin", "Landlord", "Tenant"
-
-        [Required]
-        public bool IsVerified { get; set; } = false;
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

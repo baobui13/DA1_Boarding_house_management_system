@@ -1,12 +1,17 @@
 using Backend_Boarding_house_management_system.Data;
+using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Plainquire.Filter.Mvc;
 using Plainquire.Filter.Swashbuckle;
 using Plainquire.Page.Mvc;
 using Plainquire.Page.Swashbuckle;
 using Plainquire.Sort.Mvc;
 using Plainquire.Sort.Swashbuckle;
+using System.Text;
 using System.Text.Json.Serialization;
 
 
@@ -36,6 +41,67 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSortSupport();
     options.AddPageSupport();
 });
+
+
+
+// ================================= Auth =====================================
+
+
+
+// 1. Thêm Identity
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+// 2. Thêm Authentication schemes
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
+})
+.AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+    options.SignInScheme = IdentityConstants.ExternalScheme; // quan trọng
+})
+.AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
+    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
+    options.SignInScheme = IdentityConstants.ExternalScheme;
+});
+
+// 3. Thêm Authorization (role-based)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("LandlordOnly", policy => policy.RequireRole("Landlord"));
+    options.AddPolicy("TenantOnly", policy => policy.RequireRole("Tenant"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
+
+
+// ==================================================================================================
 
 var app = builder.Build();
 

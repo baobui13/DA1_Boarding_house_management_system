@@ -125,14 +125,26 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasForeignKey(p => p.InvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Sender)
+                .WithMany(u => u.MessagesSent)
+                .HasForeignKey(m => m.SenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Message>()
+                .HasOne(m => m.Receiver)
+                .WithMany(u => u.MessagesReceived)
+                .HasForeignKey(m => m.ReceiverId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // ───────────────────────────────────────────────
             // 3. Index hữu ích cho tìm kiếm & báo cáo
             // ───────────────────────────────────────────────
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique()
-                .HasDatabaseName("IX_Users_Email_Unique");
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users"); // Đặt tên bảng là Users
+            });
 
             modelBuilder.Entity<Property>()
                 .HasIndex(p => p.Status)
