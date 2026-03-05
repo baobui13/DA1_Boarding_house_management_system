@@ -6,8 +6,7 @@ namespace Backend_Boarding_house_management_system.Entities
 {
     public class User : IdentityUser
     {
-        // Các trường sau ĐÃ CÓ trong IdentityUser:
-        // Id, Email, PasswordHash, PhoneNumber, EmailConfirmed
+        // Các trường Id, Email, PasswordHash, PhoneNumber, EmailConfirmed,... ĐÃ CÓ trong IdentityUser:
 
         [Required]
         [StringLength(100)]
@@ -22,7 +21,8 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime? UpdatedAt { get; set; }
+        [Required]
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 
         [StringLength(255)]
         public string? AvatarUrl { get; set; }
