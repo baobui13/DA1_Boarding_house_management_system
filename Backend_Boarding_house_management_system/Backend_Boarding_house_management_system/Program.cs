@@ -66,16 +66,19 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key");
+    var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("Jwt:Issuer");
+    var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new ArgumentNullException("Jwt:Audience");
+
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 })
 .AddGoogle(options =>
@@ -83,13 +86,13 @@ builder.Services.AddAuthentication(options =>
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
     options.SignInScheme = IdentityConstants.ExternalScheme; // quan trọng
-})
-.AddFacebook(options =>
-{
-    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
-    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
-    options.SignInScheme = IdentityConstants.ExternalScheme;
 });
+//.AddFacebook(options =>
+//{
+//    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
+//    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
+//    options.SignInScheme = IdentityConstants.ExternalScheme;
+//});
 
 // 3. Thêm Authorization (role-based)
 builder.Services.AddAuthorization(options =>
