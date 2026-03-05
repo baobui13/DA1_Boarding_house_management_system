@@ -27,6 +27,7 @@
     <PackageReference Include="Plainquire.Sort.Mvc" Version="7.1.0" />
     <PackageReference Include="Plainquire.Sort.Swashbuckle" Version="7.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+    <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.1" />
   </ItemGroup>
 
   <ItemGroup>
