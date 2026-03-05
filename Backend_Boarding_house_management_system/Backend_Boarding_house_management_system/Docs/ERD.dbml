@@ -1,0 +1,185 @@
+Table Users {
+    // mặc định của AspNetCore.Identity
+    Id varchar(50) [pk, not null, note: 'GUID hoặc chuỗi định danh']
+    Email varchar(256) [unique, not null]
+    NormalizedEmail varchar(256) [unique, note: 'Dùng để tìm kiếm không phân biệt hoa thường']
+    EmailConfirmed boolean [not null, default: false, note: 'Thay cho IsConfirmed']
+    PasswordHash text [note: 'Chuỗi mật khẩu đã mã hóa']
+    PhoneNumber varchar(20)
+    PhoneNumberConfirmed boolean [not null, default: false]
+    TwoFactorEnabled boolean [not null, default: false]
+    LockoutEnd datetimeoffset
+    LockoutEnabled boolean [not null, default: true]
+    AccessFailedCount int [not null, default: 0]
+    SecurityStamp varchar(255) [note: 'Dùng để tracking khi thay đổi pass/logout']
+    ConcurrencyStamp varchar(255) [note: 'Tránh ghi đè dữ liệu đồng thời']
+
+    // customed
+    FullName varchar(100) [not null]
+    Address varchar(255)
+    Role "enum('Admin', 'Landlord', 'Tenant')" [not null, note: 'Vai trò người dùng']
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+    AvatarUrl varchar(255) [note: 'Link ảnh đại diện từ Cloudinary']
+}
+
+Table Areas {
+    Id varchar(50) [pk, not null]
+    Name varchar(100) [not null, note: 'Tên khu trọ']
+    Address varchar(255) [not null]
+    Latitude decimal(10,6)
+    Longitude decimal(10,6)
+    RoomCount int [not null, default: 0]
+    Description text
+    LandlordId varchar(50) [ref: > Users.Id, not null]
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+}
+
+Table Properties {
+    Id varchar(50) [pk, not null]
+    LandlordId varchar(50) [ref: > Users.Id, not null]
+    AreaId varchar(50) [ref: > Areas.Id, note: 'có thể null nếu là phòng độc lập']
+    PropertyName varchar(50) [not null]
+    Size decimal(5,2) [not null]
+    Price decimal(18,2) [not null]
+Status "enum('PendingApproval', 'Approved', 'Rejected', 'Available', 'Rented', 'Unavailable')" [not null, default: 'PendingApproval']
+    Description text
+    Address varchar(255)
+    Latitude decimal(10,6)
+    Longitude decimal(10,6)
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+    RejectionReason text [note: 'Lý do từ chối nếu Rejected (Admin nhập)']
+}
+
+Table PropertyImages {
+    Id varchar(50) [pk, not null]
+    PropertyId varchar(50) [ref: > Properties.Id, not null]
+    ImageUrl varchar(255) [not null]
+    IsPrimary boolean [not null, default: false]
+    CreatedAt datetime [not null, default: `now()`]
+}
+
+Table Amenities {
+    Id varchar(50) [pk, not null]
+    Name varchar(100) [unique, not null]
+    Description varchar(255)
+}
+
+Table RoomAmenities {
+    Id varchar(50) [pk, not null]
+    RoomId varchar(50) [ref: > Properties.Id, not null]
+    AmenityId varchar(50) [ref: > Amenities.Id, not null]
+    Status "enum('Working', 'Broken', 'Repairing')" [not null, default: 'Working']
+    Note varchar(255)
+}
+
+Table Contracts {
+    Id varchar(50) [pk, not null]
+    RoomId varchar(50) [ref: > Properties.Id, not null]
+    TenantId varchar(50) [ref: > Users.Id, not null]
+    StartDate date [not null]
+    EndDate date [not null]
+    Deposit decimal(18,2) [not null]
+    Terms text
+    ContractFileUrl varchar(255)
+    Status "enum('Active', 'Expired', 'Terminated')" [not null, default: 'Active']
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+
+ActualEndDate date [note: 'Ngày kết thúc thực tế (bàn giao phòng)']
+    HandoverNote text [note: 'Ghi chú hiện trạng bàn giao phòng (hư hỏng, sạch sẽ, mất mát...)']
+    DeductionAmount decimal(18,2) [default: 0, note: 'Số tiền khấu trừ từ cọc (phạt hư hỏng, dọn dẹp, công nợ nhỏ...). Landlord nhập tay']
+    DeductionReason text [note: 'Lý do chi tiết khấu trừ (bắt buộc nếu DeductionAmount > 0)']
+    RefundAmount decimal(18,2) [default: 0, note: 'Số tiền hoàn cọc thực tế = Deposit - DeductionAmount - RemainingDebt']
+    HandoverConfirmedBy varchar(50) [ref: > Users.Id, note: 'UserId Landlord xác nhận bàn giao']
+    HandoverConfirmedAt datetime [note: 'Thời điểm Landlord xác nhận bàn giao']
+}
+
+Table Invoices {
+    Id varchar(50) [pk, not null]
+    ContractId varchar(50) [ref: > Contracts.Id, not null]
+    Period date [not null]
+    RentAmount decimal(18,2) [not null]
+    OldElectricityReading decimal(10,2)
+    NewElectricityReading decimal(10,2)
+    ElectricityCost decimal(18,2)
+    OldWaterReading decimal(10,2)
+    NewWaterReading decimal(10,2)
+    WaterCost decimal(18,2)
+    OtherFees decimal(18,2)
+    Penalty decimal(18,2) [default: 0]
+    Total decimal(18,2) [not null]
+    Note varchar(255)
+    Status "enum('Pending', 'Partial', 'Paid')" [not null, default: 'Pending']
+    InvoiceUrl varchar(255)
+    DueDate date [not null]
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+}
+
+Table Payments {
+    Id varchar(50) [pk, not null]
+    InvoiceId varchar(50) [ref: > Invoices.Id, not null]
+    Amount decimal(18,2) [not null]
+    PaymentDate datetime [not null, default: `now()`]
+    Method "enum('Cash', 'BankTransfer', 'Online')" [not null]
+    Note varchar(255)
+    CreatedAt datetime [not null, default: `now()`]
+}
+
+Table Appointments {
+    Id varchar(50) [pk, not null]
+    RoomId varchar(50) [ref: > Properties.Id, not null]
+    UserId varchar(50) [ref: > Users.Id, not null]
+    AppointmentDateTime datetime [not null]
+    Status "enum('Pending', 'Confirmed', 'Rejected', 'Cancelled')" [not null, default: 'Pending']
+    Note varchar(255)
+    CreatedAt datetime [not null, default: `now()`]
+    UpdatedAt datetime
+}
+
+Table Messages {
+    Id varchar(50) [pk, not null]
+    SenderId varchar(50) [ref: > Users.Id, not null]
+    ReceiverId varchar(50) [ref: > Users.Id, not null]
+    Content text [not null]
+    Timestamp datetime [not null, default: `now()`]
+    IsRead boolean [not null, default: false]
+    RoomId varchar(50) [ref: > Properties.Id]
+    ContractId varchar(50) [ref: > Contracts.Id]
+}
+
+Table Notifications {
+    Id varchar(50) [pk, not null]
+    UserId varchar(50) [ref: > Users.Id, not null]
+    Type "enum('Invoice', 'Appointment', 'Contract', 'Message', 'System')" [not null]
+    Content varchar(255) [not null]
+    IsRead boolean [not null, default: false]
+    Timestamp datetime [not null, default: `now()`]
+    RelatedId varchar(50)
+}
+
+Table SearchHistories {
+    Id varchar(50) [pk, not null]
+    UserId varchar(50) [ref: > Users.Id, not null]
+    Filters json [not null]
+    Timestamp datetime [not null, default: `now()`]
+}
+
+Table ViewHistories {
+    Id varchar(50) [pk, not null]
+    UserId varchar(50) [ref: > Users.Id, not null]
+    RoomId varchar(50) [ref: > Properties.Id, not null]
+    Timestamp datetime [not null, default: `now()`]
+}
+
+Table TenantDocuments {
+    Id varchar(50) [pk, not null]
+    TenantId varchar(50) [ref: > Users.Id, not null]
+    DocumentType "enum('IDCard', 'ResidencePermit', 'Other')" [not null]
+    FileUrl varchar(255) [not null]
+    Note varchar(255)
+    CreatedAt datetime [not null, default: `now()`]
+}

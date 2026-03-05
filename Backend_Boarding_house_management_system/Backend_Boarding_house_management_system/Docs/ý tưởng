@@ -1,0 +1,226 @@
+Nội dung đề tài:
+1.	Lý do chọn đề tài
+-	Giải quyết vấn đề thực tế trong quản lý và tìm kiếm phòng trọ: Tại Việt Nam, đặc biệt ở các thành phố lớn như TP.HCM và Hà Nội, thị trường phòng trọ đang phát triển mạnh nhưng chủ yếu dựa vào quản lý thủ công (Excel, sổ sách) và tìm kiếm qua các kênh truyền thống (nhóm Facebook, môi giới). Điều này dẫn đến mất thời gian, thiếu minh bạch trong hóa đơn, hợp đồng và tình trạng phòng. Đối với khách thuê – chủ yếu là sinh viên và lao động trẻ – việc tìm phòng thường gặp khó khăn về thông tin không chính xác, giá cả biến động mạnh và nguy cơ lừa đảo. Theo báo cáo của Batdongsan.com.vn (2024), nhu cầu tìm kiếm phòng trọ tại TP.HCM tăng 22% và Hà Nội tăng 10% chỉ trong tháng 7/2024, trong khi giá thuê trung bình tăng 20-50% so với năm trước.
+-	Nhu cầu lớn từ đối tượng thuê trọ trẻ: Khảo sát của Batdongsan.com.vn cho thấy 33% người thuê trọ thuộc độ tuổi 18-24 và 29% thuộc độ tuổi 25-34 – chủ yếu là sinh viên và người lao động nhập cư. TP.HCM hiện có hơn 629.000 phòng trọ cho thuê (Pháp Luật TP.HCM, 2024), phục vụ hàng triệu người nhưng thiếu nền tảng tập trung, dẫn đến tình trạng “chật vật tìm chỗ ở” trước mỗi mùa nhập học hoặc cao điểm việc làm.
+-	Xu hướng chuyển đổi số trong bất động sản cho thuê: PropTech (công nghệ bất động sản) đang phát triển mạnh tại Việt Nam với các giải pháp quản lý tự động, tích hợp bản đồ và gợi ý thông minh (Savills Việt Nam, 2025). Việc xây dựng hệ thống web toàn diện giúp chủ trọ tối ưu doanh thu, hóa đơn và thống kê, đồng thời mang đến trải nghiệm tìm kiếm nhanh chóng, cá nhân hóa cho khách thuê – phù hợp với xu hướng sử dụng nền tảng trực tuyến ngày càng tăng trong phân khúc cho thuê.
+2.	Mục tiêu
+-	Xây dựng hệ thống quản lý phòng trọ toàn diện: Phát triển nền tảng web với backend ASP.NET Core Web API, database SQL Server và frontend React.js, hỗ trợ đầy đủ chức năng cho cả chủ trọ (quản lý phòng, hợp đồng, hóa đơn, doanh thu, thống kê) và khách thuê (tìm kiếm, đặt lịch xem phòng, quản lý hóa đơn cá nhân).
+-	Tích hợp hệ thống gợi ý thông minh: Áp dụng thuật toán gợi ý dựa trên vị trí (Google Maps/OpenStreetMap), lịch sử tìm kiếm và hành vi người dùng để đề xuất phòng phù hợp, giúp giảm thời gian tìm kiếm trung bình của khách thuê xuống dưới 50% so với các kênh truyền thống.
+-	Nâng cao hiệu quả quản lý và trải nghiệm người dùng:
+o	Giảm thiểu công việc thủ công cho chủ trọ (tự động tính hóa đơn điện/nước, thông báo thanh toán).
+o	Đảm bảo bảo mật thông tin bằng JWT và quản lý hình ảnh qua Cloudinary.
+o	Tạo giao diện thân thiện, dễ sử dụng trên cả desktop và mobile.
+-	Đạt các chỉ tiêu thực tế trong giai đoạn phát triển:
+o	Hỗ trợ quản lý ít nhất 500 phòng trọ và 1.000 khách thuê trong môi trường thử nghiệm.
+o	Đạt tỷ lệ hài lòng người dùng ≥ 85% qua khảo sát nội bộ về tính năng tìm kiếm và quản lý hóa đơn.
+o	Hoàn thiện hệ thống gợi ý đạt độ chính xác đề xuất ≥ 70% dựa trên dữ liệu thử nghiệm.
+3.	Phạm vi
+-	Nền tảng hỗ trợ:
+o	Web Application: Phiên bản web chính được xây dựng bằng React.js, hỗ trợ responsive đầy đủ để truy cập mượt mà trên cả desktop và mobile browser.
+o	Backend API: ASP.NET Core Web API xử lý toàn bộ logic nghiệp vụ, bảo mật và tích hợp dịch vụ bên thứ ba.
+o	Database: SQL Server lưu trữ dữ liệu cấu trúc (phòng trọ, hợp đồng, hóa đơn, người dùng).
+-	Tích hợp bên thứ ba:
+o	Google Maps API/OpenStreetMap để hiển thị vị trí và tính toán khoảng cách.
+o	Cloudinary quản lý upload và lưu trữ hình ảnh phòng trọ.
+o	JWT (JSON Web Token) cho xác thực và phân quyền người dùng.
+-	Chức năng chính của hệ thống:
+A. Hệ thống người dùng và phân quyền:
+•	Đăng ký và đăng nhập:
+o	Chủ trọ: Đăng ký và đăng nhập tài khoản bằng email/mật khẩu hoặc Google/Facebook, xác thực qua email.
+o	Khách thuê tiềm năng: Đăng ký và đăng nhập tài khoản bằng email/mật khẩu hoặc Google/Facebook, xác thực qua email.
+o	Admin: Được cấp, có quyền cấp và đăng nhập tài khoản bằng email/mật khẩu hoặc Google/Facebook, xác thực qua email.
+o	Đồng bộ dữ liệu giữa các thiết bị khi đăng nhập.
+•	Phân quyền:
+o	Ba vai trò chính: Chủ trọ, Khách thuê, Admin
+o	Chủ trọ: quản lý thông tin cá nhân, dữ liệu phòng trọ, người thuê của mình.
+o	Khách thuê: quản lý thông tin cá nhân, dữ liệu phòng trọ mà mình đang thê.
+o	Admin: quản lý người dùng, thông tin phòng trọ,…
+•	Hồ sơ cá nhân:
+o	Chủ trọ: thông tin cá nhân, danh sách khu trọ, phòng trọ sở hữu, người thuê, thống kê nhanh doanh thu.
+o	Khách thuê: Cập nhật thông tin cá nhân, giấy tờ cư trú, lịch sử hóa đơn.
+o	Admin: thông tin cá nhân
+B. Quản lý phòng trọ và khu vực (dành cho chủ trọ):
+•	Quản lý khu vực và phòng:
+o	Tạo/sửa/xóa khu trọ (địa chỉ, số tầng, số phòng).
+o	Quản lý từng phòng: diện tích, giá thuê, trạng thái (trống/đã thuê/đang sửa), tiện ích (máy lạnh, tủ lạnh, wifi, nhà vệ sinh riêng…).
+o	Upload nhiều ảnh phòng qua Cloudinary, hỗ trợ mô tả chi tiết.
+•	Quản lý cơ sở vật chất:
+o	Danh sách tiện ích cố định của từng phòng, cập nhật trạng thái (hỏng/đang sửa).
+•	Quản lý hợp đồng:
+o	Tạo hợp đồng điện tử với thông tin khách thuê, ngày bắt đầu/kết thúc, tiền cọc, điều khoản.
+o	Lưu trữ file hợp đồng (PDF), chữ ký điện tử (nếu tích hợp thêm).
+o	Tự động nhắc nhở gia hạn hoặc kết thúc hợp đồng.
+C. Quản lý phòng trọ và khu vực (dành cho chủ trọ):
+•	Tính toán và tạo hóa đơn:
+o	Nhập chỉ số điện/nước hàng tháng, tự động tính tiền theo đơn giá.
+o	Cộng tiền phòng, tiền dịch vụ, phạt (nếu có).
+o	Xuất hóa đơn PDF và gửi thông báo cho khách thuê.
+•	Xem và thanh toán:
+o	Khách thuê xem chi tiết hóa đơn, lịch sử thanh toán.
+o	Ghi nhận trạng thái thanh toán (chưa thanh toán/đã thanh toán một phần/đã thanh toán).
+•	Thống kê doanh thu:
+o	Biểu đồ doanh thu theo tháng/năm, tỷ lệ lấp đầy phòng, công nợ.
+D. Tìm kiếm và đặt lịch xem phòng (dành cho khách thuê tiềm năng):
+•	Tìm kiếm thông minh:
+o	Bộ lọc đa tiêu chí: khu vực, khoảng giá, diện tích, tiện ích, khoảng cách đến địa điểm cụ thể (trường học, công ty).
+o	Hiển thị danh sách phòng kèm hình ảnh, bản đồ vị trí.
+•	Đặt lịch xem phòng:
+o	Chọn ngày giờ, gửi yêu cầu trực tiếp đến chủ trọ.
+o	Chủ trọ nhận thông báo và xác nhận/từ chối lịch.
+E. Hệ thống gợi ý phòng trọ:
+•	Gợi ý dựa trên vị trí:
+o	Sử dụng Google Maps/OpenStreetMap để đề xuất phòng gần địa điểm người dùng nhập (nơi làm việc, trường học).
+•	Gợi ý dựa trên lịch sử tìm kiếm:
+o	Lưu lịch sử tìm kiếm (không cần tài khoản), ưu tiên hiển thị phòng có giá, khu vực, tiện ích tương đồng.
+•	Gợi ý dựa trên hành vi:
+o	Thuật toán đơn giản so sánh hành vi xem phòng của người dùng hiện tại với người dùng khác, đề xuất các phòng mà người dùng tương đồng đã xem hoặc thuê.
+F. Thông báo và tương tác:
+•	Thông báo realtime:
+o	Chủ trọ: Nhận yêu cầu xem phòng, nhắc nhở thu tiền, hợp đồng sắp hết hạn.
+o	Khách thuê: Nhận hóa đơn mới, nhắc nhở thanh toán, thông báo từ chủ trọ.
+o	Admin: Tạo thông báo cho người dung, thông báo, cảnh báo cho từng cá nhân.
+•	Nhắn tin:
+o	Khách thuê gửi tin nhắn trực tiếp cho chủ trọ về vấn đề phòng ốc, sửa chữa.
+4.	Đối tượng sử dụng
+•	Chủ trọ (Landlord): Cá nhân hoặc hộ gia đình sở hữu từ vài phòng đến vài chục phòng trọ, độ tuổi thường từ 30-60 tuổi, sống tại các thành phố lớn hoặc khu vực có nhu cầu thuê cao như TP.HCM, Hà Nội, Đà Nẵng. Họ thường quản lý thủ công qua sổ sách hoặc Excel, gặp khó khăn trong việc theo dõi hóa đơn, hợp đồng và tìm khách thuê ổn định. Với vai trò chủ trọ, hệ thống cung cấp các tính năng như:
+o	Quản lý khu vực, phòng trọ và tiện ích.
+o	Quản lý hợp đồng thuê, thông tin khách thuê.
+o	Tạo và theo dõi hóa đơn điện/nước/phòng hàng tháng.
+o	Thống kê doanh thu, tỷ lệ lấp đầy phòng qua biểu đồ.
+o	Nhận yêu cầu đặt lịch xem phòng và thông báo từ khách thuê. 
+•	Khách thuê (Tenant): Chủ yếu là sinh viên, người lao động trẻ nhập cư hoặc nhân viên văn phòng ở độ tuổi 18-35 tuổi, có nhu cầu tìm phòng trọ nhanh chóng, minh bạch và tiện lợi. Nhóm này thường sử dụng smartphone để tìm kiếm thông tin qua các nhóm mạng xã hội hoặc website bất động sản, nhưng hay gặp vấn đề về thông tin không chính xác hoặc giá cả biến động. Với vai trò khách thuê, hệ thống cung cấp các tính năng như:
+o	Tìm kiếm và lọc phòng trọ theo khu vực, giá cả, tiện ích (không cần tài khoản).
+o	Đặt lịch xem phòng trực tiếp với chủ trọ.
+o	Sau khi thuê: Xem hóa đơn chi tiết, lịch sử thanh toán.
+o	Quản lý thông tin cá nhân và giấy tờ cư trú.
+o	Gửi tin nhắn, phản ánh vấn đề phòng ốc cho chủ trọ.
+o	Nhận thông báo hóa đơn và nhắc nhở thanh toán.
+•	Admin: Người vận hành trang web, duy trì cộng động ổn định lành mạnh:
+o	Nhận khiếu nại từ người dùng.
+o	Thông báo, cảnh báo cho người dung.
+o	Quản lý tài khoản, chặn tài khoản, thông tin không lành mạnh.
+o	 Đăng quản cáo duy trì trang web.
+5.	Phương pháp thực hiện
+-	Tìm hiểu công nghệ:
+o	Backend: ASP.NET Core Web API (xây dựng RESTful API, xử lý nghiệp vụ, bảo mật JWT, Entity Framework Core làm ORM).
+o	Frontend: React.js (với React Router cho navigation, Redux/Redux Toolkit hoặc Context API quản lý state, Material-UI hoặc Ant Design cho giao diện responsive).
+o	Database: Microsoft SQL Server (thiết kế schema, stored procedure cho các báo cáo phức tạp, migration bằng EF Core).
+-	Tích hợp bên thứ ba:
+o	Google Maps JavaScript API / OpenStreetMap + Leaflet để hiển thị bản đồ và tính toán khoảng cách.
+o	Cloudinary để upload, lưu trữ và tối ưu hình ảnh phòng trọ.
+o	SignalR (ASP.NET Core) cho thông báo realtime (yêu cầu xem phòng, hóa đơn mới, nhắc nhở).
+o	iTextSharp hoặc thư viện tương tự để xuất hóa đơn PDF.
+-	Tìm hiểu công cụ hỗ trợ: 
+o	Thiết kế: Figma (wireframe, prototype, UI flow cho cả desktop và mobile responsive). 
+o	Quản lý công việc: Trello hoặc Jira (quản lý backlog, sprint, phân công nhiệm vụ), Google Meet/Discord cho họp nhóm hàng tuần. 
+o	Quản lý mã nguồn: GitHub (branching strategy: feature branches, pull request review). 
+o	CI/CD: GitHub Actions (build, test tự động, deploy lên Azure App Service hoặc VPS). 
+o	Testing: xUnit/NUnit (unit test backend), Jest + React Testing Library (frontend), Postman/Newman cho API testing. 
+-	Tìm hiểu và áp dụng thuật toán gợi ý phòng trọ: 
+o	Gợi ý dựa trên vị trí: Sử dụng Haversine formula hoặc Google Distance Matrix API để tính khoảng cách từ địa điểm người dùng nhập (trường học, công ty) đến các phòng trọ, ưu tiên sắp xếp theo khoảng cách gần nhất. 
+o	Gợi ý dựa trên lịch sử tìm kiếm (content-based): Lưu trữ lịch sử bộ lọc (khu vực, giá, tiện ích) trong LocalStorage (không cần tài khoản) hoặc database (khi đăng nhập), tính độ tương đồng bằng cosine similarity trên vector đặc trưng (giá, diện tích, tiện ích).
+o	Gợi ý dựa trên hành vi người dùng khác (collaborative filtering đơn giản): Sử dụng item-to-item collaborative filtering – khi người dùng xem một phòng, đề xuất các phòng khác mà những người dùng có hành vi tương tự đã xem/thuê (dựa trên ma trận xem phòng). 
+-	Thu thập yêu cầu:
+o	Khảo sát thực tế: Phát Google Form và phỏng vấn trực tiếp 30–50 chủ trọ và khách thuê tại khu vực quận Bình Tân, Gò Vấp, Thủ Đức (TP.HCM) để xác định các pain points cụ thể (tính hóa đơn, đặt lịch xem phòng, thông báo).
+o	Benchmark và phân tích đối thủ: Nghiên cứu các nền tảng hiện có như Phongtro123.com, Batdongsan.com.vn, Mogi.vn, Renting.vn, các app như Homedy, phân tích ưu/nhược điểm về giao diện, tốc độ tìm kiếm, tính năng quản lý hóa đơn và gợi ý. 
+-	Quy trình phát triển (Agile – Scrum):
+1.	Phân tích và xác định yêu cầu (Sprint 0): Hoàn thiện tài liệu SRS, use-case diagram, user stories.
+2.	Thiết kế hệ thống: Vẽ ERD, API contract (Swagger/OpenAPI), wireframe + prototype trên Figma, thiết kế architecture (layered architecture).
+3.	Cài đặt từng module chức năng (theo thứ tự ưu tiên):
+4.	Module Auth & phân quyền
+5.	Quản lý khu trọ/phòng + upload ảnh
+6.	Quản lý hợp đồng & hóa đơn
+7.	Tìm kiếm + gợi ý + bản đồ
+8.	Thông báo realtime & đặt lịch xem phòng
+9.	Thống kê & báo cáo (biểu đồ Chart.js hoặc Recharts)
+10.	Kiểm thử: Unit test ≥ 80% coverage, integration test API, end-to-end test với Cypress/Selenium, user acceptance testing với nhóm chủ trọ và sinh viên thực tế.
+11.	Triển khai & demo: Deploy lên Azure hoặc VPS, thu thập feedback cuối cùng, hoàn thiện tài liệu và video demo sản phẩm.
+6.	Nền tảng công nghệ
+-	Thiết kế UI/UX: Figma
+o	Tạo wireframe, prototype tương tác cao (high-fidelity), thiết kế responsive ưu tiên mobile-first để đảm bảo trải nghiệm mượt mà trên cả desktop và mobile browser.
+-	Ngôn ngữ lập trình:
+o	Frontend: TypeScript (React.js).
+o	Backend: C# (ASP.NET Core 8.0).
+-	Xây dựng ứng dụng web (client & admin):
+o	Framework chính:
+	Frontend: React.js 18 (với Vite để build nhanh).
+	Backend: ASP.NET Core Web API.
+o	Thư viện chính:
+	React Router v6 (navigation & protected routes).
+	TanStack Query (react-query) (data fetching, caching, synchronization).
+	Axios + interceptors (xử lý token refresh).
+	Ant Design hoặc shadcn/ui + Tailwind CSS (component library & styling responsive).
+	Recharts hoặc Chart.js (biểu đồ doanh thu, tỷ lệ lấp đầy).
+	Leaflet hoặc @react-google-maps/api (hiển thị bản đồ và marker phòng trọ).
+	SignalR client (thông báo realtime).
+	Formik + Yup (xử lý form phức tạp như tạo hóa đơn, hợp đồng).
+	Cloudinary React SDK (upload và preview hình ảnh phòng).
+-	Xây dựng backend & API server:
+o	Core: ASP.NET Core Web API.
+o	Entity Framework Core 8 (ORM, migrations, seeding dữ liệu mẫu).
+o	ASP.NET Core Identity + JWT Bearer (xác thực, phân quyền 3 role: SuperAdmin, Landlord, Tenant).
+o	SignalR Hub (push notification realtime: yêu cầu xem phòng, hóa đơn mới, nhắc nhở).
+o	MediatR (CQRS pattern nhẹ để tách command/query).
+o	AutoMapper (mapping DTO ↔ Entity).
+o	FluentValidation (validation request).
+o	Tích hợp bên thứ ba:
+	Google Maps JavaScript API hoặc Leaflet + OpenStreetMap (hiển thị vị trí, tính khoảng cách).
+	Cloudinary .NET SDK (upload, transformation, storage hình ảnh).
+	QuestPDF hoặc iText7 (xuất hóa đơn PDF chuyên nghiệp).
+	Hangfire hoặc Quartz.NET (background job: nhắc nhở hợp đồng sắp hết hạn, tự động tính hóa đơn định kỳ).
+-	Cơ sở dữ liệu:
+o	Hệ thống: Microsoft SQL Server 2022 (hoặc Azure SQL nếu triển khai cloud). 
+o	ORM: Entity Framework Core (code-first, migrations).
+o	Realtime: ASP.NET Core SignalR kết hợp SQL Server dependency (SQL Dependency hoặc Query Notifications) để phát hiện thay đổi dữ liệu và push.
+-	Công cụ khác:
+o	CI/CD: GitHub Actions (build → test → deploy tự động lên Azure App Service hoặc VPS).
+o	Container: Docker + Docker Compose (container hóa backend, database trong môi trường dev/test).
+o	Monitoring & Logging: Serilog + Seq hoặc Application Insights (Azure). 
+o	Testing:
+o	Backend: xUnit + Moq + FluentAssertions.
+o	Frontend: Jest + React Testing Library + MSW (mock API).
+o	E2E: Cypress hoặc Playwright.
+o	Quản lý nhiệm vụ và tiến độ: Jira/Trello (backlog, sprint board) + Discord/Google Meet (daily standup, review).
+7.	Kết quả mong đợi
+-	Xây dựng và hoàn thiện đầy đủ các chức năng theo đề xuất:
+o	Hệ thống quản lý phòng trọ toàn diện: Chủ trọ có thể tạo/sửa/xóa khu trọ và phòng, quản lý tiện ích, upload hình ảnh qua Cloudinary, tạo hợp đồng điện tử, tự động tính toán và xuất hóa đơn PDF (điện/nước/phòng/dịch vụ), theo dõi công nợ và thống kê doanh thu qua biểu đồ trực quan (Chart.js/Recharts).
+o	Chức năng dành cho khách thuê: Tìm kiếm thông minh với bộ lọc đa tiêu chí (khu vực, giá, diện tích, tiện ích, khoảng cách đến địa điểm cụ thể), hiển thị danh sách phòng kèm bản đồ (Google Maps/Leaflet), đặt lịch xem phòng realtime, xem hóa đơn cá nhân và lịch sử thanh toán, nhắn tin trực tiếp với chủ trọ. 
+o	Hệ thống gợi ý phòng trọ: Đề xuất dựa trên vị trí (khoảng cách gần nhất), lịch sử tìm kiếm và hành vi người dùng tương đồng, đạt độ chính xác đề xuất ≥ 70% trên dữ liệu thử nghiệm.
+o	Thông báo realtime: Sử dụng SignalR để đẩy thông báo tức thì về yêu cầu xem phòng, hóa đơn mới, nhắc nhở thanh toán, hợp đồng sắp hết hạn.
+o	Quản trị hệ thống: Super Admin quản lý người dùng, theo dõi hoạt động, thống kê toàn hệ thống (số lượng phòng, tỷ lệ lấp đầy, khu vực nóng). 
+-	Đạt các chỉ tiêu thực tế trong giai đoạn phát triển:
+o	Hỗ trợ quản lý ít nhất 500 phòng trọ và 1.000 khách thuê trong môi trường thử nghiệm (dữ liệu giả lập và thực tế từ khảo sát). 
+o	Giảm thời gian tìm kiếm phòng trung bình của khách thuê xuống dưới 50% so với kênh truyền thống (đo lường qua user testing).
+o	Tỷ lệ hài lòng người dùng ≥ 85% qua khảo sát nội bộ (về tính năng tìm kiếm, quản lý hóa đơn, giao diện và tốc độ hệ thống). 
+o	Bảo mật và hiệu suất: Không có lỗ hổng bảo mật nghiêm trọng (JWT, HTTPS, role-based authorization), thời gian phản hồi API < 300ms, hỗ trợ đồng thời ≥ 200 người dùng mà không giảm hiệu suất. 
+-	Trải nghiệm người dùng ưu việt:
+o	Giao diện React.js responsive hoàn hảo, thân thiện trên cả desktop và mobile browser (mobile-first design), dễ sử dụng cho đối tượng chủ trọ lớn tuổi và khách thuê trẻ.
+o	Tích hợp bản đồ mượt mà, hình ảnh phòng chất lượng cao từ Cloudinary, biểu đồ thống kê trực quan giúp chủ trọ nắm bắt nhanh tình hình kinh doanh.
+o	Tối ưu hóa quy trình: Chủ trọ giảm ≥ 70% công việc thủ công (tính hóa đơn, nhắc nhở), khách thuê nhận thông tin minh bạch, giảm nguy cơ lừa đảo. 
+-	Ứng dụng có thể được triển khai thử nghiệm thực tế tại một số khu trọ ở TP.HCM (ví dụ: quận Bình Tân, Gò Vấp, Thủ Đức), thu thập feedback từ ít nhất 20 chủ trọ và 50 khách thuê, sau đó tinh chỉnh để phát triển thành sản phẩm hoàn chỉnh, có tiềm năng mở rộng ra các tỉnh thành khác và tích hợp thêm tính năng như thanh toán trực tuyến (VNPay/Momo) hoặc chữ ký điện tử hợp đồng trong tương lai.
+Kế hoạch thực hiện:
+Giai đoạn	Thời gian	Công việc trọng tâm	Kết quả bàn giao
+Giai đoạn 1: Chuẩn bị	11/02 – 25/02	Phân tích yêu cầu, thiết kế Database (ERD), thiết kế UI/UX trên Figma.	File thiết kế Figma & Sơ đồ DB.
+Giai đoạn 2: Base & Map	26/02 – 20/03	Setup React.js, tích hợp Bản đồ (Google Maps/Mapbox), làm chức năng đăng ký/đăng nhập.	Web có bản đồ và Auth.
+Giai đoạn 3: Chức năng Chính	21/03 – 15/04	Xây dựng chức năng quản lý cho chủ trọ, bộ lọc tìm kiếm cho người thuê.	Luồng tìm kiếm & quản lý thông tin hoàn tất.
+Giai đoạn 4: AI Integration	16/04 – 05/05	Xây dựng mô hình AI để hỗ trợ người thuê chat tìm phòng.	AI gợi ý tìm phòng hoạt động trên Web.
+Giai đoạn 5: Quản lý & Payment	06/05 – 20/05	Làm phần quản lý hóa đơn, yêu cầu sửa chữa, thông báo realtime.	Hệ thống quản lý vận hành tốt.
+Giai đoạn 6: Hoàn thiện	21/05 – 30/05	Fix bug, tối ưu hiệu năng, hoàn thiện báo cáo và chuẩn bị Demo.	Sản phẩm hoàn chỉnh & Báo cáo.
+8.	Hướng phát triển đề tài
+Tích hợp ứng dụng di động (mobile app): Phát triển phiên bản mobile bằng React Native hoặc Flutter, hỗ trợ cả iOS và Android, cho phép khách thuê tìm kiếm và đặt lịch xem phòng nhanh chóng trên điện thoại, nhận push notification realtime về hóa đơn hoặc thông báo từ chủ trọ, đồng bộ dữ liệu hoàn toàn với phiên bản web. 
+-	Nâng cấp hệ thống gợi ý thông minh bằng Machine Learning:
+o	Áp dụng mô hình học máy (ví dụ: collaborative filtering nâng cao hoặc mô hình embedding với TensorFlow/PyTorch) để phân tích hành vi người dùng sâu hơn, dự đoán sở thích dựa trên dữ liệu lịch sử thuê phòng toàn hệ thống, đạt độ chính xác gợi ý > 85%.
+o	Tích hợp thêm gợi ý dựa trên dự báo giá thuê theo khu vực (dựa trên dữ liệu lịch sử và xu hướng thị trường từ nguồn công khai như Batdongsan.com.vn). 
+-	Tích hợp thanh toán trực tuyến và ví điện tử: Hỗ trợ thanh toán hóa đơn tự động qua VNPay, Momo, ZaloPay hoặc chuyển khoản ngân hàng, tích hợp cổng thanh toán (ví dụ: Stripe/VNPay SDK), tự động cập nhật trạng thái thanh toán và gửi biên lai điện tử. 
+-	Hợp đồng điện tử với chữ ký số: Tích hợp dịch vụ chữ ký điện tử (Viettel-CA, VNPT-CA hoặc DocuSign) để chủ trọ và khách thuê ký hợp đồng trực tuyến, lưu trữ an toàn, có giá trị pháp lý, giảm thiểu giấy tờ thủ công. 
+-	Tính năng đánh giá và phản hồi hai chiều:
+o	Khách thuê đánh giá phòng trọ và chủ trọ sau khi kết thúc hợp đồng (điểm số, bình luận).
+o	Chủ trọ đánh giá khách thuê (thanh toán đúng hạn, giữ gìn phòng ốc) để xây dựng hệ thống uy tín, hỗ trợ gợi ý phòng phù hợp hơn với khách thuê đáng tin cậy. 
+-	Mở rộng quản lý bất động sản đa dạng: Hỗ trợ quản lý không chỉ phòng trọ mà còn nhà nguyên căn, căn hộ chung cư, ký túc xá, văn phòng cho thuê, với các tính năng tùy chỉnh theo loại hình (quản lý phí dịch vụ chung cư, chỗ đậu xe…). 
+-	Tích hợp chatbot hỗ trợ và AI trợ lý: Sử dụng LLM (như Grok API hoặc OpenAI) để xây dựng chatbot hỗ trợ khách thuê trả lời câu hỏi thường gặp, hướng dẫn đặt lịch xem phòng, hoặc hỗ trợ chủ trọ soạn thảo thông báo/hóa đơn nhanh chóng. 
+-	Phân tích dữ liệu nâng cao cho chủ trọ: 
+o	Dự báo tỷ lệ lấp đầy phòng theo mùa vụ (dựa trên dữ liệu lịch sử và sự kiện như mùa nhập học, cao điểm tuyển dụng). 
+o	Gợi ý điều chỉnh giá thuê tối ưu để tăng doanh thu (revenue management cơ bản). 
+-	Hỗ trợ đa ngôn ngữ và khách thuê quốc tế: Thêm giao diện tiếng Anh, tiếng Trung, tiếng Hàn để phục vụ lao động nước ngoài và du học sinh, tích hợp dịch tự động (Google Translate API) cho mô tả phòng và tin nhắn. 
+-	Tích hợp IoT và quản lý thông minh (dài hạn): Kết nối với thiết bị thông minh (đồng hồ điện/nước tự động đọc chỉ số, khóa cửa thông minh, camera giám sát) để tự động hóa việc ghi nhận chỉ số và nâng cao an ninh phòng trọ. 
+-	Xây dựng cộng đồng và marketplace: Tạo diễn đàn hoặc phần cộng đồng để chủ trọ chia sẻ kinh nghiệm, khách thuê trao đổi thông tin khu vực, hoặc mở rộng thành nền tảng kết nối dịch vụ liên quan (dọn dẹp, sửa chữa, nội thất) với đối tác thứ ba.
