@@ -5,16 +5,19 @@ using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository userRepository, IMapper mapper)
         {
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<UserResponse?> GetUserByIdOrEmailAsync(GetUserByIdOrEmailRequest request)
@@ -31,18 +34,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (user == null)
                 throw new NotFoundException("Không tìm thấy người dùng.");
 
-            return new UserResponse
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                Role = user.Role,
-                Address = user.Address,
-                AvatarUrl = user.AvatarUrl,
-                PhoneNumber = user.PhoneNumber,
-                CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt
-            };
+            return _mapper.Map<UserResponse>(user);
         }
 
         public async Task<UserListResponse> GetUsersByFilterAsync(GetUsersByFilterRequest request)
@@ -60,18 +52,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             return new UserListResponse
             {
-                Items = users.Select(user => new UserResponse
-                {
-                    Id = user.Id,
-                    FullName = user.FullName,
-                    Email = user.Email,
-                    Role = user.Role,
-                    Address = user.Address,
-                    AvatarUrl = user.AvatarUrl,
-                    PhoneNumber = user.PhoneNumber,
-                    CreatedAt = user.CreatedAt,
-                    UpdatedAt = user.UpdatedAt
-                }).ToList(),
+                Items = _mapper.Map<List<UserResponse>>(users),
                 TotalCount = totalCount,
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
@@ -84,9 +65,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (user == null)
                 throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
 
-            user.FullName = request.FullName ?? user.FullName;
-            user.Address = request.Address ?? user.Address;
-            user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+            _mapper.Map(request, user);
 
             var isSuccess = await _userRepository.UpdateUserAsync(user);
             if (!isSuccess)

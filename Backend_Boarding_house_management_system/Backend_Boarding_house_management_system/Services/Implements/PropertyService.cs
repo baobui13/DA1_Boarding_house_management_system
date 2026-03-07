@@ -4,15 +4,18 @@ using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
+using AutoMapper;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
     public class PropertyService : IPropertyService
     {
         private readonly IPropertyRepository _propertyRepository;
-        public PropertyService(IPropertyRepository propertyRepository)
+        private readonly IMapper _mapper;
+        public PropertyService(IPropertyRepository propertyRepository, IMapper mapper)
         {
             _propertyRepository = propertyRepository;
+            _mapper = mapper;
         }
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
@@ -20,7 +23,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetPropertyByIdAsync(request.Id);
             if (property == null)
                 throw new NotFoundException("Không tìm thấy bất động sản.");
-            return MapToResponse(property);
+            return _mapper.Map<PropertyResponse>(property);
         }
 
         public async Task<PropertyListResponse> GetPropertiesByFilterAsync(GetPropertiesByFilterRequest request)
@@ -30,7 +33,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 request.SortBy ?? "CreatedAt", request.IsDescending, request.PageNumber, request.PageSize);
             return new PropertyListResponse
             {
-                Items = properties.Select(MapToResponse).ToList(),
+                Items = _mapper.Map<List<PropertyResponse>>(properties),
                 TotalCount = totalCount,
                 PageNumber = request.PageNumber,
                 PageSize = request.PageSize
@@ -39,25 +42,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request)
         {
-            var property = new Property
-            {
-                Id = Guid.NewGuid().ToString(),
-                LandlordId = request.LandlordId,
-                AreaId = request.AreaId,
-                PropertyName = request.PropertyName,
-                Address = request.Address,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude,
-                Size = request.Size,
-                Description = request.Description,
-                Price = request.Price,
-                Status = request.Status,
-                CreatedAt = DateTime.UtcNow
-            };
+            var property = _mapper.Map<Property>(request);
+            property.Id = Guid.NewGuid().ToString();
+            property.CreatedAt = DateTime.UtcNow;
             var created = await _propertyRepository.CreatePropertyAsync(property);
             if (created == null)
                 throw new BadRequestException("Tạo bất động sản thất bại.");
-            return MapToResponse(created);
+            return _mapper.Map<PropertyResponse>(created);
         }
 
         public async Task<bool> UpdatePropertyAsync(UpdatePropertyRequest request)
@@ -65,37 +56,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetPropertyByIdAsync(request.Id);
             if (property == null)
                 throw new NotFoundException($"Không tìm thấy bất động sản với Id '{request.Id}'.");
-
-            if (request.PropertyName != null) 
-                property.PropertyName = request.PropertyName;
-
-            if (request.Address != null) 
-                property.Address = request.Address;
-
-            if (request.Latitude.HasValue) 
-                property.Latitude = request.Latitude;
-
-            if (request.Longitude.HasValue) 
-                property.Longitude = request.Longitude;
-
-            if (request.Size.HasValue) 
-                property.Size = request.Size.Value;
-
-            if (request.Description != null) 
-                property.Description = request.Description;
-
-            if (request.Price.HasValue) 
-                property.Price = request.Price.Value;
-
-            if (request.Status != null)
-                property.Status = request.Status;
-
-            if (request.AreaId != null) 
-                property.AreaId = request.AreaId;
-
-            if (request.RejectionReason != null) 
-                property.RejectionReason = request.RejectionReason;
-
+            _mapper.Map(request, property);
             var isSuccess = await _propertyRepository.UpdatePropertyAsync(property);
             if (!isSuccess)
                 throw new BadRequestException("Cập nhật bất động sản thất bại.");
@@ -108,27 +69,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!isSuccess)
                 throw new NotFoundException($"Không tìm thấy hoặc xóa bất động sản thất bại với Id '{request.Id}'.");
             return true;
-        }
-
-        private static PropertyResponse MapToResponse(Property property)
-        {
-            return new PropertyResponse
-            {
-                Id = property.Id,
-                LandlordId = property.LandlordId,
-                AreaId = property.AreaId,
-                PropertyName = property.PropertyName,
-                Address = property.Address,
-                Latitude = property.Latitude,
-                Longitude = property.Longitude,
-                Size = property.Size,
-                Description = property.Description,
-                Price = property.Price,
-                Status = property.Status,
-                RejectionReason = property.RejectionReason,
-                CreatedAt = property.CreatedAt,
-                UpdatedAt = property.UpdatedAt
-            };
         }
     }
 }
