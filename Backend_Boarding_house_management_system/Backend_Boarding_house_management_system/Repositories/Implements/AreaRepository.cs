@@ -51,8 +51,6 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             _context.Areas.Update(area);
             var result = await _context.SaveChangesAsync() > 0;
-            if (!result)
-                throw new BadRequestException($"Update area '{area.Id}' failed.");
             return result;
         }
 
@@ -60,11 +58,9 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             var area = await _context.Areas.FindAsync(areaId);
             if (area == null)
-                throw new NotFoundException($"Area with id '{areaId}' not found.");
+                return false;
             _context.Areas.Remove(area);
             var result = await _context.SaveChangesAsync() > 0;
-            if (!result)
-                throw new BadRequestException($"Delete area '{areaId}' failed.");
             return result;
         }
 
@@ -72,9 +68,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             _context.Areas.Add(area);
             var result = await _context.SaveChangesAsync() > 0;
-            if (!result)
-                throw new BadRequestException($"Create area failed.");
-            return area;
+            return result ? area : null!;
         }
     }
 }

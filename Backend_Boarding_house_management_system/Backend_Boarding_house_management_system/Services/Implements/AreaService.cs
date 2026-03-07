@@ -57,31 +57,46 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 CreatedAt = DateTime.UtcNow
             };
             var created = await _areaRepository.CreateAreaAsync(area);
+            if (created == null)
+                throw new BadRequestException("Tạo khu vực thất bại.");
             return MapToResponse(created);
         }
 
         public async Task<bool> UpdateAreaAsync(UpdateAreaRequest request)
         {
             var area = await _areaRepository.GetAreaByIdAsync(request.Id);
+            if (area == null)
+                throw new NotFoundException($"Không tìm thấy khu vực với Id '{request.Id}'.");
             if (request.Name != null) area.Name = request.Name;
             if (request.Address != null) area.Address = request.Address;
             if (request.Latitude.HasValue) area.Latitude = request.Latitude;
             if (request.Longitude.HasValue) area.Longitude = request.Longitude;
             if (request.RoomCount.HasValue) area.RoomCount = request.RoomCount.Value;
             if (request.Description != null) area.Description = request.Description;
-            return await _areaRepository.UpdateAreaAsync(area);
+            var isSuccess = await _areaRepository.UpdateAreaAsync(area);
+            if (!isSuccess)
+                throw new BadRequestException("Cập nhật khu vực thất bại.");
+            return true;
         }
 
         public async Task<bool> UpdateAreaDescriptionAsync(UpdateAreaDescriptionRequest request)
         {
             var area = await _areaRepository.GetAreaByIdAsync(request.Id);
+            if (area == null)
+                throw new NotFoundException($"Không tìm thấy khu vực với Id '{request.Id}'.");
             area.Description = request.Description;
-            return await _areaRepository.UpdateAreaAsync(area);
+            var isSuccess = await _areaRepository.UpdateAreaAsync(area);
+            if (!isSuccess)
+                throw new BadRequestException("Cập nhật mô tả khu vực thất bại.");
+            return true;
         }
 
         public async Task<bool> DeleteAreaAsync(DeleteAreaRequest request)
         {
-            return await _areaRepository.DeleteAreaAsync(request.Id);
+            var isSuccess = await _areaRepository.DeleteAreaAsync(request.Id);
+            if (!isSuccess)
+                throw new NotFoundException($"Không tìm thấy hoặc xóa khu vực thất bại với Id '{request.Id}'.");
+            return true;
         }
 
         private static AreaResponse MapToResponse(Area area)
