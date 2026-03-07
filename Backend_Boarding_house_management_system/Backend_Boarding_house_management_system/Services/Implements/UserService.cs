@@ -1,6 +1,7 @@
-using Backend_Boarding_house_management_system.DTOs.User.Requests;
+﻿using Backend_Boarding_house_management_system.DTOs.User.Requests;
 using Backend_Boarding_house_management_system.DTOs.User.Responses;
 using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -22,11 +23,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             if (!string.IsNullOrEmpty(request.Id))
                 user = await _userRepository.GetUserByIdAsync(request.Id);
-
-            if (user == null && !string.IsNullOrEmpty(request.Email))
+            else if (!string.IsNullOrEmpty(request.Email))
                 user = await _userRepository.GetUserByEmailAsync(request.Email);
+            else
+                throw new BadRequestException("Phải cung cấp Id hoặc Email.");
 
-            return user == null ? null : new UserResponse
+            if (user == null)
+                throw new NotFoundException("Không tìm thấy người dùng.");
+
+            return new UserResponse
             {
                 Id = user.Id,
                 FullName = user.FullName,
@@ -48,7 +53,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 request.Address, 
                 request.CreatedAfter, 
                 request.CreatedBefore,
-                request.SortBy!, 
+                request.SortBy ?? "CreatedAt",
                 request.IsDescending, 
                 request.PageNumber, 
                 request.PageSize);
@@ -76,28 +81,57 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         public async Task<bool> UpdateUserAsync(UpdateUserRequest request)
         {
             var user = await _userRepository.GetUserByIdAsync(request.Id);
-            if (user == null) return false;
+            if (user == null)
+                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
 
             user.FullName = request.FullName ?? user.FullName;
             user.Address = request.Address ?? user.Address;
             user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
 
-            return await _userRepository.UpdateUserAsync(user);
+            var isSuccess = await _userRepository.UpdateUserAsync(user);
+            if (!isSuccess)
+                throw new BadRequestException("Cập nhật thông tin thất bại do lỗi hệ thống.");
+
+            return true;
         }
 
         public async Task<bool> UpdateUserAvatarAsync(UpdateUserAvatarRequest request)
         {
-            return await _userRepository.UpdateUserAvatarAsync(request.Id, request.AvatarUrl);
+            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            if (user == null)
+                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+
+            var isSuccess = await _userRepository.UpdateUserAvatarAsync(request.Id, request.AvatarUrl);
+            if (!isSuccess)
+                throw new BadRequestException("Cập nhật ảnh đại diện thất bại.");
+
+            return true;
         }
 
         public async Task<bool> BlockUserAsync(BlockUserRequest request)
         {
-            return await _userRepository.BlockUserAsync(request.Id, request.IsBlocked);
+            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            if (user == null)
+                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+
+            var isSuccess = await _userRepository.BlockUserAsync(request.Id, request.IsBlocked);
+            if (!isSuccess)
+                throw new BadRequestException("Khóa/Mở khóa người dùng thất bại.");
+
+            return true;
         }
 
         public async Task<bool> DeleteUserAsync(DeleteUserRequest request)
         {
-            return await _userRepository.DeleteUserAsync(request.Id);
+            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            if (user == null)
+                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+
+            var isSuccess = await _userRepository.DeleteUserAsync(request.Id);
+            if (!isSuccess)
+                throw new BadRequestException("Xóa người dùng thất bại.");
+
+            return true;
         }
     }
 }

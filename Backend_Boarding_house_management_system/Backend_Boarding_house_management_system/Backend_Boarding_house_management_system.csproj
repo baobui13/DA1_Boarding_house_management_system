@@ -32,11 +32,12 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
+    <Folder Include="Entities\" />
     <Folder Include="DTOs\" />
     <Folder Include="Interfaces\" />
-    <Folder Include="Middlewares\" />
     <Folder Include="Helpers\" />
     <Folder Include="Repositories\" />
+    <Folder Include="Extensions\" />
     <Folder Include="Services\" />
   </ItemGroup>
 

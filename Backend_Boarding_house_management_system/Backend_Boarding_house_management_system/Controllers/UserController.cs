@@ -20,9 +20,6 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<IActionResult> GetUserByIdOrEmail([FromQuery] GetUserByIdOrEmailRequest request)
         {
             var user = await _userService.GetUserByIdOrEmailAsync(request);
-            if (user == null)
-                return NotFound("User not found.");
-
             return Ok(user);
         }
 
@@ -36,40 +33,28 @@ namespace Backend_Boarding_house_management_system.Controllers
         [HttpPut("UpdateUser")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {
-            var result = await _userService.UpdateUserAsync(request);
-            if (!result)
-                return NotFound("User not found or update failed.");
-
+            await _userService.UpdateUserAsync(request);
             return NoContent();
         }
 
         [HttpPut("UpdateUserAvatar")]
         public async Task<IActionResult> UpdateUserAvatar([FromBody] UpdateUserAvatarRequest request)
         {
-            var result = await _userService.UpdateUserAvatarAsync(request);
-            if (!result)
-                return NotFound("User not found or update failed.");
-
+            await _userService.UpdateUserAvatarAsync(request);
             return NoContent();
         }
 
         [HttpPut("BlockUser")]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserRequest request)
         {
-            var result = await _userService.BlockUserAsync(request);
-            if (!result)
-                return NotFound("User not found or block operation failed.");
-
+            await _userService.BlockUserAsync(request);
             return NoContent();
         }
 
         [HttpDelete("DeleteUser")]
         public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)
         {
-            var result = await _userService.DeleteUserAsync(request);
-            if (!result)
-                return NotFound("User not found or delete operation failed.");
-
+            await _userService.DeleteUserAsync(request);
             return NoContent();
         }
     }
