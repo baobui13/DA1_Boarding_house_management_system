@@ -13,7 +13,7 @@ using Plainquire.Sort.Mvc;
 using Plainquire.Sort.Swashbuckle;
 using System.Text;
 using System.Text.Json.Serialization;
-
+using AutoMapper;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +21,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddApplicationServices();
+
+// Đăng ký các Repository và Service của ứng dụng
+builder.Services.AddApplicationRepositoriesAndServices();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -42,6 +44,10 @@ builder.Services.AddSwaggerGen(options =>
     options.AddPageSupport();
 });
 
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(typeof(Program).Assembly);
+});
 
 
 // ================================= Auth =====================================
@@ -61,40 +67,32 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 // 2. Thêm Authentication schemes
 builder.Services.AddAuthentication(options =>
 {
+    // Đặt mặc định xác thực bằng JWT cho các request gửi đến API
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key");
-    var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("Jwt:Issuer");
-    var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new ArgumentNullException("Jwt:Audience");
-
+    options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 })
 .AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-    options.SignInScheme = IdentityConstants.ExternalScheme; // quan trọng
 });
-//.AddFacebook(options =>
-//{
-//    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
-//    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
-//    options.SignInScheme = IdentityConstants.ExternalScheme;
-//});
 
-// 3. Thêm Authorization (role-based)
+// 3. Authorization (role-based)
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("LandlordOnly", policy => policy.RequireRole("Landlord"));
@@ -122,6 +120,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
