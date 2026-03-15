@@ -52,64 +52,16 @@ builder.Services.AddAutoMapper(cfg =>
 // Bind cấu hình Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
-// ================================= Auth =====================================
-
-
-
-// 1. Thêm Identity
-builder.Services.AddIdentity<User, IdentityRole>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
-
-// 2. Thêm Authentication schemes
-builder.Services.AddAuthentication(options =>
-{
-    // Đặt mặc định xác thực bằng JWT cho các request gửi đến API
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
-    };
-})
-.AddGoogle(options =>
-{
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-});
-
-// 3. Authorization (role-based)
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("LandlordOnly", policy => policy.RequireRole("Landlord"));
-    options.AddPolicy("TenantOnly", policy => policy.RequireRole("Tenant"));
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-});
-
-
-
-// ==================================================================================================
+// Đăng ký cấu hình authentication bằng extension
+builder.Services.AddAuthenticationServices(builder.Configuration);
 
 var app = builder.Build();
 
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
 await app.CheckCloudinaryConnectionAsync();
+
+// Kiểm tra kết nối tới các dịch vụ authentication (JWT & Google) khi ứng dụng khởi động
+app.CheckAuthenticationConnections();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

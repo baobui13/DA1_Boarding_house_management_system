@@ -28,7 +28,7 @@ namespace Backend_Boarding_house_management_system.Extensions
 
                     if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
                     {
-                        logger.LogWarning("MISSING CLOUDINARY CONFIGURATION IN APPSETTINGS.JSON!");
+                        logger.LogWarning("I [WARNING] Missing Cloudinary configuration in appsettings.json!");
                         return app; // Thoát sớm nếu thiếu cấu hình
                     }
 
@@ -45,18 +45,18 @@ namespace Backend_Boarding_house_management_system.Extensions
 
                     if (response.IsSuccessStatusCode)
                     {
-                        logger.LogInformation("SUCCESSFULLY ACCESSED CLOUDINARY (CloudName: {CloudName})", cloudName);
+                        logger.LogInformation("O [SUCCESS] Successfully accessed Cloudinary (CloudName: {CloudName})", cloudName);
                     }
                     else
                     {
                         // Đọc lỗi chi tiết từ Cloudinary nếu có (thường do sai API Key/Secret)
                         var errorContent = await response.Content.ReadAsStringAsync();
-                        logger.LogWarning("CLOUDINARY CONNECTION REJECTED. StatusCode: {StatusCode}, Details: {Error}", response.StatusCode, errorContent);
+                        logger.LogWarning("I [WARNING] Cloudinary connection rejected. StatusCode: {StatusCode}, Details: {Error}", response.StatusCode, errorContent);
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "FAILED TO SEND REQUEST TO CLOUDINARY. Please check your network connection.");
+                    logger.LogError(ex, "X [ERROR] Failed to send request to Cloudinary. Please check your network connection.");
                 }
             }
 
