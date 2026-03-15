@@ -21,6 +21,8 @@ namespace Backend_Boarding_house_management_system.Extensions
             services.AddScoped<IPropertyService, PropertyService>();
 
             services.AddScoped<IPhotoService, PhotoService>();
+            services.AddScoped<IAmenityRepository, AmenityRepository>();
+            services.AddScoped<IAmenityService, AmenityService>();
         }
     }
 }

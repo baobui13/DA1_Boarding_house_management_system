@@ -55,6 +55,10 @@ builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(
 // Đăng ký cấu hình authentication bằng extension
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
+
+// ===========================================================================================
+
+
 var app = builder.Build();
 
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
