@@ -5,6 +5,8 @@ using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.DTOs.User.Requests;
 using Backend_Boarding_house_management_system.DTOs.User.Responses;
+using Backend_Boarding_house_management_system.DTOs.PropertyImage.Requests;
+using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -26,6 +28,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<Property, PropertyResponse>();
             CreateMap<CreatePropertyRequest, Property>();
             CreateMap<UpdatePropertyRequest, Property>();
+
+            // PropertyImage mappings
+            CreateMap<PropertyImage, PropertyImageResponse>();
+            CreateMap<CreatePropertyImageRequest, PropertyImage>();
         }
     }
 }
