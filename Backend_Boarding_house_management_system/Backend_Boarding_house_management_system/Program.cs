@@ -49,6 +49,8 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddMaps(typeof(Program).Assembly);
 });
 
+// Bind cấu hình Cloudinary
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 // ================================= Auth =====================================
 
@@ -105,6 +107,9 @@ builder.Services.AddAuthorization(options =>
 // ==================================================================================================
 
 var app = builder.Build();
+
+// Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
+await app.CheckCloudinaryConnectionAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

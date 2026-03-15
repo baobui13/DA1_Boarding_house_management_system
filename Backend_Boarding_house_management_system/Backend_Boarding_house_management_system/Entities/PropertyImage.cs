@@ -18,6 +18,10 @@ namespace Backend_Boarding_house_management_system.Entities
         public string ImageUrl { get; set; } = null!;
 
         [Required]
+        [StringLength(100)]
+        public string PublicId { get; set; } = null!;
+
+        [Required]
         public bool IsPrimary { get; set; } = false;
 
         [Required]
