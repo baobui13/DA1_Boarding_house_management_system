@@ -1,4 +1,5 @@
 using Backend_Boarding_house_management_system.DTOs.Area.Requests;
+using Backend_Boarding_house_management_system.DTOs.Area.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,21 +16,21 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [HttpGet("GetAreaByIdOrName")]
-        public async Task<IActionResult> GetAreaByIdOrName([FromQuery] GetAreaByIdRequest request)
+        public async Task<ActionResult<AreaResponse>> GetAreaByIdOrName([FromQuery] GetAreaByIdRequest request)
         {
             var area = await _areaService.GetAreaByIdAsync(request);
             return Ok(area);
         }
 
         [HttpGet("GetAreasByFilter")]
-        public async Task<IActionResult> GetAreasByFilter([FromQuery] GetAreasByFilterRequest request)
+        public async Task<ActionResult<AreaListResponse>> GetAreasByFilter([FromQuery] GetAreasByFilterRequest request)
         {
             var areas = await _areaService.GetAreasByFilterAsync(request);
             return Ok(areas);
         }
 
         [HttpPost("CreateArea")]
-        public async Task<IActionResult> CreateArea([FromBody] CreateAreaRequest request)
+        public async Task<ActionResult<AreaResponse>> CreateArea([FromBody] CreateAreaRequest request)
         {
             var area = await _areaService.CreateAreaAsync(request);
             return Ok(area);
@@ -39,21 +40,21 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<IActionResult> UpdateArea([FromBody] UpdateAreaRequest request)
         {
             await _areaService.UpdateAreaAsync(request);
-            return NoContent();
+            return Ok();
         }
 
         [HttpPut("UpdateAreaDescription")]
         public async Task<IActionResult> UpdateAreaDescription([FromBody] UpdateAreaDescriptionRequest request)
         {
             await _areaService.UpdateAreaDescriptionAsync(request);
-            return NoContent();
+            return Ok();
         }
 
         [HttpDelete("DeleteArea")]
         public async Task<IActionResult> DeleteArea([FromBody] DeleteAreaRequest request)
         {
             await _areaService.DeleteAreaAsync(request);
-            return NoContent();
+            return Ok();
         }
     }
 }

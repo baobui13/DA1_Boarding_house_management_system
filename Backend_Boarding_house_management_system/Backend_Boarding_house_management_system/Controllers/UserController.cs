@@ -17,14 +17,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [HttpGet("GetUserByIdOrEmail")]
-        public async Task<IActionResult> GetUserByIdOrEmail([FromQuery] GetUserByIdOrEmailRequest request)
+        public async Task<ActionResult<UserResponse>> GetUserByIdOrEmail([FromQuery] GetUserByIdOrEmailRequest request)
         {
             var user = await _userService.GetUserByIdOrEmailAsync(request);
             return Ok(user);
         }
 
         [HttpGet("GetUsersByFilter")]
-        public async Task<IActionResult> GetUsersByFilter([FromQuery] GetUsersByFilterRequest request)
+        public async Task<ActionResult<UserListResponse>> GetUsersByFilter([FromQuery] GetUsersByFilterRequest request)
         {
             var users = await _userService.GetUsersByFilterAsync(request);
             return Ok(users);
@@ -34,28 +34,28 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {
             await _userService.UpdateUserAsync(request);
-            return NoContent();
+            return Ok();
         }
 
         [HttpPut("UpdateUserAvatar")]
         public async Task<IActionResult> UpdateUserAvatar([FromBody] UpdateUserAvatarRequest request)
         {
             await _userService.UpdateUserAvatarAsync(request);
-            return NoContent();
+            return Ok();
         }
 
         [HttpPut("BlockUser")]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserRequest request)
         {
             await _userService.BlockUserAsync(request);
-            return NoContent();
+            return Ok();
         }
 
         [HttpDelete("DeleteUser")]
         public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)
         {
             await _userService.DeleteUserAsync(request);
-            return NoContent();
+            return Ok();
         }
     }
 }

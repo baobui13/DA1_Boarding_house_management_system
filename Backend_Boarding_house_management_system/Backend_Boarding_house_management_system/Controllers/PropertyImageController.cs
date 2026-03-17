@@ -1,4 +1,5 @@
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Requests;
+using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,21 +16,21 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [HttpGet("GetPropertyImageById")]
-        public async Task<IActionResult> GetPropertyImageById([FromQuery] GetPropertyImageByIdRequest request)
+        public async Task<ActionResult<PropertyImageResponse>> GetPropertyImageById([FromQuery] GetPropertyImageByIdRequest request)
         {
             var image = await _propertyImageService.GetPropertyImageByIdAsync(request);
             return Ok(image);
         }
 
         [HttpGet("GetPropertyImagesByFilter")]
-        public async Task<IActionResult> GetPropertyImagesByFilter([FromQuery] GetPropertyImagesByFilterRequest request)
+        public async Task<ActionResult<PropertyImageListResponse>> GetPropertyImagesByFilter([FromQuery] GetPropertyImagesByFilterRequest request)
         {
             var images = await _propertyImageService.GetPropertyImagesByFilterAsync(request);
             return Ok(images);
         }
 
         [HttpPost("CreatePropertyImage")]
-        public async Task<IActionResult> CreatePropertyImage([FromForm] CreatePropertyImageRequest request)
+        public async Task<ActionResult<PropertyImageResponse>> CreatePropertyImage([FromForm] CreatePropertyImageRequest request)
         {
             var image = await _propertyImageService.CreatePropertyImageAsync(request);
             return Ok(image);
@@ -38,15 +39,15 @@ namespace Backend_Boarding_house_management_system.Controllers
         [HttpPut("UpdatePropertyImage")]
         public async Task<IActionResult> UpdatePropertyImage([FromBody] UpdatePropertyImageRequest request)
         {
-            var result = await _propertyImageService.UpdatePropertyImageAsync(request);
-            return Ok(result);
+            await _propertyImageService.UpdatePropertyImageAsync(request);
+            return Ok();
         }
 
         [HttpDelete("DeletePropertyImage")]
         public async Task<IActionResult> DeletePropertyImage([FromQuery] DeletePropertyImageRequest request)
         {
-            var result = await _propertyImageService.DeletePropertyImageAsync(request);
-            return Ok(result);
+            await _propertyImageService.DeletePropertyImageAsync(request);
+            return Ok();
         }
     }
 }
