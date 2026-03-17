@@ -1,0 +1,29 @@
+using Backend_Boarding_house_management_system.DTOs.Base;
+
+namespace Backend_Boarding_house_management_system.DTOs.Invoice.Responses
+{
+    public class InvoiceResponse
+    {
+        public string Id { get; set; } = null!;
+        public string ContractId { get; set; } = null!;
+        public DateTime Period { get; set; }
+        public decimal RentAmount { get; set; }
+        public decimal? ElectricityUsage { get; set; }
+        public decimal? ElectricityCost { get; set; }
+        public decimal? WaterUsage { get; set; }
+        public decimal? WaterCost { get; set; }
+        public decimal? OtherFees { get; set; }
+        public decimal Penalty { get; set; }
+        public decimal Total { get; set; }
+        public string? Note { get; set; }
+        public string Status { get; set; } = null!;
+        public string? InvoiceUrl { get; set; }
+        public DateTime DueDate { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class InvoiceListResponse : PagedResponse<InvoiceResponse>
+    {
+    }
+}
