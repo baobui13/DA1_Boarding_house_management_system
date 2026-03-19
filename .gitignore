@@ -5,6 +5,10 @@
 
 appsettings.Development.json
 
+# VS Code settings
+.vscode/launch.json
+.vscode/tasks.json
+
 # User-specific files
 *.rsuser
 *.suo
