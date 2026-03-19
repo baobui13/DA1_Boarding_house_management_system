@@ -31,6 +31,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="Plainquire.Filter" Version="7.1.0" />
     <PackageReference Include="Plainquire.Filter.Mvc" Version="7.1.0" />
     <PackageReference Include="Plainquire.Filter.Swashbuckle" Version="7.1.0" />

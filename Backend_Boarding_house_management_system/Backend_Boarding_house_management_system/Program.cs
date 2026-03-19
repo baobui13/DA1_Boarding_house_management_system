@@ -18,9 +18,8 @@ using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Đăng ký cấu hình Database
+builder.Services.AddDatabaseServices(builder.Configuration);
 
 // Đăng ký các Repository và Service của ứng dụng
 builder.Services.AddApplicationRepositoriesAndServices();
@@ -60,6 +59,9 @@ builder.Services.AddAuthenticationServices(builder.Configuration);
 
 
 var app = builder.Build();
+
+// Kiểm tra kết nối tới Database khi ứng dụng khởi động
+await app.CheckDatabaseConnectionAsync();
 
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
 await app.CheckCloudinaryConnectionAsync();
