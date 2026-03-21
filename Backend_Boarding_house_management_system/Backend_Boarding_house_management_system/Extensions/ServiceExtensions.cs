@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.Repositories.Interfaces;
+using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Implements;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Services.Implements;
@@ -23,6 +23,9 @@ namespace Backend_Boarding_house_management_system.Extensions
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IAmenityRepository, AmenityRepository>();
             services.AddScoped<IAmenityService, AmenityService>();
+
+            services.AddScoped<IRoomAmenityRepository, RoomAmenityRepository>();
+            services.AddScoped<IRoomAmenityService, RoomAmenityService>();
         }
     }
 }

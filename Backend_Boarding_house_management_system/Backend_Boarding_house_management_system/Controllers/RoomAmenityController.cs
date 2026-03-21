@@ -3,6 +3,8 @@ using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 
+using Backend_Boarding_house_management_system.Services.Interfaces;
+
 namespace Backend_Boarding_house_management_system.Controllers
 {
     [ApiController]
@@ -10,39 +12,50 @@ namespace Backend_Boarding_house_management_system.Controllers
     [Authorize]
     public class RoomAmenityController : ControllerBase
     {
+        private readonly IRoomAmenityService _roomAmenityService;
+
+        public RoomAmenityController(IRoomAmenityService roomAmenityService)
+        {
+            _roomAmenityService = roomAmenityService;
+        }
         [AllowAnonymous]
         [HttpGet("GetRoomAmenityById")]
         public async Task<ActionResult<RoomAmenityResponse>> GetRoomAmenityById([FromQuery] GetRoomAmenityByIdRequest request)
         {
-            throw new NotImplementedException();
+            var result = await _roomAmenityService.GetByIdAsync(request);
+            return Ok(result);
         }
 
         [AllowAnonymous]
         [HttpGet("GetRoomAmenitiesByFilter")]
         public async Task<ActionResult<RoomAmenityListResponse>> GetRoomAmenitiesByFilter([FromQuery] GetRoomAmenitiesByFilterRequest request)
         {
-            throw new NotImplementedException();
+            var result = await _roomAmenityService.GetByFilterAsync(request);
+            return Ok(result);
         }
 
         [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateRoomAmenity")]
         public async Task<ActionResult<RoomAmenityResponse>> CreateRoomAmenity([FromBody] CreateRoomAmenityRequest request)
         {
-            throw new NotImplementedException();
+            var result = await _roomAmenityService.CreateAsync(request);
+            return Ok(result);
         }
 
         [Authorize(Roles = "Landlord,Admin")]
         [HttpPut("UpdateRoomAmenity")]
         public async Task<IActionResult> UpdateRoomAmenity([FromBody] UpdateRoomAmenityRequest request)
         {
-            throw new NotImplementedException();
+            await _roomAmenityService.UpdateAsync(request);
+            return Ok();
         }
 
         [Authorize(Roles = "Landlord,Admin")]
         [HttpDelete("DeleteRoomAmenity")]
         public async Task<IActionResult> DeleteRoomAmenity([FromBody] DeleteRoomAmenityRequest request)
         {
-            throw new NotImplementedException();
+            await _roomAmenityService.DeleteAsync(request);
+            return Ok();
         }
     }
 }
