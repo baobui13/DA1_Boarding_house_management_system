@@ -2,6 +2,8 @@ using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -35,6 +37,31 @@ namespace Backend_Boarding_house_management_system.Controllers
         {
             var result = await _authService.GoogleLoginAsync(request);
             return Ok(result);
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<AuthResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<ActionResult> Logout()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await _authService.LogoutAsync(userId);
+            if (result)
+            {
+                return Ok(new { message = "Đăng xuất thành công" });
+            }
+            return BadRequest(new { message = "Đăng xuất thất bại" });
         }
     }
 }

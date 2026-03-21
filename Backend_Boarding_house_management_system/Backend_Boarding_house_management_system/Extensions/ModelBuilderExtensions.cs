@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Extensions
@@ -136,6 +136,12 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .WithMany(u => u.MessagesReceived)
                 .HasForeignKey(m => m.ReceiverId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);      // Xóa user -> xóa luôn refresh token
 
             // ───────────────────────────────────────────────
             // 3. Index hữu ích cho tìm kiếm & báo cáo

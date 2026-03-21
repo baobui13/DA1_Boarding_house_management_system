@@ -1,10 +1,13 @@
-﻿using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Data;
+using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
@@ -16,17 +19,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly AppDbContext _context;
 
-        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
+        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, AppDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _context = context;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest dto)
         {
-            // Kiểm tra Email tồn tại đã được Identity xử lý qua cấu hình RequireUniqueEmail
             var user = new User
             {
                 UserName = dto.Email,
@@ -37,7 +41,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 Role = dto.Role,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                // EmailConfirmed = false (Mặc định theo Diagram)
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
@@ -48,17 +51,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new Exception($"Đăng ký thất bại: {errors}");
             }
 
-            // Gán Role (Lưu ý: Bạn cần đảm bảo các Role đã được Seed trong DB trước đó)
             await _userManager.AddToRoleAsync(user, dto.Role);
-
-            // TODO: Bắn Event/Message gửi Email xác thực tại đây
 
             return new AuthResponse
             {
                 Email = user.Email,
                 FullName = user.FullName,
                 Role = user.Role
-                // Token null vì theo flow cần phải đăng nhập lại hoặc click link xác nhận
             };
         }
 
@@ -71,10 +70,21 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!result.Succeeded) throw new Exception("Lỗi: Sai thông tin đăng nhập.");
 
             var token = await GenerateJwtTokenAsync(user);
+            var refreshToken = GenerateRefreshToken();
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                ExpiryTime = DateTime.UtcNow.AddDays(30),
+                UserId = user.Id
+            });
+            await _context.SaveChangesAsync();
 
             return new AuthResponse
             {
                 Token = token,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiration = DateTime.UtcNow.AddDays(30),
                 Email = user.Email!,
                 FullName = user.FullName,
                 Role = user.Role,
@@ -84,7 +94,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest dto)
         {
-            // Xác thực Token từ Google
             GoogleJsonWebSignature.Payload payload;
             try
             {
@@ -99,20 +108,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new Exception("Lỗi: Token Google không hợp lệ.");
             }
 
-            // Kiểm tra user đã tồn tại chưa
             var user = await _userManager.FindByEmailAsync(payload.Email);
 
             if (user == null)
             {
-                // Nếu chưa có, tạo user mới (Đăng ký qua OAuth)
                 user = new User
                 {
                     UserName = payload.Email,
                     Email = payload.Email,
                     FullName = payload.Name,
                     AvatarUrl = payload.Picture,
-                    Role = "Tenant", // Mặc định gán Tenant khi login qua Google, có thể cho update sau
-                    EmailConfirmed = true, // OAuth đã verify email
+                    Role = "Tenant",
+                    EmailConfirmed = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -129,15 +136,83 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             }
 
             var token = await GenerateJwtTokenAsync(user);
+            var refreshToken = GenerateRefreshToken();
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                ExpiryTime = DateTime.UtcNow.AddDays(30),
+                UserId = user.Id
+            });
+            await _context.SaveChangesAsync();
 
             return new AuthResponse
             {
                 Token = token,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiration = DateTime.UtcNow.AddDays(30),
                 Email = user.Email!,
                 FullName = user.FullName,
                 Role = user.Role,
                 AvatarUrl = user.AvatarUrl
             };
+        }
+
+        public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest dto)
+        {
+            var principal = GetPrincipalFromExpiredToken(dto.Token);
+            if (principal == null) throw new Exception("Lỗi: Token không hợp lệ.");
+
+            var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId!);
+
+            if (user == null) throw new Exception("Lỗi: Người dùng không tồn tại.");
+
+            var refreshToken = await _context.RefreshTokens
+                .FirstOrDefaultAsync(rt => rt.Token == dto.RefreshToken && rt.UserId == user.Id);
+
+            if (refreshToken == null || refreshToken.IsRevoked || refreshToken.ExpiryTime <= DateTime.UtcNow)
+                throw new Exception("Lỗi: Refresh token không hợp lệ hoặc đã hết hạn.");
+
+            refreshToken.IsRevoked = true;
+
+            var newJwtToken = await GenerateJwtTokenAsync(user);
+            var newRefreshToken = GenerateRefreshToken();
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = newRefreshToken,
+                ExpiryTime = DateTime.UtcNow.AddDays(30),
+                UserId = user.Id
+            });
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponse
+            {
+                Token = newJwtToken,
+                RefreshToken = newRefreshToken,
+                RefreshTokenExpiration = DateTime.UtcNow.AddDays(30),
+                Email = user.Email!,
+                FullName = user.FullName,
+                Role = user.Role,
+                AvatarUrl = user.AvatarUrl
+            };
+        }
+
+        public async Task<bool> LogoutAsync(string userId)
+        {
+            var refreshTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+                .ToListAsync();
+
+            foreach (var token in refreshTokens)
+            {
+                token.IsRevoked = true;
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         private async Task<string> GenerateJwtTokenAsync(User user)
@@ -149,7 +224,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Email, user.Email!),
                 new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Role, user.Role), // Lưu trữ Role như trong Flow Sync Avatar/Role
+                new Claim(ClaimTypes.Role, user.Role), // Lưu trữ Role
                 new Claim("AvatarUrl", user.AvatarUrl ?? "")
             };
 
@@ -160,11 +235,40 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7), // Token sống 7 ngày
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:DurationInMinutes"] ?? "30")), // Using configured duration or default 30 mins
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = true,
+                ValidateIssuer = true,
+                ValidIssuer = _configuration["Jwt:Issuer"],
+                ValidAudience = _configuration["Jwt:Audience"],
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!)),
+                ValidateLifetime = false // Ignore expiration time
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+
+            return principal;
         }
     }
 }

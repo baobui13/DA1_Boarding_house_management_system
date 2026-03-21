@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Extensions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +26,7 @@ namespace Backend_Boarding_house_management_system.Data
         public DbSet<SearchHistory> SearchHistories { get; set; }
         public DbSet<ViewHistory> ViewHistories { get; set; }
         public DbSet<TenantDocument> TenantDocuments { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

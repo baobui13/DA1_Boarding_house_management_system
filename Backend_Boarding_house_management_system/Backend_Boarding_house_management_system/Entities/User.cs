@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.Contracts;
 
@@ -38,5 +38,6 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<SearchHistory> SearchHistories { get; set; } = new List<SearchHistory>();
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
         public ICollection<TenantDocument> TenantDocuments { get; set; } = new List<TenantDocument>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }
