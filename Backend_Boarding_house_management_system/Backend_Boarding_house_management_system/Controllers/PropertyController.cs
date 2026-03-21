@@ -2,11 +2,13 @@ using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PropertyController : ControllerBase
     {
         private readonly IPropertyService _propertyService;
@@ -15,6 +17,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             _propertyService = propertyService;
         }
 
+        [AllowAnonymous]
         [HttpGet("GetPropertyById")]
         public async Task<ActionResult<PropertyResponse>> GetPropertyById([FromQuery] GetPropertyByIdRequest request)
         {
@@ -22,6 +25,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(property);
         }
 
+        [AllowAnonymous]
         [HttpGet("GetPropertiesByFilter")]
         public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter([FromQuery] GetPropertiesByFilterRequest request)
         {
@@ -29,6 +33,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(properties);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateProperty")]
         public async Task<ActionResult<PropertyResponse>> CreateProperty([FromBody] CreatePropertyRequest request)
         {
@@ -36,6 +41,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(property);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPut("UpdateProperty")]
         public async Task<IActionResult> UpdateProperty([FromBody] UpdatePropertyRequest request)
         {
@@ -43,6 +49,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpDelete("DeleteProperty")]
         public async Task<IActionResult> DeleteProperty([FromBody] DeletePropertyRequest request)
         {

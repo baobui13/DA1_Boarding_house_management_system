@@ -2,11 +2,13 @@ using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Responses;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AmenityController : ControllerBase
     {
         private readonly IAmenityService _amenityService;
@@ -15,6 +17,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             _amenityService = amenityService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<AmenityPagedResponse>> Get([FromQuery] GetAmenitiesByFilterRequest request)
         {
@@ -22,6 +25,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("all")]
         public async Task<ActionResult<List<AmenityResponse>>> GetAll()
         {
@@ -29,6 +33,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<AmenityResponse>> GetById(string id)
         {
@@ -36,6 +41,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateAmenityRequest request)
         {
@@ -43,6 +49,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateAmenityRequest request)
         {
@@ -50,6 +57,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {

@@ -2,11 +2,13 @@ using Backend_Boarding_house_management_system.DTOs.Area.Requests;
 using Backend_Boarding_house_management_system.DTOs.Area.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AreaController : ControllerBase
     {
         private readonly IAreaService _areaService;
@@ -15,6 +17,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             _areaService = areaService;
         }
 
+        [AllowAnonymous]
         [HttpGet("GetAreaByIdOrName")]
         public async Task<ActionResult<AreaResponse>> GetAreaByIdOrName([FromQuery] GetAreaByIdRequest request)
         {
@@ -22,6 +25,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(area);
         }
 
+        [AllowAnonymous]
         [HttpGet("GetAreasByFilter")]
         public async Task<ActionResult<AreaListResponse>> GetAreasByFilter([FromQuery] GetAreasByFilterRequest request)
         {
@@ -29,6 +33,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(areas);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateArea")]
         public async Task<ActionResult<AreaResponse>> CreateArea([FromBody] CreateAreaRequest request)
         {
@@ -36,6 +41,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(area);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPut("UpdateArea")]
         public async Task<IActionResult> UpdateArea([FromBody] UpdateAreaRequest request)
         {
@@ -43,6 +49,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPut("UpdateAreaDescription")]
         public async Task<IActionResult> UpdateAreaDescription([FromBody] UpdateAreaDescriptionRequest request)
         {
@@ -50,6 +57,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpDelete("DeleteArea")]
         public async Task<IActionResult> DeleteArea([FromBody] DeleteAreaRequest request)
         {

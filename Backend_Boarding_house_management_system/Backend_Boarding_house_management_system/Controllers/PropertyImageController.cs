@@ -2,6 +2,7 @@ using Backend_Boarding_house_management_system.DTOs.PropertyImage.Requests;
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -15,6 +16,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             _propertyImageService = propertyImageService;
         }
 
+        [AllowAnonymous]
         [HttpGet("GetPropertyImageById")]
         public async Task<ActionResult<PropertyImageResponse>> GetPropertyImageById([FromQuery] GetPropertyImageByIdRequest request)
         {
@@ -22,6 +24,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(image);
         }
 
+        [AllowAnonymous]
         [HttpGet("GetPropertyImagesByFilter")]
         public async Task<ActionResult<PropertyImageListResponse>> GetPropertyImagesByFilter([FromQuery] GetPropertyImagesByFilterRequest request)
         {
@@ -29,6 +32,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(images);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreatePropertyImage")]
         public async Task<ActionResult<PropertyImageResponse>> CreatePropertyImage([FromForm] CreatePropertyImageRequest request)
         {
@@ -36,6 +40,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(image);
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPut("UpdatePropertyImage")]
         public async Task<IActionResult> UpdatePropertyImage([FromBody] UpdatePropertyImageRequest request)
         {
@@ -43,6 +48,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpDelete("DeletePropertyImage")]
         public async Task<IActionResult> DeletePropertyImage([FromQuery] DeletePropertyImageRequest request)
         {
