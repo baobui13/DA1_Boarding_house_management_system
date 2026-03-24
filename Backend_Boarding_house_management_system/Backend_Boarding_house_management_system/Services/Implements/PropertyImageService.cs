@@ -1,11 +1,15 @@
-﻿using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Requests;
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -29,16 +33,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PropertyImageResponse>(image);
         }
 
-        public async Task<PropertyImageListResponse> GetPropertyImagesByFilterAsync(GetPropertyImagesByFilterRequest request)
+        public async Task<PropertyImageListResponse> GetPropertyImagesByFilterAsync(
+            EntityFilter<PropertyImage> filter,
+            EntitySort<PropertyImage> sort,
+            EntityPage page)
         {
-            var (images, totalCount) = await _propertyImageRepository.GetPropertyImagesByFilterAsync(
-                request.PropertyId, request.IsPrimary, request.SortBy ?? "CreatedAt", request.IsDescending, request.PageNumber, request.PageSize);
+            var (images, totalCount) = await _propertyImageRepository.GetPropertyImagesByFilterAsync(filter, sort, page);
             return new PropertyImageListResponse
             {
                 Items = _mapper.Map<List<PropertyImageResponse>>(images),
                 TotalCount = totalCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
         }
 

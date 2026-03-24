@@ -2,6 +2,10 @@ using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 using Backend_Boarding_house_management_system.Services.Interfaces;
 
@@ -28,9 +32,12 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [AllowAnonymous]
         [HttpGet("GetRoomAmenitiesByFilter")]
-        public async Task<ActionResult<RoomAmenityListResponse>> GetRoomAmenitiesByFilter([FromQuery] GetRoomAmenitiesByFilterRequest request)
+        public async Task<ActionResult<RoomAmenityListResponse>> GetRoomAmenitiesByFilter(
+            [FromQuery] EntityFilter<RoomAmenity> filter,
+            [FromQuery] EntitySort<RoomAmenity> sort,
+            [FromQuery] EntityPage page)
         {
-            var result = await _roomAmenityService.GetByFilterAsync(request);
+            var result = await _roomAmenityService.GetByFilterAsync(filter, sort, page);
             return Ok(result);
         }
 

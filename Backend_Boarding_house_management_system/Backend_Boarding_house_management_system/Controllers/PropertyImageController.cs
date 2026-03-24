@@ -3,6 +3,10 @@ using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -26,9 +30,12 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [AllowAnonymous]
         [HttpGet("GetPropertyImagesByFilter")]
-        public async Task<ActionResult<PropertyImageListResponse>> GetPropertyImagesByFilter([FromQuery] GetPropertyImagesByFilterRequest request)
+        public async Task<ActionResult<PropertyImageListResponse>> GetPropertyImagesByFilter(
+            [FromQuery] EntityFilter<PropertyImage> filter,
+            [FromQuery] EntitySort<PropertyImage> sort,
+            [FromQuery] EntityPage page)
         {
-            var images = await _propertyImageService.GetPropertyImagesByFilterAsync(request);
+            var images = await _propertyImageService.GetPropertyImagesByFilterAsync(filter, sort, page);
             return Ok(images);
         }
 

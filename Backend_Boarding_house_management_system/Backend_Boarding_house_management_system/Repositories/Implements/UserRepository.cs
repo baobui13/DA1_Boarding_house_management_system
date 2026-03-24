@@ -2,7 +2,9 @@ using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
@@ -25,31 +27,18 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
-        public async Task<(IEnumerable<User>, int)> GetUsersByFilterAsync(string? role, string? fullName, string? address, DateTime? createdAfter, DateTime? createdBefore, string sortBy, bool isDescending, int pageNumber, int pageSize)
+        public async Task<(IEnumerable<User>, int)> GetUsersByFilterAsync(
+            EntityFilter<User> filter,
+            EntitySort<User> sort,
+            EntityPage page)
         {
-            var query = _context.Users.AsNoTracking().AsQueryable();
+            var query = _context.Users.AsNoTracking();
 
-            if (!string.IsNullOrEmpty(role))
-                query = query.Where(u => u.Role == role);
+            query = query.Where(filter);
+            query = query.OrderBy(sort);
 
-            if (!string.IsNullOrEmpty(fullName))
-                query = query.Where(u => u.FullName.Contains(fullName));
-
-            if (!string.IsNullOrEmpty(address))
-                query = query.Where(u => u.Address != null && u.Address.Contains(address));
-
-            if (createdAfter.HasValue)
-                query = query.Where(u => u.CreatedAt >= createdAfter.Value);
-
-            if (createdBefore.HasValue)
-                query = query.Where(u => u.CreatedAt <= createdBefore.Value);
-
-            // Sorting
-            query = query.OrderBy($"{sortBy} {(isDescending ? "descending" : "ascending")}");
-
-            // Pagination
             var totalCount = await query.CountAsync();
-            var users = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            var users = await query.Page(page).ToListAsync();
 
             return (users, totalCount);
         }

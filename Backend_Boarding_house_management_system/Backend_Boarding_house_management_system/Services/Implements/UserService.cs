@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.DTOs.User.Requests;
+using Backend_Boarding_house_management_system.DTOs.User.Requests;
 using Backend_Boarding_house_management_system.DTOs.User.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
@@ -6,6 +6,9 @@ using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -37,25 +40,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<UserResponse>(user);
         }
 
-        public async Task<UserListResponse> GetUsersByFilterAsync(GetUsersByFilterRequest request)
+        public async Task<UserListResponse> GetUsersByFilterAsync(
+            EntityFilter<User> filter,
+            EntitySort<User> sort,
+            EntityPage page)
         {
-            var (users, totalCount) = await _userRepository.GetUsersByFilterAsync(
-                request.Role, 
-                request.FullName, 
-                request.Address, 
-                request.CreatedAfter, 
-                request.CreatedBefore,
-                request.SortBy ?? "CreatedAt",
-                request.IsDescending, 
-                request.PageNumber, 
-                request.PageSize);
+            var (users, totalCount) = await _userRepository.GetUsersByFilterAsync(filter, sort, page);
 
             return new UserListResponse
             {
                 Items = _mapper.Map<List<UserResponse>>(users),
                 TotalCount = totalCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
         }
 

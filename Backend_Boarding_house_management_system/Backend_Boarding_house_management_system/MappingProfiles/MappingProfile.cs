@@ -13,6 +13,8 @@ using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
 using Backend_Boarding_house_management_system.DTOs.Appointment.Requests;
 using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
+using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
+using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -21,6 +23,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
     {
         public MappingProfile()
         {
+            // Auth mappings
+            CreateMap<User, AuthResponse>();
+            CreateMap<RegisterRequest, User>();
+
             // User mappings
             CreateMap<User, UserResponse>();
             CreateMap<UpdateUserRequest, User>();

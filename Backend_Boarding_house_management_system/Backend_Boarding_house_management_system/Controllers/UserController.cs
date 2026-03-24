@@ -2,6 +2,10 @@ using Backend_Boarding_house_management_system.DTOs.User.Requests;
 using Backend_Boarding_house_management_system.DTOs.User.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -24,9 +28,12 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [HttpGet("GetUsersByFilter")]
-        public async Task<ActionResult<UserListResponse>> GetUsersByFilter([FromQuery] GetUsersByFilterRequest request)
+        public async Task<ActionResult<UserListResponse>> GetUsersByFilter(
+            [FromQuery] EntityFilter<User> filter,
+            [FromQuery] EntitySort<User> sort,
+            [FromQuery] EntityPage page)
         {
-            var users = await _userService.GetUsersByFilterAsync(request);
+            var users = await _userService.GetUsersByFilterAsync(filter, sort, page);
             return Ok(users);
         }
 

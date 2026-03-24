@@ -2,10 +2,12 @@ using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Responses;
-using Backend_Boarding_house_management_system.DTOs.Base;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -29,15 +31,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<AmenityResponse>(amenity);
         }
 
-        public async Task<AmenityPagedResponse> GetByFilterAsync(GetAmenitiesByFilterRequest request)
+        public async Task<AmenityPagedResponse> GetByFilterAsync(
+            EntityFilter<Amenity> filter,
+            EntitySort<Amenity> sort,
+            EntityPage page)
         {
-            var paged = await _amenityRepository.GetByFilterAsync(request);
+            var (items, totalCount) = await _amenityRepository.GetByFilterAsync(filter, sort, page);
             var response = new AmenityPagedResponse
             {
-                Items = _mapper.Map<List<AmenityResponse>>(paged.Items),
-                TotalCount = paged.TotalCount,
-                PageNumber = paged.PageNumber,
-                PageSize = paged.PageSize
+                Items = _mapper.Map<List<AmenityResponse>>(items),
+                TotalCount = totalCount,
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
             return response;
         }
