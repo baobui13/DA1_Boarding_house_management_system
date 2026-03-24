@@ -26,6 +26,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IRoomAmenityRepository, RoomAmenityRepository>();
             services.AddScoped<IRoomAmenityService, RoomAmenityService>();
+
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
         }
     }
 }

@@ -11,6 +11,8 @@ using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Responses;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
+using Backend_Boarding_house_management_system.DTOs.Appointment.Requests;
+using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -47,6 +49,12 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
                 .ForMember(dest => dest.AmenityName, opt => opt.MapFrom(src => src.Amenity != null ? src.Amenity.Name : string.Empty));
             CreateMap<CreateRoomAmenityRequest, RoomAmenity>();
             CreateMap<UpdateRoomAmenityRequest, RoomAmenity>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Appointment mappings
+            CreateMap<Appointment, AppointmentResponse>();
+            CreateMap<CreateAppointmentRequest, Appointment>();
+            CreateMap<UpdateAppointmentRequest, Appointment>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
