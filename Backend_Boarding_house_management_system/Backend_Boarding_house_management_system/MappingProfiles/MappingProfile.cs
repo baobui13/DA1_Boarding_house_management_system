@@ -21,6 +21,8 @@ using Backend_Boarding_house_management_system.DTOs.Invoice.Requests;
 using Backend_Boarding_house_management_system.DTOs.Invoice.Responses;
 using Backend_Boarding_house_management_system.DTOs.Message.Requests;
 using Backend_Boarding_house_management_system.DTOs.Message.Responses;
+using Backend_Boarding_house_management_system.DTOs.Notification.Requests;
+using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -85,6 +87,11 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<Message, MessageResponse>();
             CreateMap<CreateMessageRequest, Message>();
             CreateMap<UpdateMessageRequest, Message>();
+
+            // Notification mappings
+            CreateMap<Notification, NotificationResponse>();
+            CreateMap<CreateNotificationRequest, Notification>();
+            CreateMap<UpdateNotificationRequest, Notification>();
         }
     }
 }

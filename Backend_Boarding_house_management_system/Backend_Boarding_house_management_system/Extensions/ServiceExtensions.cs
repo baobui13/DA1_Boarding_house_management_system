@@ -38,6 +38,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddScoped<IMessageService, MessageService>();
+
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
         }
     }
 }
