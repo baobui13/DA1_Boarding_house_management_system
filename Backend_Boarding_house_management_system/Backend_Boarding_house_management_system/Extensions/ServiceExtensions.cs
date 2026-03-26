@@ -47,6 +47,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<ITenantDocumentRepository, TenantDocumentRepository>();
             services.AddScoped<ITenantDocumentService, TenantDocumentService>();
+
+            services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
+            services.AddScoped<ISearchHistoryService, SearchHistoryService>();
         }
     }
 }
