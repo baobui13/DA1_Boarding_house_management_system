@@ -35,6 +35,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IInvoiceService, InvoiceService>();
+
+            services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddScoped<IMessageService, MessageService>();
         }
     }
 }

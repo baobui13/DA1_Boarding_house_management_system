@@ -19,6 +19,8 @@ using Backend_Boarding_house_management_system.DTOs.Contract.Requests;
 using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
 using Backend_Boarding_house_management_system.DTOs.Invoice.Requests;
 using Backend_Boarding_house_management_system.DTOs.Invoice.Responses;
+using Backend_Boarding_house_management_system.DTOs.Message.Requests;
+using Backend_Boarding_house_management_system.DTOs.Message.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -78,6 +80,11 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<CreateInvoiceRequest, Invoice>();
             CreateMap<UpdateInvoiceRequest, Invoice>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Message mappings
+            CreateMap<Message, MessageResponse>();
+            CreateMap<CreateMessageRequest, Message>();
+            CreateMap<UpdateMessageRequest, Message>();
         }
     }
 }
