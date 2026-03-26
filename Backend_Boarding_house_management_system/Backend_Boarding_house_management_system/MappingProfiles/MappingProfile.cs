@@ -29,6 +29,8 @@ using Backend_Boarding_house_management_system.DTOs.TenantDocument.Requests;
 using Backend_Boarding_house_management_system.DTOs.TenantDocument.Responses;
 using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
 using Backend_Boarding_house_management_system.DTOs.SearchHistory.Responses;
+using Backend_Boarding_house_management_system.DTOs.ViewHistory.Requests;
+using Backend_Boarding_house_management_system.DTOs.ViewHistory.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -112,6 +114,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // SearchHistory mappings
             CreateMap<SearchHistory, SearchHistoryResponse>();
             CreateMap<CreateSearchHistoryRequest, SearchHistory>();
+
+            // ViewHistory mappings
+            CreateMap<ViewHistory, ViewHistoryResponse>();
+            CreateMap<CreateViewHistoryRequest, ViewHistory>();
         }
     }
 }

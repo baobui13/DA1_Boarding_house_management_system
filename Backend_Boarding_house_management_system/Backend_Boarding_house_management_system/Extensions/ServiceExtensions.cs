@@ -50,6 +50,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
             services.AddScoped<ISearchHistoryService, SearchHistoryService>();
+
+            services.AddScoped<IViewHistoryRepository, ViewHistoryRepository>();
+            services.AddScoped<IViewHistoryService, ViewHistoryService>();
         }
     }
 }
