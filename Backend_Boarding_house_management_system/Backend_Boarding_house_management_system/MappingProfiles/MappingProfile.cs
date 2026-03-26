@@ -25,6 +25,8 @@ using Backend_Boarding_house_management_system.DTOs.Notification.Requests;
 using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
 using Backend_Boarding_house_management_system.DTOs.Payment.Requests;
 using Backend_Boarding_house_management_system.DTOs.Payment.Responses;
+using Backend_Boarding_house_management_system.DTOs.TenantDocument.Requests;
+using Backend_Boarding_house_management_system.DTOs.TenantDocument.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -98,6 +100,12 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // Payment mappings
             CreateMap<Payment, PaymentResponse>();
             CreateMap<CreatePaymentRequest, Payment>();
+
+            // TenantDocument mappings
+            CreateMap<TenantDocument, TenantDocumentResponse>();
+            CreateMap<CreateTenantDocumentRequest, TenantDocument>();
+            CreateMap<UpdateTenantDocumentRequest, TenantDocument>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

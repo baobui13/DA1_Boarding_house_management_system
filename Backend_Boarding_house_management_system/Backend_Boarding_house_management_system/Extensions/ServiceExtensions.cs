@@ -44,6 +44,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IPaymentService, PaymentService>();
+
+            services.AddScoped<ITenantDocumentRepository, TenantDocumentRepository>();
+            services.AddScoped<ITenantDocumentService, TenantDocumentService>();
         }
     }
 }
