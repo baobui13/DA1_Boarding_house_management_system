@@ -15,6 +15,8 @@ using Backend_Boarding_house_management_system.DTOs.Appointment.Requests;
 using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
+using Backend_Boarding_house_management_system.DTOs.Contract.Requests;
+using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -61,6 +63,12 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<Appointment, AppointmentResponse>();
             CreateMap<CreateAppointmentRequest, Appointment>();
             CreateMap<UpdateAppointmentRequest, Appointment>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Contract mappings
+            CreateMap<Contract, ContractResponse>();
+            CreateMap<CreateContractRequest, Contract>();
+            CreateMap<UpdateContractRequest, Contract>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
