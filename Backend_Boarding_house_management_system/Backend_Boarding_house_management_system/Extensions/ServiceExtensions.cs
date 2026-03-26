@@ -41,6 +41,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<INotificationService, NotificationService>();
+
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
         }
     }
 }
