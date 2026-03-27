@@ -5,6 +5,9 @@ using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -29,15 +32,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<RoomAmenityResponse>(entity);
         }
 
-        public async Task<RoomAmenityListResponse> GetByFilterAsync(GetRoomAmenitiesByFilterRequest request)
+        public async Task<RoomAmenityListResponse> GetByFilterAsync(
+            EntityFilter<RoomAmenity> filter,
+            EntitySort<RoomAmenity> sort,
+            EntityPage page)
         {
-            var paged = await _roomAmenityRepository.GetByFilterAsync(request);
+            var (items, totalCount) = await _roomAmenityRepository.GetByFilterAsync(filter, sort, page);
             var response = new RoomAmenityListResponse
             {
-                Items = _mapper.Map<List<RoomAmenityResponse>>(paged.Items),
-                TotalCount = paged.TotalCount,
-                PageNumber = paged.PageNumber,
-                PageSize = paged.PageSize
+                Items = _mapper.Map<List<RoomAmenityResponse>>(items),
+                TotalCount = totalCount,
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
             return response;
         }

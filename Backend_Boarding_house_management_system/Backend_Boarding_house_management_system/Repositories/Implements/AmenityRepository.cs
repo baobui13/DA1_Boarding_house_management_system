@@ -1,12 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
-using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
-using Backend_Boarding_house_management_system.DTOs.Base;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
@@ -28,18 +26,20 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.Amenities.ToListAsync();
         }
 
-        public async Task<PagedResponse<Amenity>> GetByFilterAsync(GetAmenitiesByFilterRequest request)
+        public async Task<(IEnumerable<Amenity>, int)> GetByFilterAsync(
+            EntityFilter<Amenity> filter,
+            EntitySort<Amenity> sort,
+            EntityPage page)
         {
-            var query = _context.Amenities.AsQueryable();
-            if (!string.IsNullOrEmpty(request.Name))
-            {
-                query = query.Where(a => a.Name.Contains(request.Name));
-            }
-            var total = await query.CountAsync();
-            var items = await query.Skip((request.PageNumber - 1) * request.PageSize)
-                                   .Take(request.PageSize)
-                                   .ToListAsync();
-            return new PagedResponse<Amenity>(items, total, request.PageNumber, request.PageSize);
+            var query = _context.Amenities.AsNoTracking();
+
+            query = query.Where(filter);
+            query = query.OrderBy(sort);
+
+            var totalCount = await query.CountAsync();
+            var items = await query.Page(page).ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task AddAsync(Amenity amenity)

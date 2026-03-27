@@ -5,6 +5,9 @@ using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -31,17 +34,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<AreaResponse>(area);
         }
 
-        public async Task<AreaListResponse> GetAreasByFilterAsync(GetAreasByFilterRequest request)
+        public async Task<AreaListResponse> GetAreasByFilterAsync(
+            EntityFilter<Area> filter,
+            EntitySort<Area> sort,
+            EntityPage page)
         {
-            var (areas, totalCount) = await _areaRepository.GetAreasByFilterAsync(
-                request.Name, request.Address, request.LandlordId, request.CreatedAfter, request.CreatedBefore,
-                request.SortBy ?? "CreatedAt", request.IsDescending, request.PageNumber, request.PageSize);
+            var (areas, totalCount) = await _areaRepository.GetAreasByFilterAsync(filter, sort, page);
             return new AreaListResponse
             {
                 Items = _mapper.Map<List<AreaResponse>>(areas),
                 TotalCount = totalCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
         }
 

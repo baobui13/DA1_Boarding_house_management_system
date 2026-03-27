@@ -11,6 +11,26 @@ using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Responses;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
+using Backend_Boarding_house_management_system.DTOs.Appointment.Requests;
+using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
+using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
+using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
+using Backend_Boarding_house_management_system.DTOs.Contract.Requests;
+using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
+using Backend_Boarding_house_management_system.DTOs.Invoice.Requests;
+using Backend_Boarding_house_management_system.DTOs.Invoice.Responses;
+using Backend_Boarding_house_management_system.DTOs.Message.Requests;
+using Backend_Boarding_house_management_system.DTOs.Message.Responses;
+using Backend_Boarding_house_management_system.DTOs.Notification.Requests;
+using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
+using Backend_Boarding_house_management_system.DTOs.Payment.Requests;
+using Backend_Boarding_house_management_system.DTOs.Payment.Responses;
+using Backend_Boarding_house_management_system.DTOs.TenantDocument.Requests;
+using Backend_Boarding_house_management_system.DTOs.TenantDocument.Responses;
+using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
+using Backend_Boarding_house_management_system.DTOs.SearchHistory.Responses;
+using Backend_Boarding_house_management_system.DTOs.ViewHistory.Requests;
+using Backend_Boarding_house_management_system.DTOs.ViewHistory.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -19,6 +39,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
     {
         public MappingProfile()
         {
+            // Auth mappings
+            CreateMap<User, AuthResponse>();
+            CreateMap<RegisterRequest, User>();
+
             // User mappings
             CreateMap<User, UserResponse>();
             CreateMap<UpdateUserRequest, User>();
@@ -48,6 +72,52 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<CreateRoomAmenityRequest, RoomAmenity>();
             CreateMap<UpdateRoomAmenityRequest, RoomAmenity>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Appointment mappings
+            CreateMap<Appointment, AppointmentResponse>();
+            CreateMap<CreateAppointmentRequest, Appointment>();
+            CreateMap<UpdateAppointmentRequest, Appointment>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Contract mappings
+            CreateMap<Contract, ContractResponse>();
+            CreateMap<CreateContractRequest, Contract>();
+            CreateMap<UpdateContractRequest, Contract>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Invoice mappings
+            CreateMap<Invoice, InvoiceResponse>();
+            CreateMap<CreateInvoiceRequest, Invoice>();
+            CreateMap<UpdateInvoiceRequest, Invoice>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Message mappings
+            CreateMap<Message, MessageResponse>();
+            CreateMap<CreateMessageRequest, Message>();
+            CreateMap<UpdateMessageRequest, Message>();
+
+            // Notification mappings
+            CreateMap<Notification, NotificationResponse>();
+            CreateMap<CreateNotificationRequest, Notification>();
+            CreateMap<UpdateNotificationRequest, Notification>();
+
+            // Payment mappings
+            CreateMap<Payment, PaymentResponse>();
+            CreateMap<CreatePaymentRequest, Payment>();
+
+            // TenantDocument mappings
+            CreateMap<TenantDocument, TenantDocumentResponse>();
+            CreateMap<CreateTenantDocumentRequest, TenantDocument>();
+            CreateMap<UpdateTenantDocumentRequest, TenantDocument>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // SearchHistory mappings
+            CreateMap<SearchHistory, SearchHistoryResponse>();
+            CreateMap<CreateSearchHistoryRequest, SearchHistory>();
+
+            // ViewHistory mappings
+            CreateMap<ViewHistory, ViewHistoryResponse>();
+            CreateMap<CreateViewHistoryRequest, ViewHistory>();
         }
     }
 }

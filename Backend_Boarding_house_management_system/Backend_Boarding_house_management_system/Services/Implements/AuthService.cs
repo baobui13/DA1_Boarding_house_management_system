@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Requests;
 using Backend_Boarding_house_management_system.DTOs.Authentication.Responses;
+using AutoMapper;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -20,28 +21,23 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, AppDbContext context)
+        public AuthService(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration, AppDbContext context, IMapper mapper)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _context = context;
+            _mapper = mapper;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest dto)
         {
-            var user = new User
-            {
-                UserName = dto.Email,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                PhoneNumber = dto.PhoneNumber,
-                Address = dto.Address,
-                Role = dto.Role,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            };
+            var user = _mapper.Map<User>(dto);
+            user.UserName = dto.Email;
+            user.CreatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 
@@ -53,12 +49,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             await _userManager.AddToRoleAsync(user, dto.Role);
 
-            return new AuthResponse
-            {
-                Email = user.Email,
-                FullName = user.FullName,
-                Role = user.Role
-            };
+            return _mapper.Map<AuthResponse>(user);
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest dto)
@@ -188,16 +179,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             await _context.SaveChangesAsync();
 
-            return new AuthResponse
-            {
-                Token = newJwtToken,
-                RefreshToken = newRefreshToken,
-                RefreshTokenExpiration = DateTime.UtcNow.AddDays(30),
-                Email = user.Email!,
-                FullName = user.FullName,
-                Role = user.Role,
-                AvatarUrl = user.AvatarUrl
-            };
+            var response = _mapper.Map<AuthResponse>(user);
+            response.Token = newJwtToken;
+            response.RefreshToken = newRefreshToken;
+            response.RefreshTokenExpiration = DateTime.UtcNow.AddDays(30);
+
+            return response;
         }
 
         public async Task<bool> LogoutAsync(string userId)

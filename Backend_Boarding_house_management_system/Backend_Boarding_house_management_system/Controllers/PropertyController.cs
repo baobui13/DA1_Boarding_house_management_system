@@ -3,6 +3,10 @@ using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -27,9 +31,12 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [AllowAnonymous]
         [HttpGet("GetPropertiesByFilter")]
-        public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter([FromQuery] GetPropertiesByFilterRequest request)
+        public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter(
+            [FromQuery] EntityFilter<Property> filter,
+            [FromQuery] EntitySort<Property> sort,
+            [FromQuery] EntityPage page)
         {
-            var properties = await _propertyService.GetPropertiesByFilterAsync(request);
+            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
             return Ok(properties);
         }
 

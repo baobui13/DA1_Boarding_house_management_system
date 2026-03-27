@@ -3,6 +3,10 @@ using Backend_Boarding_house_management_system.DTOs.Area.Responses;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -27,9 +31,12 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [AllowAnonymous]
         [HttpGet("GetAreasByFilter")]
-        public async Task<ActionResult<AreaListResponse>> GetAreasByFilter([FromQuery] GetAreasByFilterRequest request)
+        public async Task<ActionResult<AreaListResponse>> GetAreasByFilter(
+            [FromQuery] EntityFilter<Area> filter,
+            [FromQuery] EntitySort<Area> sort,
+            [FromQuery] EntityPage page)
         {
-            var areas = await _areaService.GetAreasByFilterAsync(request);
+            var areas = await _areaService.GetAreasByFilterAsync(filter, sort, page);
             return Ok(areas);
         }
 

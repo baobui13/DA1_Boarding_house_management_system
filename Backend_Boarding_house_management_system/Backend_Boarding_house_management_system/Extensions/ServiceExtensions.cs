@@ -26,6 +26,33 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IRoomAmenityRepository, RoomAmenityRepository>();
             services.AddScoped<IRoomAmenityService, RoomAmenityService>();
+
+            services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+            services.AddScoped<IAppointmentService, AppointmentService>();
+
+            services.AddScoped<IContractRepository, ContractRepository>();
+            services.AddScoped<IContractService, ContractService>();
+
+            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+            services.AddScoped<IInvoiceService, InvoiceService>();
+
+            services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddScoped<IMessageService, MessageService>();
+
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
+
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
+
+            services.AddScoped<ITenantDocumentRepository, TenantDocumentRepository>();
+            services.AddScoped<ITenantDocumentService, TenantDocumentService>();
+
+            services.AddScoped<ISearchHistoryRepository, SearchHistoryRepository>();
+            services.AddScoped<ISearchHistoryService, SearchHistoryService>();
+
+            services.AddScoped<IViewHistoryRepository, ViewHistoryRepository>();
+            services.AddScoped<IViewHistoryService, ViewHistoryService>();
         }
     }
 }

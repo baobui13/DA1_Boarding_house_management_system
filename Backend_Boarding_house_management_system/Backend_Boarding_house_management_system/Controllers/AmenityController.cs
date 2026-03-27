@@ -3,6 +3,10 @@ using Backend_Boarding_house_management_system.DTOs.Amenity.Requests;
 using Backend_Boarding_house_management_system.DTOs.Amenity.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -19,9 +23,12 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public async Task<ActionResult<AmenityPagedResponse>> Get([FromQuery] GetAmenitiesByFilterRequest request)
+        public async Task<ActionResult<AmenityPagedResponse>> Get(
+            [FromQuery] EntityFilter<Amenity> filter,
+            [FromQuery] EntitySort<Amenity> sort,
+            [FromQuery] EntityPage page)
         {
-            var result = await _amenityService.GetByFilterAsync(request);
+            var result = await _amenityService.GetByFilterAsync(filter, sort, page);
             return Ok(result);
         }
 

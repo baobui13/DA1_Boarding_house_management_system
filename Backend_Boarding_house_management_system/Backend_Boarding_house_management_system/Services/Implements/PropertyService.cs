@@ -5,6 +5,9 @@ using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using AutoMapper;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -26,17 +29,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PropertyResponse>(property);
         }
 
-        public async Task<PropertyListResponse> GetPropertiesByFilterAsync(GetPropertiesByFilterRequest request)
+        public async Task<PropertyListResponse> GetPropertiesByFilterAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page)
         {
-            var (properties, totalCount) = await _propertyRepository.GetPropertiesByFilterAsync(
-                request.LandlordId, request.AreaId, request.PropertyName, request.Address, request.MinPrice, request.MaxPrice, request.Status, request.MinSize, request.MaxSize, request.CreatedAfter, request.CreatedBefore,
-                request.SortBy ?? "CreatedAt", request.IsDescending, request.PageNumber, request.PageSize);
+            var (properties, totalCount) = await _propertyRepository.GetPropertiesByFilterAsync(filter, sort, page);
             return new PropertyListResponse
             {
                 Items = _mapper.Map<List<PropertyResponse>>(properties),
                 TotalCount = totalCount,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize
+                PageNumber = (int)(page.PageNumber ?? 1),
+                PageSize = (int)(page.PageSize ?? 10)
             };
         }
 

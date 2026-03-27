@@ -1,9 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
 using Backend_Boarding_house_management_system.Data;
-using Backend_Boarding_house_management_system.Exceptions;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
@@ -20,29 +21,18 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.Areas.FindAsync(id);
         }
 
-
-        public async Task<(IEnumerable<Area>, int)> GetAreasByFilterAsync(string? name, string? address, string? landlordId, DateTime? createdAfter, DateTime? createdBefore, string sortBy, bool isDescending, int pageNumber, int pageSize)
+        public async Task<(IEnumerable<Area>, int)> GetAreasByFilterAsync(
+            EntityFilter<Area> filter,
+            EntitySort<Area> sort,
+            EntityPage page)
         {
-            var query = _context.Areas.AsNoTracking().AsQueryable();
-            if (!string.IsNullOrEmpty(name))
-                query = query.Where(a => a.Name.Contains(name));
+            var query = _context.Areas.AsNoTracking();
 
-            if (!string.IsNullOrEmpty(address))
-                query = query.Where(a => a.Address.Contains(address));
-
-            if (!string.IsNullOrEmpty(landlordId))
-                query = query.Where(a => a.LandlordId == landlordId);
-
-            if (createdAfter.HasValue)
-                query = query.Where(a => a.CreatedAt >= createdAfter.Value);
-
-            if (createdBefore.HasValue)
-                query = query.Where(a => a.CreatedAt <= createdBefore.Value);
-
-            query = query.OrderBy($"{sortBy} {(isDescending ? "descending" : "ascending")}");
+            query = query.Where(filter);
+            query = query.OrderBy(sort);
 
             var totalCount = await query.CountAsync();
-            var areas = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+            var areas = await query.Page(page).ToListAsync();
 
             return (areas, totalCount);
         }

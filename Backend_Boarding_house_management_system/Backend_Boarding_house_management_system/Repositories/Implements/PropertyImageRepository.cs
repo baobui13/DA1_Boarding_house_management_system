@@ -1,10 +1,10 @@
-﻿using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
-using Google;
-using System.Threading.Tasks;
 using Backend_Boarding_house_management_system.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
+using Plainquire.Filter;
+using Plainquire.Sort;
+using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
@@ -22,21 +22,20 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.PropertyImages.FindAsync(id);
         }
 
-        public async Task<(IEnumerable<PropertyImage>, int)> GetPropertyImagesByFilterAsync(string? propertyId, bool? isPrimary, string sortBy, bool isDescending, int pageNumber, int pageSize)
+        public async Task<(IEnumerable<PropertyImage>, int)> GetPropertyImagesByFilterAsync(
+            EntityFilter<PropertyImage> filter,
+            EntitySort<PropertyImage> sort,
+            EntityPage page)
         {
-            var query = _context.PropertyImages.AsNoTracking().AsQueryable();
+            var query = _context.PropertyImages.AsNoTracking();
 
-            if (!string.IsNullOrEmpty(propertyId))
-                query = query.Where(i => i.PropertyId == propertyId);
-
-            if (isPrimary.HasValue)
-                query = query.Where(i => i.IsPrimary == isPrimary.Value);
+            query = query.Where(filter);
+            query = query.OrderBy(sort);
 
             var totalCount = await query.CountAsync();
-            query = query.OrderBy(sortBy + (isDescending ? " descending" : ""));
-            query = query.Skip((pageNumber - 1) * pageSize).Take(pageSize);
+            var images = await query.Page(page).ToListAsync();
 
-            return (await query.ToListAsync(), totalCount);
+            return (images, totalCount);
         }
 
         public async Task<PropertyImage> CreatePropertyImageAsync(PropertyImage propertyImage)
