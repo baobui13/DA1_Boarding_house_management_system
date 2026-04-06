@@ -1,20 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface INotificationRepository
+    public interface INotificationRepository : IRepository<Notification, string>
     {
-        Task<Notification?> GetByIdAsync(string id);
-        Task<(IEnumerable<Notification>, int)> GetByFilterAsync(
-            EntityFilter<Notification> filter,
-            EntitySort<Notification> sort,
-            EntityPage page);
-        Task AddAsync(Notification entity);
-        Task UpdateAsync(Notification entity);
-        Task DeleteAsync(string id);
-        Task<bool> ExistsAsync(string id);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
     }
 }

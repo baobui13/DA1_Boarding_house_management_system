@@ -1,78 +1,25 @@
-using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Data;
+using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Repositories.Implements.Base;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
-    public class RoomAmenityRepository : IRoomAmenityRepository
+    public class RoomAmenityRepository : Repository<RoomAmenity, string>, IRoomAmenityRepository
     {
-        private readonly AppDbContext _context;
-        public RoomAmenityRepository(AppDbContext context)
-        {
-            _context = context;
-        }
+        public RoomAmenityRepository(AppDbContext context) : base(context) { }
 
-        public async Task<RoomAmenity?> GetByIdAsync(string id)
-        {
-            return await _context.RoomAmenities
-                .Include(r => r.Amenity)
+        protected override IQueryable<RoomAmenity> GetQueryWithIncludes()
+            => _dbSet
                 .Include(r => r.Property)
+                .Include(r => r.Amenity);
+
+        public override async Task<RoomAmenity?> GetByIdAsync(string id)
+            => await GetQueryWithIncludes()
                 .FirstOrDefaultAsync(r => r.Id == id);
-        }
 
-        public async Task<(IEnumerable<RoomAmenity>, int)> GetByFilterAsync(
-            EntityFilter<RoomAmenity> filter,
-            EntitySort<RoomAmenity> sort,
-            EntityPage page)
-        {
-            var query = _context.RoomAmenities
-                .Include(r => r.Amenity)
-                .Include(r => r.Property)
-                .AsNoTracking();
-
-            query = query.Where(filter);
-            query = query.OrderBy(sort);
-
-            var totalCount = await query.CountAsync();
-            var items = await query.Page(page).ToListAsync();
-
-            return (items, totalCount);
-        }
-
-        public async Task AddAsync(RoomAmenity entity)
-        {
-            _context.RoomAmenities.Add(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(RoomAmenity entity)
-        {
-            _context.RoomAmenities.Update(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(string id)
-        {
-            var entity = await _context.RoomAmenities.FindAsync(id);
-            if (entity != null)
-            {
-                _context.RoomAmenities.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task<bool> ExistsAsync(string id)
-        {
-            return await _context.RoomAmenities.AnyAsync(r => r.Id == id);
-        }
-
-        public async Task<bool> ExistsForRoomAndAmenityAsync(string PropertyId, string amenityId)
-        {
-            return await _context.RoomAmenities.AnyAsync(r => r.PropertyId == PropertyId && r.AmenityId == amenityId);
-        }
+        public async Task<bool> ExistsForPropertyAndAmenityAsync(string propertyId, string amenityId)
+            => await _dbSet.AnyAsync(r => r.PropertyId == propertyId && r.AmenityId == amenityId);
     }
 }

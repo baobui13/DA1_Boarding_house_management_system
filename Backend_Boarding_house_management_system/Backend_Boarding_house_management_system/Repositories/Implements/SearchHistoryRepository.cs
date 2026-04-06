@@ -1,65 +1,20 @@
-using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Data;
+using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Repositories.Implements.Base;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Implements
 {
-    public class SearchHistoryRepository : ISearchHistoryRepository
+    public class SearchHistoryRepository : Repository<SearchHistory, string>, ISearchHistoryRepository
     {
-        private readonly AppDbContext _context;
-        public SearchHistoryRepository(AppDbContext context)
-        {
-            _context = context;
-        }
+        public SearchHistoryRepository(AppDbContext context) : base(context) { }
 
-        public async Task<SearchHistory?> GetByIdAsync(string id)
-        {
-            return await _context.SearchHistories
-                .Include(sh => sh.User)
+        protected override IQueryable<SearchHistory> GetQueryWithIncludes()
+            => _dbSet.Include(sh => sh.User);
+
+        public override async Task<SearchHistory?> GetByIdAsync(string id)
+            => await GetQueryWithIncludes()
                 .FirstOrDefaultAsync(sh => sh.Id == id);
-        }
-
-        public async Task<(IEnumerable<SearchHistory>, int)> GetByFilterAsync(
-            EntityFilter<SearchHistory> filter,
-            EntitySort<SearchHistory> sort,
-            EntityPage page)
-        {
-            var query = _context.SearchHistories
-                .Include(sh => sh.User)
-                .AsNoTracking();
-
-            query = query.Where(filter);
-            query = query.OrderBy(sort);
-
-            var totalCount = await query.CountAsync();
-            var items = await query.Page(page).ToListAsync();
-
-            return (items, totalCount);
-        }
-
-        public async Task AddAsync(SearchHistory entity)
-        {
-            _context.SearchHistories.Add(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(string id)
-        {
-            var entity = await _context.SearchHistories.FindAsync(id);
-            if (entity != null)
-            {
-                _context.SearchHistories.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        public async Task<bool> ExistsAsync(string id)
-        {
-            return await _context.SearchHistories.AnyAsync(sh => sh.Id == id);
-        }
     }
 }

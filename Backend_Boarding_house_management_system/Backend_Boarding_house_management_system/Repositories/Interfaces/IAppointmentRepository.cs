@@ -1,19 +1,14 @@
 using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface IAppointmentRepository
+    public interface IAppointmentRepository : IRepository<Appointment, string>
     {
-        Task<Appointment?> GetAppointmentByIdAsync(string id);
-        Task<(IEnumerable<Appointment>, int)> GetAppointmentsByFilterAsync(
-            EntityFilter<Appointment> filter,
-            EntitySort<Appointment> sort,
-            EntityPage page);
-        Task<Appointment> CreateAppointmentAsync(Appointment appointment);
-        Task<bool> UpdateAppointmentAsync(Appointment appointment);
-        Task<bool> DeleteAppointmentAsync(string id);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
+        // Thêm methods đặc thù của Appointment tại đây nếu cần.
     }
 }

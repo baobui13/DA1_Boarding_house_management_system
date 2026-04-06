@@ -1,20 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface ITenantDocumentRepository
+    public interface ITenantDocumentRepository : IRepository<TenantDocument, string>
     {
-        Task<TenantDocument?> GetByIdAsync(string id);
-        Task<(IEnumerable<TenantDocument>, int)> GetByFilterAsync(
-            EntityFilter<TenantDocument> filter,
-            EntitySort<TenantDocument> sort,
-            EntityPage page);
-        Task AddAsync(TenantDocument entity);
-        Task UpdateAsync(TenantDocument entity);
-        Task DeleteAsync(string id);
-        Task<bool> ExistsAsync(string id);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
     }
 }
