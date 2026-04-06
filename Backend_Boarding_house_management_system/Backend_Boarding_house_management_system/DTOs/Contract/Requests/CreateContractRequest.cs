@@ -5,7 +5,7 @@ namespace Backend_Boarding_house_management_system.DTOs.Contract.Requests
     public class CreateContractRequest
     {
         [Required]
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
 
         [Required]
         public string TenantId { get; set; } = null!;

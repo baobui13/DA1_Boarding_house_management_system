@@ -6,7 +6,7 @@ namespace Backend_Boarding_house_management_system.DTOs.Message.Requests
     {
         public string? SenderId { get; set; }
         public string? ReceiverId { get; set; }
-        public string? RoomId { get; set; }
+        public string? PropertyId { get; set; }
         public string? ContractId { get; set; }
         public bool? IsRead { get; set; }
         public DateTime? TimestampFrom { get; set; }

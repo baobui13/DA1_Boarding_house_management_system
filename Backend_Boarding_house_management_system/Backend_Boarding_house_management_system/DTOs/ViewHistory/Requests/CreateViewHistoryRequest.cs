@@ -8,6 +8,6 @@ namespace Backend_Boarding_house_management_system.DTOs.ViewHistory.Requests
         public string UserId { get; set; } = null!;
 
         [Required]
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
     }
 }

@@ -6,7 +6,7 @@ namespace Backend_Boarding_house_management_system.DTOs.ViewHistory.Responses
     {
         public string Id { get; set; } = null!;
         public string UserId { get; set; } = null!;
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
         public DateTime Timestamp { get; set; }
     }
 

@@ -5,7 +5,7 @@ namespace Backend_Boarding_house_management_system.DTOs.Contract.Responses
     public class ContractResponse
     {
         public string Id { get; set; } = null!;
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
         public string TenantId { get; set; } = null!;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
