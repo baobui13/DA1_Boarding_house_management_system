@@ -15,6 +15,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     {
         private readonly IPropertyRepository _propertyRepository;
         private readonly IMapper _mapper;
+
         public PropertyService(IPropertyRepository propertyRepository, IMapper mapper)
         {
             _propertyRepository = propertyRepository;
@@ -23,9 +24,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
         {
-            var property = await _propertyRepository.GetPropertyByIdAsync(request.Id);
+            var property = await _propertyRepository.GetByIdAsync(request.Id);
             if (property == null)
-                throw new NotFoundException("Không tìm thấy bất động sản.");
+                throw new NotFoundException("Khong tim thay bat dong san.");
+
             return _mapper.Map<PropertyResponse>(property);
         }
 
@@ -34,7 +36,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<Property> sort,
             EntityPage page)
         {
-            var (properties, totalCount) = await _propertyRepository.GetPropertiesByFilterAsync(filter, sort, page);
+            var (properties, totalCount) = await _propertyRepository.GetByFilterAsync(filter, sort, page);
             return new PropertyListResponse
             {
                 Items = _mapper.Map<List<PropertyResponse>>(properties),
@@ -49,29 +51,28 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = _mapper.Map<Property>(request);
             property.Id = Guid.NewGuid().ToString();
             property.CreatedAt = DateTime.UtcNow;
-            var created = await _propertyRepository.CreatePropertyAsync(property);
-            if (created == null)
-                throw new BadRequestException("Tạo bất động sản thất bại.");
-            return _mapper.Map<PropertyResponse>(created);
+
+            await _propertyRepository.AddAsync(property);
+            return _mapper.Map<PropertyResponse>(property);
         }
 
         public async Task<bool> UpdatePropertyAsync(UpdatePropertyRequest request)
         {
-            var property = await _propertyRepository.GetPropertyByIdAsync(request.Id);
+            var property = await _propertyRepository.GetByIdAsync(request.Id);
             if (property == null)
-                throw new NotFoundException($"Không tìm thấy bất động sản với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
+
             _mapper.Map(request, property);
-            var isSuccess = await _propertyRepository.UpdatePropertyAsync(property);
-            if (!isSuccess)
-                throw new BadRequestException("Cập nhật bất động sản thất bại.");
+            await _propertyRepository.UpdateAsync(property);
             return true;
         }
 
         public async Task<bool> DeletePropertyAsync(DeletePropertyRequest request)
         {
-            var isSuccess = await _propertyRepository.DeletePropertyAsync(request.Id);
-            if (!isSuccess)
-                throw new NotFoundException($"Không tìm thấy hoặc xóa bất động sản thất bại với Id '{request.Id}'.");
+            if (!await _propertyRepository.ExistsAsync(request.Id))
+                throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
+
+            await _propertyRepository.DeleteAsync(request.Id);
             return true;
         }
     }

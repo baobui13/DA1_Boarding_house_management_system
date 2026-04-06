@@ -1,11 +1,9 @@
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Requests;
 using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
+using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
 using Plainquire.Filter;
 using Plainquire.Sort;
@@ -18,6 +16,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IPropertyImageRepository _propertyImageRepository;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
+
         public PropertyImageService(IPropertyImageRepository propertyImageRepository, IMapper mapper, IPhotoService photoService)
         {
             _propertyImageRepository = propertyImageRepository;
@@ -27,9 +26,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyImageResponse> GetPropertyImageByIdAsync(GetPropertyImageByIdRequest request)
         {
-            var image = await _propertyImageRepository.GetPropertyImageByIdAsync(request.Id);
+            var image = await _propertyImageRepository.GetByIdAsync(request.Id);
             if (image == null)
-                throw new Exception("Không tìm thấy hình ảnh.");
+                throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
+
             return _mapper.Map<PropertyImageResponse>(image);
         }
 
@@ -38,7 +38,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<PropertyImage> sort,
             EntityPage page)
         {
-            var (images, totalCount) = await _propertyImageRepository.GetPropertyImagesByFilterAsync(filter, sort, page);
+            var (images, totalCount) = await _propertyImageRepository.GetByFilterAsync(filter, sort, page);
             return new PropertyImageListResponse
             {
                 Items = _mapper.Map<List<PropertyImageResponse>>(images),
@@ -50,10 +50,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyImageResponse> CreatePropertyImageAsync(CreatePropertyImageRequest request)
         {
-            // Upload file lên Cloudinary
             var uploadResult = await _photoService.AddPhotoAsync(request.File);
             if (uploadResult.Error != null)
-                throw new Exception("Lỗi upload ảnh lên Cloudinary: " + uploadResult.Error.Message);
+                throw new BadRequestException("Upload anh len Cloudinary that bai: " + uploadResult.Error.Message);
 
             var entity = new PropertyImage
             {
@@ -64,22 +63,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 IsPrimary = request.IsPrimary,
                 CreatedAt = DateTime.UtcNow
             };
-            var result = await _propertyImageRepository.CreatePropertyImageAsync(entity);
-            return _mapper.Map<PropertyImageResponse>(result);
+
+            await _propertyImageRepository.AddAsync(entity);
+            var saved = await _propertyImageRepository.GetByIdAsync(entity.Id);
+            return _mapper.Map<PropertyImageResponse>(saved ?? entity);
         }
 
         public async Task<bool> UpdatePropertyImageAsync(UpdatePropertyImageRequest request)
         {
-            var image = await _propertyImageRepository.GetPropertyImageByIdAsync(request.Id);
-            if (image == null) return false;
+            var image = await _propertyImageRepository.GetByIdAsync(request.Id);
+            if (image == null)
+                throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
+
             if (request.IsPrimary.HasValue)
                 image.IsPrimary = request.IsPrimary.Value;
-            return await _propertyImageRepository.UpdatePropertyImageAsync(image);
+
+            await _propertyImageRepository.UpdateAsync(image);
+            return true;
         }
 
         public async Task<bool> DeletePropertyImageAsync(DeletePropertyImageRequest request)
         {
-            return await _propertyImageRepository.DeletePropertyImageAsync(request.Id);
+            if (!await _propertyImageRepository.ExistsAsync(request.Id))
+                throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
+
+            await _propertyImageRepository.DeleteAsync(request.Id);
+            return true;
         }
     }
 }
