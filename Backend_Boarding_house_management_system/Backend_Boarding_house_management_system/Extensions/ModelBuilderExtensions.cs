@@ -86,9 +86,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             // Property → Contract
             modelBuilder.Entity<Contract>()
-                .HasOne(c => c.Room)
+                .HasOne(c => c.Property)
                 .WithMany(p => p.Contracts)
-                .HasForeignKey(c => c.RoomId)
+                .HasForeignKey(c => c.PropertyId)
                 .OnDelete(DeleteBehavior.Restrict);     // Không xóa phòng nếu đang có hợp đồng
 
             // Contract → Invoice
@@ -100,9 +100,9 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             // Property → RoomAmenity (junction)
             modelBuilder.Entity<RoomAmenity>()
-                .HasOne(ra => ra.Room)
+                .HasOne(ra => ra.Property)
                 .WithMany(p => p.RoomAmenities)
-                .HasForeignKey(ra => ra.RoomId)
+                .HasForeignKey(ra => ra.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<RoomAmenity>()
