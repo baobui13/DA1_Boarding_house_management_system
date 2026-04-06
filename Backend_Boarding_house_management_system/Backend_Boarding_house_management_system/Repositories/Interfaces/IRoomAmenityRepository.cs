@@ -16,6 +16,6 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
         Task UpdateAsync(RoomAmenity entity);
         Task DeleteAsync(string id);
         Task<bool> ExistsAsync(string id);
-        Task<bool> ExistsForRoomAndAmenityAsync(string roomId, string amenityId);
+        Task<bool> ExistsForRoomAndAmenityAsync(string PropertyId, string amenityId);
     }
 }

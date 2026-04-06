@@ -20,7 +20,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             return await _context.ViewHistories
                 .Include(vh => vh.User)
-                .Include(vh => vh.Room)
+                .Include(vh => vh.Property)
                 .FirstOrDefaultAsync(vh => vh.Id == id);
         }
 
@@ -31,7 +31,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             var query = _context.ViewHistories
                 .Include(vh => vh.User)
-                .Include(vh => vh.Room)
+                .Include(vh => vh.Property)
                 .AsNoTracking();
 
             query = query.Where(filter);

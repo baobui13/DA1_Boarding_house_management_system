@@ -20,7 +20,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             return await _context.RoomAmenities
                 .Include(r => r.Amenity)
-                .Include(r => r.Room)
+                .Include(r => r.Property)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
@@ -31,7 +31,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         {
             var query = _context.RoomAmenities
                 .Include(r => r.Amenity)
-                .Include(r => r.Room)
+                .Include(r => r.Property)
                 .AsNoTracking();
 
             query = query.Where(filter);
@@ -70,9 +70,9 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.RoomAmenities.AnyAsync(r => r.Id == id);
         }
 
-        public async Task<bool> ExistsForRoomAndAmenityAsync(string roomId, string amenityId)
+        public async Task<bool> ExistsForRoomAndAmenityAsync(string PropertyId, string amenityId)
         {
-            return await _context.RoomAmenities.AnyAsync(r => r.RoomId == roomId && r.AmenityId == amenityId);
+            return await _context.RoomAmenities.AnyAsync(r => r.PropertyId == PropertyId && r.AmenityId == amenityId);
         }
     }
 }

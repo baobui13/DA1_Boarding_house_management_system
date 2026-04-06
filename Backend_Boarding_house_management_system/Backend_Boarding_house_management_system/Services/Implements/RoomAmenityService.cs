@@ -50,7 +50,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<RoomAmenityResponse> CreateAsync(CreateRoomAmenityRequest request)
         {
-            if (await _roomAmenityRepository.ExistsForRoomAndAmenityAsync(request.RoomId, request.AmenityId))
+            if (await _roomAmenityRepository.ExistsForRoomAndAmenityAsync(request.PropertyId, request.AmenityId))
             {
                 throw new ConflictException($"Tiện ích này đã được thêm vào phòng.");
             }

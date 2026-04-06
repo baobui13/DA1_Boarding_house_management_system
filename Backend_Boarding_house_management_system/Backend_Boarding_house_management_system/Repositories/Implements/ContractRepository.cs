@@ -19,7 +19,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<Contract?> GetByIdAsync(string id)
         {
             return await _context.Contracts
-                .Include(c => c.Room)
+                .Include(c => c.Property)
                 .Include(c => c.Tenant)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
@@ -30,7 +30,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             EntityPage page)
         {
             var query = _context.Contracts
-                .Include(c => c.Room)
+                .Include(c => c.Property)
                 .Include(c => c.Tenant)
                 .AsNoTracking();
 

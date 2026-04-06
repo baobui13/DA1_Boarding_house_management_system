@@ -21,7 +21,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             return await _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
-                .Include(m => m.Room)
+                .Include(m => m.Property)
                 .Include(m => m.Contract)
                 .FirstOrDefaultAsync(m => m.Id == id);
         }
@@ -34,7 +34,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             var query = _context.Messages
                 .Include(m => m.Sender)
                 .Include(m => m.Receiver)
-                .Include(m => m.Room)
+                .Include(m => m.Property)
                 .Include(m => m.Contract)
                 .AsNoTracking();
 

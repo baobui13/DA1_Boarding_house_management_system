@@ -20,7 +20,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<Appointment?> GetAppointmentByIdAsync(string id)
         {
             return await _context.Appointments
-                .Include(a => a.Room)
+                .Include(a => a.Property)
                 .Include(a => a.User)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
@@ -31,7 +31,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             EntityPage page)
         {
             var query = _context.Appointments
-                .Include(a => a.Room)
+                .Include(a => a.Property)
                 .Include(a => a.User)
                 .AsNoTracking();
 
