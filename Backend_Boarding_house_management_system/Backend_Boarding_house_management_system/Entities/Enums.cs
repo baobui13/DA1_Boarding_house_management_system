@@ -1,4 +1,4 @@
-﻿namespace Backend_Boarding_house_management_system.Entities
+namespace Backend_Boarding_house_management_system.Entities
 {
     public enum UserRole
     {
@@ -14,7 +14,8 @@
         Rejected, 
         Available,
         Rented,
-        Unavailable
+        Repairing,
+        NearExpiry
     }
 
     public enum AmenityStatus
@@ -26,9 +27,12 @@
 
     public enum ContractStatus
     {
+        Draft,
         Active,
+        NearExpiry,
         Expired,
-        Terminated
+        Terminated,
+        Cancelled
     }
 
     public enum InvoiceStatus
@@ -59,7 +63,8 @@
         Appointment,
         Contract,
         Message,
-        System
+        System,
+        Rating
     }
 
     public enum DocumentType
@@ -67,5 +72,26 @@
         IDCard,
         ResidencePermit,
         Other
+    }
+    
+    public enum RatingAttitude
+    {
+        Positive,
+        Negative,
+        Neutral
+    }
+    
+    public enum ComplaintStatus
+    {
+        Pending,
+        Processing,
+        Resolved
+    }
+    
+    public enum ComplaintRelatedType
+    {
+        Invoice,
+        Contract,
+        Property
     }
 }

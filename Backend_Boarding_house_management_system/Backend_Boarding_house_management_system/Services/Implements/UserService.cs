@@ -4,7 +4,6 @@ using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using Plainquire.Filter;
 using Plainquire.Sort;
@@ -28,14 +27,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             User? user = null;
 
             if (!string.IsNullOrEmpty(request.Id))
-                user = await _userRepository.GetUserByIdAsync(request.Id);
+                user = await _userRepository.GetByIdAsync(request.Id);
             else if (!string.IsNullOrEmpty(request.Email))
-                user = await _userRepository.GetUserByEmailAsync(request.Email);
+                user = await _userRepository.GetByEmailAsync(request.Email);
             else
-                throw new BadRequestException("Phải cung cấp Id hoặc Email.");
+                throw new BadRequestException("Phai cung cap Id hoac Email.");
 
             if (user == null)
-                throw new NotFoundException("Không tìm thấy người dùng.");
+                throw new NotFoundException("Khong tim thay nguoi dung.");
 
             return _mapper.Map<UserResponse>(user);
         }
@@ -45,7 +44,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<User> sort,
             EntityPage page)
         {
-            var (users, totalCount) = await _userRepository.GetUsersByFilterAsync(filter, sort, page);
+            var (users, totalCount) = await _userRepository.GetByFilterAsync(filter, sort, page);
 
             return new UserListResponse
             {
@@ -58,55 +57,48 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<bool> UpdateUserAsync(UpdateUserRequest request)
         {
-            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
-                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
             _mapper.Map(request, user);
-
-            var isSuccess = await _userRepository.UpdateUserAsync(user);
-            if (!isSuccess)
-                throw new BadRequestException("Cập nhật thông tin thất bại do lỗi hệ thống.");
-
+            await _userRepository.UpdateAsync(user);
             return true;
         }
 
         public async Task<bool> UpdateUserAvatarAsync(UpdateUserAvatarRequest request)
         {
-            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
-                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
-            var isSuccess = await _userRepository.UpdateUserAvatarAsync(request.Id, request.AvatarUrl);
+            var isSuccess = await _userRepository.UpdateAvatarAsync(request.Id, request.AvatarUrl);
             if (!isSuccess)
-                throw new BadRequestException("Cập nhật ảnh đại diện thất bại.");
+                throw new BadRequestException("Cap nhat anh dai dien that bai.");
 
             return true;
         }
 
         public async Task<bool> BlockUserAsync(BlockUserRequest request)
         {
-            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
-                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
             var isSuccess = await _userRepository.BlockUserAsync(request.Id, request.IsBlocked);
             if (!isSuccess)
-                throw new BadRequestException("Khóa/Mở khóa người dùng thất bại.");
+                throw new BadRequestException("Khoa/mo khoa nguoi dung that bai.");
 
             return true;
         }
 
         public async Task<bool> DeleteUserAsync(DeleteUserRequest request)
         {
-            var user = await _userRepository.GetUserByIdAsync(request.Id);
+            var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
-                throw new NotFoundException($"Không tìm thấy người dùng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
-            var isSuccess = await _userRepository.DeleteUserAsync(request.Id);
-            if (!isSuccess)
-                throw new BadRequestException("Xóa người dùng thất bại.");
-
+            await _userRepository.DeleteAsync(request.Id);
             return true;
         }
     }

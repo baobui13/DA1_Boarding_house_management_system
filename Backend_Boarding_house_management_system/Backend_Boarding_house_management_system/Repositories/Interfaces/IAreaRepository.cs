@@ -1,19 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface IAreaRepository
+    public interface IAreaRepository : IRepository<Area, string>
     {
-        Task<Area?> GetAreaByIdAsync(string id);
-        Task<(IEnumerable<Area>, int)> GetAreasByFilterAsync(
-            EntityFilter<Area> filter,
-            EntitySort<Area> sort,
-            EntityPage page);
-        Task<bool> UpdateAreaAsync(Area area);
-        Task<bool> DeleteAreaAsync(string areaId);
-        Task<Area> CreateAreaAsync(Area area);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
     }
 }

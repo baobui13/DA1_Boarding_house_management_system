@@ -1,21 +1,11 @@
 using Backend_Boarding_house_management_system.Entities;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface IAmenityRepository
+    public interface IAmenityRepository : IRepository<Amenity, string>
     {
-        Task<Amenity?> GetByIdAsync(string id);
-        Task<List<Amenity>> GetAllAsync();
-        Task<(IEnumerable<Amenity>, int)> GetByFilterAsync(
-            EntityFilter<Amenity> filter,
-            EntitySort<Amenity> sort,
-            EntityPage page);
-        Task AddAsync(Amenity amenity);
-        Task UpdateAsync(Amenity amenity);
-        Task DeleteAsync(string id);
-        Task<bool> ExistsAsync(string id);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
+        // Thêm methods đặc thù của Amenity tại đây nếu cần.
     }
 }

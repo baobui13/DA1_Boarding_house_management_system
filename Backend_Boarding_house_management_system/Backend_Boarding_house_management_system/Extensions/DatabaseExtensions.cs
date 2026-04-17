@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.Data;
+using Backend_Boarding_house_management_system.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -39,6 +39,9 @@ namespace Backend_Boarding_house_management_system.Extensions
                     // MigrateAsync sẽ TỰ ĐỘNG kết nối. Nếu sai Pass/Port, nó sẽ ném ra lỗi chi tiết rớt xuống catch.
                     // Nếu kết nối thành công, nó sẽ tự động tạo bảng luôn. Gộp 2 việc làm 1!
                     await dbContext.Database.MigrateAsync();
+
+                    // Seed data
+                    await Backend_Boarding_house_management_system.Data.DatabaseSeeder.SeedDataAsync(dbContext);
 
                     logger.LogInformation("O [SUCCESS] Successfully connected to PostgreSQL Database (Supabase) and migrations applied.");
                 }

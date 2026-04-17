@@ -13,11 +13,15 @@ namespace Backend_Boarding_house_management_system.DTOs.Invoice.Requests
         [Required]
         public decimal RentAmount { get; set; }
 
-        public decimal? ElectricityUsage { get; set; }
+        public decimal? OldElectricityReading { get; set; }
+
+        public decimal? NewElectricityReading { get; set; }
 
         public decimal? ElectricityCost { get; set; }
 
-        public decimal? WaterUsage { get; set; }
+        public decimal? OldWaterReading { get; set; }
+
+        public decimal? NewWaterReading { get; set; }
 
         public decimal? WaterCost { get; set; }
 
@@ -33,6 +37,8 @@ namespace Backend_Boarding_house_management_system.DTOs.Invoice.Requests
         public string Status { get; set; } = "Pending";
 
         public string? InvoiceUrl { get; set; }
+
+        public string? ReceiptUrl { get; set; }
 
         [Required]
         public DateTime DueDate { get; set; }

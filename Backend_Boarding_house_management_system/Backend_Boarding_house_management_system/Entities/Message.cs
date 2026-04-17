@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -27,7 +27,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public bool IsRead { get; set; } = false;
 
         [StringLength(50)]
-        public string? RoomId { get; set; }
+        public string? PropertyId { get; set; }
 
         [StringLength(50)]
         public string? ContractId { get; set; }
@@ -38,8 +38,8 @@ namespace Backend_Boarding_house_management_system.Entities
         [ForeignKey(nameof(ReceiverId))]
         public User Receiver { get; set; } = null!;
 
-        [ForeignKey(nameof(RoomId))]
-        public Property? Room { get; set; }
+        [ForeignKey(nameof(PropertyId))]
+        public Property? Property { get; set; }
 
         [ForeignKey(nameof(ContractId))]
         public Contract? Contract { get; set; }

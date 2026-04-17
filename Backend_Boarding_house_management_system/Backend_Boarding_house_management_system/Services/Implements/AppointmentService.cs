@@ -24,9 +24,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AppointmentResponse> GetAppointmentByIdAsync(GetAppointmentByIdRequest request)
         {
-            var appointment = await _appointmentRepository.GetAppointmentByIdAsync(request.Id);
+            var appointment = await _appointmentRepository.GetByIdAsync(request.Id);
             if (appointment == null)
-                throw new NotFoundException($"Không tìm thấy cuộc hẹn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay cuoc hen voi Id '{request.Id}'.");
 
             return _mapper.Map<AppointmentResponse>(appointment);
         }
@@ -36,7 +36,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<Appointment> sort,
             EntityPage page)
         {
-            var (appointments, totalCount) = await _appointmentRepository.GetAppointmentsByFilterAsync(filter, sort, page);
+            var (appointments, totalCount) = await _appointmentRepository.GetByFilterAsync(filter, sort, page);
 
             return new AppointmentListResponse
             {
@@ -53,35 +53,31 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             appointment.Id = Guid.NewGuid().ToString();
             appointment.CreatedAt = DateTime.UtcNow;
 
-            var created = await _appointmentRepository.CreateAppointmentAsync(appointment);
-            if (created == null)
-                throw new BadRequestException("Tạo cuộc hẹn thất bại.");
+            await _appointmentRepository.AddAsync(appointment);
 
-            return _mapper.Map<AppointmentResponse>(created);
+            var created = await _appointmentRepository.GetByIdAsync(appointment.Id);
+            return _mapper.Map<AppointmentResponse>(created ?? appointment);
         }
 
         public async Task<bool> UpdateAppointmentAsync(UpdateAppointmentRequest request)
         {
-            var appointment = await _appointmentRepository.GetAppointmentByIdAsync(request.Id);
+            var appointment = await _appointmentRepository.GetByIdAsync(request.Id);
             if (appointment == null)
-                throw new NotFoundException($"Không tìm thấy cuộc hẹn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay cuoc hen voi Id '{request.Id}'.");
 
             _mapper.Map(request, appointment);
             appointment.UpdatedAt = DateTime.UtcNow;
 
-            var isSuccess = await _appointmentRepository.UpdateAppointmentAsync(appointment);
-            if (!isSuccess)
-                throw new BadRequestException("Cập nhật cuộc hẹn thất bại.");
-
+            await _appointmentRepository.UpdateAsync(appointment);
             return true;
         }
 
         public async Task<bool> DeleteAppointmentAsync(DeleteAppointmentRequest request)
         {
-            var isSuccess = await _appointmentRepository.DeleteAppointmentAsync(request.Id);
-            if (!isSuccess)
-                throw new NotFoundException($"Không tìm thấy hoặc xóa cuộc hẹn thất bại với Id '{request.Id}'.");
+            if (!await _appointmentRepository.ExistsAsync(request.Id))
+                throw new NotFoundException($"Khong tim thay cuoc hen voi Id '{request.Id}'.");
 
+            await _appointmentRepository.DeleteAsync(request.Id);
             return true;
         }
     }

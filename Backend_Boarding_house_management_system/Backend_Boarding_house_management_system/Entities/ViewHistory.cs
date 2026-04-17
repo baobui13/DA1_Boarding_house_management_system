@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -15,7 +15,7 @@ namespace Backend_Boarding_house_management_system.Entities
 
         [Required]
         [StringLength(50)]
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
 
         [Required]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
@@ -23,7 +23,7 @@ namespace Backend_Boarding_house_management_system.Entities
         [ForeignKey(nameof(UserId))]
         public User User { get; set; } = null!;
 
-        [ForeignKey(nameof(RoomId))]
-        public Property Room { get; set; } = null!;
+        [ForeignKey(nameof(PropertyId))]
+        public Property Property { get; set; } = null!;
     }
 }

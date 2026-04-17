@@ -1,19 +1,10 @@
 using Backend_Boarding_house_management_system.Entities;
-using Plainquire.Filter;
-using Plainquire.Sort;
-using Plainquire.Page;
+using Backend_Boarding_house_management_system.Repositories.Interfaces.Base;
 
 namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
-    public interface ISearchHistoryRepository
+    public interface ISearchHistoryRepository : IRepository<SearchHistory, string>
     {
-        Task<SearchHistory?> GetByIdAsync(string id);
-        Task<(IEnumerable<SearchHistory>, int)> GetByFilterAsync(
-            EntityFilter<SearchHistory> filter,
-            EntitySort<SearchHistory> sort,
-            EntityPage page);
-        Task AddAsync(SearchHistory entity);
-        Task DeleteAsync(string id);
-        Task<bool> ExistsAsync(string id);
+        // Tất cả CRUD chung đã được kế thừa từ IRepository.
     }
 }

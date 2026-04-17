@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.Exceptions;
+using Backend_Boarding_house_management_system.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,25 +20,24 @@ namespace Backend_Boarding_house_management_system.Middlewares
             Exception exception,
             CancellationToken cancellationToken)
         {
-            _logger.LogError(exception, "Đã xảy ra lỗi: {Message}", exception.Message);
+            _logger.LogError(exception, "Da xay ra loi: {Message}", exception.Message);
 
-            // 1. Dùng Switch Expression để code gọn và dễ đọc hơn
             var (statusCode, title, errorCode) = exception switch
             {
-                NotFoundException e => (StatusCodes.Status404NotFound, "Không tìm thấy dữ liệu (Not Found)", e.ErrorCode),
-                BadRequestException e => (StatusCodes.Status400BadRequest, "Dữ liệu không hợp lệ (Bad Request)", e.ErrorCode),
-                UnauthorizedException e => (StatusCodes.Status401Unauthorized, "Không có quyền truy cập (Unauthorized)", e.ErrorCode),
-                ConflictException e => (StatusCodes.Status409Conflict, "Xung đột dữ liệu (Conflict)", e.ErrorCode),
-                _ => (StatusCodes.Status500InternalServerError, "Lỗi máy chủ nội bộ (Internal Server Error)", null)
+                ValidationException e => (StatusCodes.Status400BadRequest, "Du lieu khong hop le (Validation Error)", e.ErrorCode),
+                BadRequestException e => (StatusCodes.Status400BadRequest, "Yeu cau khong hop le (Bad Request)", e.ErrorCode),
+                UnauthorizedException e => (StatusCodes.Status401Unauthorized, "Khong the xac thuc (Unauthorized)", e.ErrorCode),
+                ForbiddenException e => (StatusCodes.Status403Forbidden, "Khong duoc phep truy cap (Forbidden)", e.ErrorCode),
+                NotFoundException e => (StatusCodes.Status404NotFound, "Khong tim thay du lieu (Not Found)", e.ErrorCode),
+                ConflictException e => (StatusCodes.Status409Conflict, "Xung dot du lieu (Conflict)", e.ErrorCode),
+                InternalServerException e => (StatusCodes.Status500InternalServerError, "Loi may chu noi bo (Internal Server Error)", e.ErrorCode),
+                _ => (StatusCodes.Status500InternalServerError, "Loi may chu noi bo (Internal Server Error)", null)
             };
 
-            // 2. Logic hiển thị Detail thông minh hơn
-            // Nếu là lỗi do mình tự định nghĩa (AppException) -> Luôn hiện message. 
-            // Nếu là lỗi hệ thống (chia cho 0, null reference...) -> Chỉ hiện message ở Dev.
-            bool isAppException = exception is AppException;
-            string detailMessage = isAppException || _env.IsDevelopment()
+            var isAppException = exception is AppException;
+            var detailMessage = isAppException || _env.IsDevelopment()
                 ? exception.Message
-                : "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau.";
+                : "Da xay ra loi he thong, vui long thu lai sau.";
 
             var problemDetails = new ProblemDetails
             {
@@ -48,7 +47,7 @@ namespace Backend_Boarding_house_management_system.Middlewares
                 Instance = httpContext.Request.Path
             };
 
-            if (errorCode != null)
+            if (!string.IsNullOrWhiteSpace(errorCode))
             {
                 problemDetails.Extensions["errorCode"] = errorCode;
             }

@@ -12,11 +12,17 @@ namespace Backend_Boarding_house_management_system.Entities
         [StringLength(100)]
         public string FullName { get; set; } = null!;
 
+        [Required]
+        [StringLength(20)]
+        public string CCCD { get; set; } = null!;
+
         [StringLength(255)]
         public string? Address { get; set; }
 
         [Required]
         public string Role { get; set; } = null!;  // "Admin", "Landlord", "Tenant"
+
+        public int ReputationScore { get; set; } = 0;
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -39,5 +45,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
         public ICollection<TenantDocument> TenantDocuments { get; set; } = new List<TenantDocument>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+        public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
     }
 }

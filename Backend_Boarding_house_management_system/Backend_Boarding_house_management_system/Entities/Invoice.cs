@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -21,13 +21,19 @@ namespace Backend_Boarding_house_management_system.Entities
         public decimal RentAmount { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
-        public decimal? ElectricityUsage { get; set; }
+        public decimal? OldElectricityReading { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? NewElectricityReading { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? ElectricityCost { get; set; }
 
         [Column(TypeName = "decimal(10,2)")]
-        public decimal? WaterUsage { get; set; }
+        public decimal? OldWaterReading { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? NewWaterReading { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? WaterCost { get; set; }
@@ -41,6 +47,9 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Total { get; set; }
+
+        [StringLength(255)]
+        public string? ReceiptUrl { get; set; }
 
         [StringLength(255)]
         public string? Note { get; set; }

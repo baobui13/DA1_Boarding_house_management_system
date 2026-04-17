@@ -5,7 +5,7 @@ namespace Backend_Boarding_house_management_system.DTOs.Appointment.Requests
     public class CreateAppointmentRequest
     {
         [Required]
-        public string RoomId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
 
         [Required]
         public string UserId { get; set; } = null!;

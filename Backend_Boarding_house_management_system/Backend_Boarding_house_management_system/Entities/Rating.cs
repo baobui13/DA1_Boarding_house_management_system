@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
 {
-    public class Appointment
+    public class Rating
     {
         [Key]
         [StringLength(50)]
@@ -11,30 +11,28 @@ namespace Backend_Boarding_house_management_system.Entities
 
         [Required]
         [StringLength(50)]
-        public string PropertyId { get; set; } = null!;
+        public string TenantId { get; set; } = null!;
 
         [Required]
         [StringLength(50)]
-        public string UserId { get; set; } = null!;
+        public string PropertyId { get; set; } = null!;
 
         [Required]
-        public DateTime AppointmentDateTime { get; set; }
+        public int Stars { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Pending";  // Pending, Confirmed, Rejected, Cancelled
+        public string Content { get; set; } = null!;
 
-        [StringLength(255)]
-        public string? Note { get; set; }
+        [Required]
+        public string AIAttitude { get; set; } = null!;  // Positive, Negative, Neutral
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime? UpdatedAt { get; set; }
+        [ForeignKey(nameof(TenantId))]
+        public User Tenant { get; set; } = null!;
 
         [ForeignKey(nameof(PropertyId))]
         public Property Property { get; set; } = null!;
-
-        [ForeignKey(nameof(UserId))]
-        public User User { get; set; } = null!;
     }
 }
