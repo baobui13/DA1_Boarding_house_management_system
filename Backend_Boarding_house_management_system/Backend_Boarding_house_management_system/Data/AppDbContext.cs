@@ -27,6 +27,8 @@ namespace Backend_Boarding_house_management_system.Data
         public DbSet<ViewHistory> ViewHistories { get; set; }
         public DbSet<TenantDocument> TenantDocuments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
+        public DbSet<Complaint> Complaints { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
