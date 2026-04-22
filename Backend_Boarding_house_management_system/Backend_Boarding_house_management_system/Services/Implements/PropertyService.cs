@@ -39,6 +39,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PropertyResponse>(property);
         }
 
+        public async Task<PropertyDetailResponse> GetPropertyDetailByIdAsync(GetPropertyByIdRequest request)
+        {
+            var property = await _propertyRepository.GetByIdWithDetailsAsync(request.Id);
+            if (property == null)
+                throw new NotFoundException("Khong tim thay bat dong san.");
+
+            return _mapper.Map<PropertyDetailResponse>(property);
+        }
+
         public async Task<PropertyListResponse> GetPropertiesByFilterAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,

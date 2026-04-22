@@ -1,5 +1,12 @@
 namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
 {
+    using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
+    using Backend_Boarding_house_management_system.DTOs.Area.Responses;
+    using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
+    using Backend_Boarding_house_management_system.DTOs.PropertyImage.Responses;
+    using Backend_Boarding_house_management_system.DTOs.RoomAmenity.Responses;
+    using Backend_Boarding_house_management_system.DTOs.User.Responses;
+
     public class PropertyResponse
     {
         public string Id { get; set; } = null!;
@@ -22,5 +29,15 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
 
     public class PropertyListResponse : Backend_Boarding_house_management_system.DTOs.Base.PagedResponse<PropertyResponse>
     {
+    }
+
+    public class PropertyDetailResponse : PropertyResponse
+    {
+        public UserResponse? Landlord { get; set; }
+        public AreaResponse? Area { get; set; }
+        public List<PropertyImageResponse> PropertyImages { get; set; } = new();
+        public List<RoomAmenityResponse> RoomAmenities { get; set; } = new();
+        public List<ContractResponse> Contracts { get; set; } = new();
+        public List<AppointmentResponse> Appointments { get; set; } = new();
     }
 }

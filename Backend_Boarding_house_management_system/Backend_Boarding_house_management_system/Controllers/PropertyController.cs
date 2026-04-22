@@ -30,6 +30,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("GetPropertyDetailById")]
+        public async Task<ActionResult<PropertyDetailResponse>> GetPropertyDetailById([FromQuery] GetPropertyByIdRequest request)
+        {
+            var property = await _propertyService.GetPropertyDetailByIdAsync(request);
+            return Ok(property);
+        }
+
+        [AllowAnonymous]
         [HttpGet("GetPropertiesByFilter")]
         public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter(
             [FromQuery] EntityFilter<Property> filter,
