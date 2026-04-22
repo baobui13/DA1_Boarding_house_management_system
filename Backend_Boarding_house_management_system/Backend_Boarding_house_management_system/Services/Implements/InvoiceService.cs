@@ -34,6 +34,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<InvoiceResponse>(entity);
         }
 
+        public async Task<InvoiceDetailResponse> GetDetailByIdAsync(GetInvoiceByIdRequest request)
+        {
+            var entity = await _invoiceRepository.GetByIdWithDetailsAsync(request.Id);
+            if (entity == null)
+            {
+                throw new NotFoundException($"Khong tim thay hoa don voi Id '{request.Id}'.");
+            }
+            return _mapper.Map<InvoiceDetailResponse>(entity);
+        }
+
         public async Task<InvoiceListResponse> GetByFilterAsync(
             EntityFilter<Invoice> filter,
             EntitySort<Invoice> sort,

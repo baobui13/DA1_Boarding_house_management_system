@@ -10,6 +10,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
     public interface IInvoiceService
     {
         Task<InvoiceResponse> GetByIdAsync(GetInvoiceByIdRequest request);
+        Task<InvoiceDetailResponse> GetDetailByIdAsync(GetInvoiceByIdRequest request);
         Task<InvoiceListResponse> GetByFilterAsync(
             EntityFilter<Invoice> filter,
             EntitySort<Invoice> sort,
