@@ -42,6 +42,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PaymentResponse>(entity);
         }
 
+        public async Task<PaymentDetailResponse> GetDetailByIdAsync(GetPaymentByIdRequest request)
+        {
+            var entity = await _paymentRepository.GetByIdWithDetailsAsync(request.Id);
+            if (entity == null)
+            {
+                throw new NotFoundException($"Khong tim thay thanh toan voi Id '{request.Id}'.");
+            }
+            return _mapper.Map<PaymentDetailResponse>(entity);
+        }
+
         public async Task<PaymentListResponse> GetByFilterAsync(
             EntityFilter<Payment> filter,
             EntitySort<Payment> sort,
