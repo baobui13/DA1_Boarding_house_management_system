@@ -10,6 +10,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
     public interface IPropertyImageService
     {
         Task<PropertyImageResponse> GetPropertyImageByIdAsync(GetPropertyImageByIdRequest request);
+        Task<PropertyImageDetailResponse> GetPropertyImageDetailByIdAsync(GetPropertyImageByIdRequest request);
         Task<PropertyImageListResponse> GetPropertyImagesByFilterAsync(
             EntityFilter<PropertyImage> filter,
             EntitySort<PropertyImage> sort,

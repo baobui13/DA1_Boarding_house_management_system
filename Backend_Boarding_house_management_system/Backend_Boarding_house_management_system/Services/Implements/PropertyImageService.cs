@@ -39,6 +39,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PropertyImageResponse>(image);
         }
 
+        public async Task<PropertyImageDetailResponse> GetPropertyImageDetailByIdAsync(GetPropertyImageByIdRequest request)
+        {
+            var image = await _propertyImageRepository.GetByIdWithDetailsAsync(request.Id);
+            if (image == null)
+                throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
+
+            return _mapper.Map<PropertyImageDetailResponse>(image);
+        }
+
         public async Task<PropertyImageListResponse> GetPropertyImagesByFilterAsync(
             EntityFilter<PropertyImage> filter,
             EntitySort<PropertyImage> sort,
