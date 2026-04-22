@@ -12,6 +12,8 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
         public decimal Size { get; set; }
         public string? Description { get; set; }
         public decimal Price { get; set; }
+        public decimal ElectricPrice { get; set; }
+        public decimal WaterPrice { get; set; }
         public string Status { get; set; } = null!;
         public string? RejectionReason { get; set; }
         public DateTime CreatedAt { get; set; }

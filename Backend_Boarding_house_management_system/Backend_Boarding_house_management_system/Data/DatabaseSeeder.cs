@@ -121,6 +121,8 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(p => p.PropertyName, f => "Phòng " + f.Random.Int(100, 999))
                 .RuleFor(p => p.Size, f => f.Random.Decimal(15, 40))
                 .RuleFor(p => p.Price, f => f.Random.Decimal(1000000, 5000000))
+                .RuleFor(p => p.ElectricPrice, f => f.Random.Decimal(3000, 5000))
+                .RuleFor(p => p.WaterPrice, f => f.Random.Decimal(10000, 30000))
                 .RuleFor(p => p.Status, "Available") 
                 .RuleFor(p => p.Address, f => f.Address.FullAddress())
                 .RuleFor(p => p.Description, f => f.Lorem.Paragraph())

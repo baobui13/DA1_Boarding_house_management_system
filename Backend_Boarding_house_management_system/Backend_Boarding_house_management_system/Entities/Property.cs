@@ -41,6 +41,14 @@ namespace Backend_Boarding_house_management_system.Entities
         public decimal Price { get; set; }
 
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ElectricPrice { get; set; }
+
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal WaterPrice { get; set; }
+
+        [Required]
         public string Status { get; set; } = "Available";  // Available, Rented, Unavailable
 
         public string? RejectionReason { get; set; }

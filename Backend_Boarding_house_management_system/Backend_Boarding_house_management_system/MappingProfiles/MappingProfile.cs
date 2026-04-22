@@ -44,7 +44,13 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<RegisterRequest, User>();
 
             // User mappings
-            CreateMap<User, UserResponse>();
+            CreateMap<User, UserResponse>()
+                .ForMember(
+                    dest => dest.Status,
+                    opt => opt.MapFrom(src =>
+                        src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow
+                            ? "Blocked"
+                            : "Active"));
             CreateMap<UpdateUserRequest, User>();
             
             // Area mappings
