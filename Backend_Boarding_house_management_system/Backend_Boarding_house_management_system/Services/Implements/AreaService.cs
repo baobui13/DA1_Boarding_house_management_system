@@ -36,6 +36,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<AreaResponse>(area);
         }
 
+        public async Task<AreaDetailResponse> GetAreaDetailByIdAsync(GetAreaByIdRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Id))
+                throw new BadRequestException("Phai cung cap Id.");
+
+            var area = await _areaRepository.GetByIdWithDetailsAsync(request.Id);
+            if (area == null)
+                throw new NotFoundException("Khong tim thay khu vuc.");
+
+            return _mapper.Map<AreaDetailResponse>(area);
+        }
+
         public async Task<AreaListResponse> GetAreasByFilterAsync(
             EntityFilter<Area> filter,
             EntitySort<Area> sort,

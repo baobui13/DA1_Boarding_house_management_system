@@ -30,6 +30,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("GetAreaDetailById")]
+        public async Task<ActionResult<AreaDetailResponse>> GetAreaDetailById([FromQuery] GetAreaByIdRequest request)
+        {
+            var area = await _areaService.GetAreaDetailByIdAsync(request);
+            return Ok(area);
+        }
+
+        [AllowAnonymous]
         [HttpGet("GetAreasByFilter")]
         public async Task<ActionResult<AreaListResponse>> GetAreasByFilter(
             [FromQuery] EntityFilter<Area> filter,

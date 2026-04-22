@@ -1,5 +1,8 @@
 namespace Backend_Boarding_house_management_system.DTOs.Area.Responses
 {
+    using Backend_Boarding_house_management_system.DTOs.Property.Responses;
+    using Backend_Boarding_house_management_system.DTOs.User.Responses;
+
     public class AreaResponse
     {
         public string Id { get; set; } = null!;
@@ -16,5 +19,11 @@ namespace Backend_Boarding_house_management_system.DTOs.Area.Responses
 
     public class AreaListResponse : Backend_Boarding_house_management_system.DTOs.Base.PagedResponse<AreaResponse>
     {
+    }
+
+    public class AreaDetailResponse : AreaResponse
+    {
+        public UserResponse? Landlord { get; set; }
+        public List<PropertyResponse> Properties { get; set; } = new();
     }
 }
