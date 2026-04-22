@@ -55,16 +55,19 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             
             // Area mappings
             CreateMap<Area, AreaResponse>();
+            CreateMap<Area, AreaDetailResponse>();
             CreateMap<CreateAreaRequest, Area>();
             CreateMap<UpdateAreaRequest, Area>();
             
             // Property mappings
             CreateMap<Property, PropertyResponse>();
+            CreateMap<Property, PropertyDetailResponse>();
             CreateMap<CreatePropertyRequest, Property>();
             CreateMap<UpdatePropertyRequest, Property>();
 
             // PropertyImage mappings
             CreateMap<PropertyImage, PropertyImageResponse>();
+            CreateMap<PropertyImage, PropertyImageDetailResponse>();
             CreateMap<CreatePropertyImageRequest, PropertyImage>();
 
             // Amenity mappings
@@ -93,6 +96,9 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
 
             // Invoice mappings
             CreateMap<Invoice, InvoiceResponse>();
+            CreateMap<Invoice, InvoiceDetailResponse>()
+                .ForMember(dest => dest.Property, opt => opt.MapFrom(src => src.Contract != null ? src.Contract.Property : null))
+                .ForMember(dest => dest.Tenant, opt => opt.MapFrom(src => src.Contract != null ? src.Contract.Tenant : null));
             CreateMap<CreateInvoiceRequest, Invoice>();
             CreateMap<UpdateInvoiceRequest, Invoice>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -109,6 +115,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
 
             // Payment mappings
             CreateMap<Payment, PaymentResponse>();
+            CreateMap<Payment, PaymentDetailResponse>()
+                .ForMember(dest => dest.Contract, opt => opt.MapFrom(src => src.Invoice != null ? src.Invoice.Contract : null))
+                .ForMember(dest => dest.Property, opt => opt.MapFrom(src => src.Invoice != null && src.Invoice.Contract != null ? src.Invoice.Contract.Property : null))
+                .ForMember(dest => dest.Tenant, opt => opt.MapFrom(src => src.Invoice != null && src.Invoice.Contract != null ? src.Invoice.Contract.Tenant : null));
             CreateMap<CreatePaymentRequest, Payment>();
 
             // TenantDocument mappings
