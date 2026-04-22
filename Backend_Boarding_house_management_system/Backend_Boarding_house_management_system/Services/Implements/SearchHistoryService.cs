@@ -14,11 +14,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class SearchHistoryService : ISearchHistoryService
     {
         private readonly ISearchHistoryRepository _searchHistoryRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public SearchHistoryService(ISearchHistoryRepository searchHistoryRepository, IMapper mapper)
+        public SearchHistoryService(ISearchHistoryRepository searchHistoryRepository, IUserRepository userRepository, IMapper mapper)
         {
             _searchHistoryRepository = searchHistoryRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +29,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _searchHistoryRepository.GetByIdAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy lịch sử tìm kiếm với Id '{id}'.");
+                throw new NotFoundException($"Khong tim thay lich su tim kiem voi Id '{id}'.");
             }
             return _mapper.Map<SearchHistoryResponse>(entity);
         }
@@ -50,6 +52,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<SearchHistoryResponse> CreateAsync(CreateSearchHistoryRequest request)
         {
+            if (await _userRepository.GetByIdAsync(request.UserId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.UserId}'.");
+
             var entity = _mapper.Map<SearchHistory>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.Timestamp = DateTime.UtcNow;
@@ -65,7 +70,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _searchHistoryRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy lịch sử tìm kiếm với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay lich su tim kiem voi Id '{request.Id}'.");
             }
             await _searchHistoryRepository.DeleteAsync(request.Id);
         }

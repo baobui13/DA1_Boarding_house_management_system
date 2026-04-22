@@ -14,11 +14,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class AreaService : IAreaService
     {
         private readonly IAreaRepository _areaRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public AreaService(IAreaRepository areaRepository, IMapper mapper)
+        public AreaService(IAreaRepository areaRepository, IUserRepository userRepository, IMapper mapper)
         {
             _areaRepository = areaRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -51,6 +53,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AreaResponse> CreateAreaAsync(CreateAreaRequest request)
         {
+            var landlord = await _userRepository.GetByIdAsync(request.LandlordId);
+            if (landlord == null)
+                throw new NotFoundException($"Khong tim thay landlord voi Id '{request.LandlordId}'.");
+
+            if (!string.Equals(landlord.Role, "Landlord", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("User duoc chon khong phai landlord.");
+
             var area = _mapper.Map<Area>(request);
             area.Id = Guid.NewGuid().ToString();
             area.CreatedAt = DateTime.UtcNow;

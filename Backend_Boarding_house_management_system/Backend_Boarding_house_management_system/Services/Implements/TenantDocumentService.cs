@@ -1,7 +1,6 @@
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.DTOs.TenantDocument.Requests;
-using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
@@ -15,11 +14,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class TenantDocumentService : ITenantDocumentService
     {
         private readonly ITenantDocumentRepository _tenantDocumentRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public TenantDocumentService(ITenantDocumentRepository tenantDocumentRepository, IMapper mapper)
+        public TenantDocumentService(
+            ITenantDocumentRepository tenantDocumentRepository,
+            IUserRepository userRepository,
+            IMapper mapper)
         {
             _tenantDocumentRepository = tenantDocumentRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -28,7 +32,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _tenantDocumentRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy tài liệu với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tai lieu voi Id '{request.Id}'.");
             }
             return _mapper.Map<TenantDocumentResponse>(entity);
         }
@@ -51,6 +55,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<TenantDocumentResponse> CreateAsync(CreateTenantDocumentRequest request)
         {
+            var tenant = await _userRepository.GetByIdAsync(request.TenantId);
+            if (tenant == null)
+                throw new NotFoundException($"Khong tim thay tenant voi Id '{request.TenantId}'.");
+
+            if (!string.Equals(tenant.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("User duoc chon khong phai tenant.");
+
             var entity = _mapper.Map<TenantDocument>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
@@ -66,7 +77,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _tenantDocumentRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy tài liệu với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tai lieu voi Id '{request.Id}'.");
             }
 
             _mapper.Map(request, existing);
@@ -79,7 +90,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _tenantDocumentRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy tài liệu với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tai lieu voi Id '{request.Id}'.");
             }
             await _tenantDocumentRepository.DeleteAsync(request.Id);
         }

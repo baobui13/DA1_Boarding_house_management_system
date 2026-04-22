@@ -4,7 +4,9 @@ using Backend_Boarding_house_management_system.DTOs.Notification.Requests;
 using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
+using Backend_Boarding_house_management_system.Data;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -14,11 +16,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
-        public NotificationService(INotificationRepository notificationRepository, IMapper mapper)
+        public NotificationService(
+            INotificationRepository notificationRepository,
+            IUserRepository userRepository,
+            AppDbContext context,
+            IMapper mapper)
         {
             _notificationRepository = notificationRepository;
+            _userRepository = userRepository;
+            _context = context;
             _mapper = mapper;
         }
 
@@ -27,7 +37,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _notificationRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy thông báo với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
             return _mapper.Map<NotificationResponse>(entity);
         }
@@ -50,6 +60,26 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<NotificationResponse> CreateAsync(CreateNotificationRequest request)
         {
+            if (await _userRepository.GetByIdAsync(request.UserId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.UserId}'.");
+
+            var notificationType = request.Type?.Trim();
+            if (string.IsNullOrWhiteSpace(notificationType))
+                throw new BadRequestException("Loai thong bao khong hop le.");
+
+            if (!string.Equals(notificationType, "System", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(request.RelatedId))
+            {
+                throw new BadRequestException("RelatedId la bat buoc voi loai thong bao nay.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.RelatedId))
+            {
+                var exists = await RelatedEntityExistsAsync(notificationType, request.RelatedId);
+                if (!exists)
+                    throw new NotFoundException($"Khong tim thay du lieu lien quan voi Id '{request.RelatedId}'.");
+            }
+
             var entity = _mapper.Map<Notification>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.Timestamp = DateTime.UtcNow;
@@ -66,7 +96,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _notificationRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy thông báo với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
 
             existing.IsRead = request.IsRead;
@@ -79,9 +109,23 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _notificationRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy thông báo với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
             await _notificationRepository.DeleteAsync(request.Id);
+        }
+
+        private async Task<bool> RelatedEntityExistsAsync(string notificationType, string relatedId)
+        {
+            return notificationType.ToLowerInvariant() switch
+            {
+                "invoice" => await _context.Invoices.AnyAsync(x => x.Id == relatedId),
+                "appointment" => await _context.Appointments.AnyAsync(x => x.Id == relatedId),
+                "contract" => await _context.Contracts.AnyAsync(x => x.Id == relatedId),
+                "message" => await _context.Messages.AnyAsync(x => x.Id == relatedId),
+                "rating" => await _context.Ratings.AnyAsync(x => x.Id == relatedId),
+                "system" => true,
+                _ => throw new BadRequestException("Loai thong bao khong ho tro.")
+            };
         }
     }
 }

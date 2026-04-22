@@ -14,11 +14,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class PropertyService : IPropertyService
     {
         private readonly IPropertyRepository _propertyRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IAreaRepository _areaRepository;
         private readonly IMapper _mapper;
 
-        public PropertyService(IPropertyRepository propertyRepository, IMapper mapper)
+        public PropertyService(
+            IPropertyRepository propertyRepository,
+            IUserRepository userRepository,
+            IAreaRepository areaRepository,
+            IMapper mapper)
         {
             _propertyRepository = propertyRepository;
+            _userRepository = userRepository;
+            _areaRepository = areaRepository;
             _mapper = mapper;
         }
 
@@ -48,6 +56,23 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request)
         {
+            var landlord = await _userRepository.GetByIdAsync(request.LandlordId);
+            if (landlord == null)
+                throw new NotFoundException($"Khong tim thay landlord voi Id '{request.LandlordId}'.");
+
+            if (!string.Equals(landlord.Role, "Landlord", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("User duoc chon khong phai landlord.");
+
+            if (!string.IsNullOrWhiteSpace(request.AreaId))
+            {
+                var area = await _areaRepository.GetByIdAsync(request.AreaId);
+                if (area == null)
+                    throw new NotFoundException($"Khong tim thay khu vuc voi Id '{request.AreaId}'.");
+
+                if (!string.Equals(area.LandlordId, request.LandlordId, StringComparison.Ordinal))
+                    throw new BadRequestException("Khu vuc khong thuoc landlord da chon.");
+            }
+
             var property = _mapper.Map<Property>(request);
             property.Id = Guid.NewGuid().ToString();
             property.CreatedAt = DateTime.UtcNow;

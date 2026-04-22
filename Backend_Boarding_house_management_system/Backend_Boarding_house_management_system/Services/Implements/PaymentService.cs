@@ -4,7 +4,9 @@ using Backend_Boarding_house_management_system.DTOs.Payment.Requests;
 using Backend_Boarding_house_management_system.DTOs.Payment.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
+using Backend_Boarding_house_management_system.Data;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -14,11 +16,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepository;
+        private readonly IInvoiceRepository _invoiceRepository;
+        private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
-        public PaymentService(IPaymentRepository paymentRepository, IMapper mapper)
+        public PaymentService(
+            IPaymentRepository paymentRepository,
+            IInvoiceRepository invoiceRepository,
+            AppDbContext context,
+            IMapper mapper)
         {
             _paymentRepository = paymentRepository;
+            _invoiceRepository = invoiceRepository;
+            _context = context;
             _mapper = mapper;
         }
 
@@ -27,7 +37,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _paymentRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy thanh toán với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay thanh toan voi Id '{request.Id}'.");
             }
             return _mapper.Map<PaymentResponse>(entity);
         }
@@ -50,12 +60,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PaymentResponse> CreateAsync(CreatePaymentRequest request)
         {
+            var invoice = await _invoiceRepository.GetByIdAsync(request.InvoiceId);
+            if (invoice == null)
+                throw new NotFoundException($"Khong tim thay hoa don voi Id '{request.InvoiceId}'.");
+
+            if (request.Amount <= 0)
+                throw new BadRequestException("So tien thanh toan phai lon hon 0.");
+
             var entity = _mapper.Map<Payment>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.PaymentDate = DateTime.UtcNow;
             entity.CreatedAt = DateTime.UtcNow;
 
             await _paymentRepository.AddAsync(entity);
+
+            var totalPaid = await _context.Payments
+                .Where(p => p.InvoiceId == request.InvoiceId)
+                .SumAsync(p => p.Amount);
+
+            invoice.Status = totalPaid >= invoice.Total
+                ? "Paid"
+                : totalPaid > 0
+                    ? "Partial"
+                    : "Pending";
+            invoice.UpdatedAt = DateTime.UtcNow;
+
+            await _invoiceRepository.UpdateAsync(invoice);
 
             var savedEntity = await _paymentRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<PaymentResponse>(savedEntity);
@@ -66,7 +96,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _paymentRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy thanh toán với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay thanh toan voi Id '{request.Id}'.");
             }
             await _paymentRepository.DeleteAsync(request.Id);
         }

@@ -14,11 +14,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class ViewHistoryService : IViewHistoryService
     {
         private readonly IViewHistoryRepository _viewHistoryRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IPropertyRepository _propertyRepository;
         private readonly IMapper _mapper;
 
-        public ViewHistoryService(IViewHistoryRepository viewHistoryRepository, IMapper mapper)
+        public ViewHistoryService(
+            IViewHistoryRepository viewHistoryRepository,
+            IUserRepository userRepository,
+            IPropertyRepository propertyRepository,
+            IMapper mapper)
         {
             _viewHistoryRepository = viewHistoryRepository;
+            _userRepository = userRepository;
+            _propertyRepository = propertyRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +35,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _viewHistoryRepository.GetByIdAsync(id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy lịch sử xem phòng với Id '{id}'.");
+                throw new NotFoundException($"Khong tim thay lich su xem phong voi Id '{id}'.");
             }
             return _mapper.Map<ViewHistoryResponse>(entity);
         }
@@ -50,6 +58,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<ViewHistoryResponse> CreateAsync(CreateViewHistoryRequest request)
         {
+            if (await _userRepository.GetByIdAsync(request.UserId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.UserId}'.");
+
+            if (await _propertyRepository.GetByIdAsync(request.PropertyId) == null)
+                throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
             var entity = _mapper.Map<ViewHistory>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.Timestamp = DateTime.UtcNow;
@@ -65,7 +79,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _viewHistoryRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy lịch sử xem phòng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay lich su xem phong voi Id '{request.Id}'.");
             }
             await _viewHistoryRepository.DeleteAsync(request.Id);
         }

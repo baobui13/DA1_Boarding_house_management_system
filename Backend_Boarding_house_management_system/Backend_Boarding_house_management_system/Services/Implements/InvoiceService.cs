@@ -14,11 +14,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class InvoiceService : IInvoiceService
     {
         private readonly IInvoiceRepository _invoiceRepository;
+        private readonly IContractRepository _contractRepository;
         private readonly IMapper _mapper;
 
-        public InvoiceService(IInvoiceRepository invoiceRepository, IMapper mapper)
+        public InvoiceService(IInvoiceRepository invoiceRepository, IContractRepository contractRepository, IMapper mapper)
         {
             _invoiceRepository = invoiceRepository;
+            _contractRepository = contractRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +29,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _invoiceRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy hóa đơn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hoa don voi Id '{request.Id}'.");
             }
             return _mapper.Map<InvoiceResponse>(entity);
         }
@@ -50,6 +52,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<InvoiceResponse> CreateAsync(CreateInvoiceRequest request)
         {
+            if (await _contractRepository.GetByIdAsync(request.ContractId) == null)
+                throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.ContractId}'.");
+
             var entity = _mapper.Map<Invoice>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
@@ -65,7 +70,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _invoiceRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy hóa đơn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hoa don voi Id '{request.Id}'.");
             }
 
             _mapper.Map(request, existing);
@@ -79,7 +84,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _invoiceRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy hóa đơn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hoa don voi Id '{request.Id}'.");
             }
             await _invoiceRepository.DeleteAsync(request.Id);
         }

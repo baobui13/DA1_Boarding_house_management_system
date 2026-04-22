@@ -14,11 +14,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class ContractService : IContractService
     {
         private readonly IContractRepository _contractRepository;
+        private readonly IPropertyRepository _propertyRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public ContractService(IContractRepository contractRepository, IMapper mapper)
+        public ContractService(
+            IContractRepository contractRepository,
+            IPropertyRepository propertyRepository,
+            IUserRepository userRepository,
+            IMapper mapper)
         {
             _contractRepository = contractRepository;
+            _propertyRepository = propertyRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +35,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _contractRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy hợp đồng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
             return _mapper.Map<ContractResponse>(entity);
         }
@@ -50,6 +58,17 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<ContractResponse> CreateAsync(CreateContractRequest request)
         {
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
+                throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
+            var tenant = await _userRepository.GetByIdAsync(request.TenantId);
+            if (tenant == null)
+                throw new NotFoundException($"Khong tim thay tenant voi Id '{request.TenantId}'.");
+
+            if (!string.Equals(tenant.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
+                throw new BadRequestException("User duoc chon khong phai tenant.");
+
             var entity = _mapper.Map<Contract>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
@@ -66,12 +85,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _contractRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy hợp đồng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
 
             _mapper.Map(request, existing);
             existing.UpdatedAt = DateTime.UtcNow;
-            
+
             await _contractRepository.UpdateAsync(existing);
         }
 
@@ -80,7 +99,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _contractRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy hợp đồng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
             await _contractRepository.DeleteAsync(request.Id);
         }

@@ -14,11 +14,22 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class MessageService : IMessageService
     {
         private readonly IMessageRepository _messageRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IPropertyRepository _propertyRepository;
+        private readonly IContractRepository _contractRepository;
         private readonly IMapper _mapper;
 
-        public MessageService(IMessageRepository messageRepository, IMapper mapper)
+        public MessageService(
+            IMessageRepository messageRepository,
+            IUserRepository userRepository,
+            IPropertyRepository propertyRepository,
+            IContractRepository contractRepository,
+            IMapper mapper)
         {
             _messageRepository = messageRepository;
+            _userRepository = userRepository;
+            _propertyRepository = propertyRepository;
+            _contractRepository = contractRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +38,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _messageRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy tin nhắn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tin nhan voi Id '{request.Id}'.");
             }
             return _mapper.Map<MessageResponse>(entity);
         }
@@ -50,6 +61,38 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<MessageResponse> CreateAsync(CreateMessageRequest request)
         {
+            if (await _userRepository.GetByIdAsync(request.SenderId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi gui voi Id '{request.SenderId}'.");
+
+            if (await _userRepository.GetByIdAsync(request.ReceiverId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi nhan voi Id '{request.ReceiverId}'.");
+
+            if (string.Equals(request.SenderId, request.ReceiverId, StringComparison.Ordinal))
+                throw new BadRequestException("Nguoi gui va nguoi nhan khong duoc giong nhau.");
+
+            Property? property = null;
+            if (!string.IsNullOrWhiteSpace(request.PropertyId))
+            {
+                property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+                if (property == null)
+                    throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ContractId))
+            {
+                var contract = await _contractRepository.GetByIdAsync(request.ContractId);
+                if (contract == null)
+                    throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.ContractId}'.");
+
+                if (property != null && !string.Equals(contract.PropertyId, property.Id, StringComparison.Ordinal))
+                    throw new BadRequestException("Hop dong khong thuoc phong da chon.");
+
+                var contractLandlordId = contract.Property.LandlordId;
+                var participants = new[] { contract.TenantId, contractLandlordId };
+                if (!participants.Contains(request.SenderId) || !participants.Contains(request.ReceiverId))
+                    throw new BadRequestException("Nguoi gui/nguoi nhan khong hop le voi hop dong da chon.");
+            }
+
             var entity = _mapper.Map<Message>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.Timestamp = DateTime.UtcNow;
@@ -66,12 +109,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _messageRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy tin nhắn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tin nhan voi Id '{request.Id}'.");
             }
 
-            // In this project, UpdateMessageRequest only contains IsRead
             existing.IsRead = request.IsRead;
-            
+
             await _messageRepository.UpdateAsync(existing);
         }
 
@@ -80,7 +122,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _messageRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy tin nhắn với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tin nhan voi Id '{request.Id}'.");
             }
             await _messageRepository.DeleteAsync(request.Id);
         }
