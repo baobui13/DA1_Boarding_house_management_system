@@ -278,6 +278,13 @@ namespace Backend_Boarding_house_management_system.Extensions
             modelBuilder.Entity<Appointment>()
                 .HasIndex(a => a.AppointmentDateTime);
 
+            modelBuilder.Entity<Rating>()
+                .HasIndex(r => new { r.TenantId, r.PropertyId })
+                .IsUnique();
+
+            modelBuilder.Entity<Complaint>()
+                .HasIndex(c => c.CreatorId);
+
             return modelBuilder;
         }
     }
