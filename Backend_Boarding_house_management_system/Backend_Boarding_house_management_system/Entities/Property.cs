@@ -70,6 +70,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<Contract> Contracts { get; set; } = new List<Contract>();
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public ICollection<Message> Messages { get; set; } = new List<Message>();
+        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
     }
 }

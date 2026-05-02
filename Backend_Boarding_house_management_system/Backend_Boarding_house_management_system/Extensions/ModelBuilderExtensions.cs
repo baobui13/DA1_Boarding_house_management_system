@@ -236,7 +236,7 @@ namespace Backend_Boarding_house_management_system.Extensions
             // Property → Rating
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.Property)
-                .WithMany()
+                .WithMany(p => p.Ratings)
                 .HasForeignKey(r => r.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 

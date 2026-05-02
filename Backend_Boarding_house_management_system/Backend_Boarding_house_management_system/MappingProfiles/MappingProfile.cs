@@ -31,6 +31,10 @@ using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
 using Backend_Boarding_house_management_system.DTOs.SearchHistory.Responses;
 using Backend_Boarding_house_management_system.DTOs.ViewHistory.Requests;
 using Backend_Boarding_house_management_system.DTOs.ViewHistory.Responses;
+using Backend_Boarding_house_management_system.DTOs.Rating.Requests;
+using Backend_Boarding_house_management_system.DTOs.Rating.Responses;
+using Backend_Boarding_house_management_system.DTOs.Complaint.Requests;
+using Backend_Boarding_house_management_system.DTOs.Complaint.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -134,6 +138,20 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // ViewHistory mappings
             CreateMap<ViewHistory, ViewHistoryResponse>();
             CreateMap<CreateViewHistoryRequest, ViewHistory>();
+
+            // Rating mappings
+            CreateMap<Rating, RatingResponse>();
+            CreateMap<Rating, RatingDetailResponse>();
+            CreateMap<CreateRatingRequest, Rating>();
+            CreateMap<UpdateRatingRequest, Rating>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Complaint mappings
+            CreateMap<Complaint, ComplaintResponse>();
+            CreateMap<Complaint, ComplaintDetailResponse>();
+            CreateMap<CreateComplaintRequest, Complaint>();
+            CreateMap<UpdateComplaintRequest, Complaint>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }
