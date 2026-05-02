@@ -1,10 +1,12 @@
 using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
+using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -13,17 +15,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 {
     public class PropertyService : IPropertyService
     {
+        private readonly AppDbContext _context;
         private readonly IPropertyRepository _propertyRepository;
         private readonly IUserRepository _userRepository;
         private readonly IAreaRepository _areaRepository;
         private readonly IMapper _mapper;
 
         public PropertyService(
+            AppDbContext context,
             IPropertyRepository propertyRepository,
             IUserRepository userRepository,
             IAreaRepository areaRepository,
             IMapper mapper)
         {
+            _context = context;
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
             _areaRepository = areaRepository;
@@ -106,8 +111,43 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!await _propertyRepository.ExistsAsync(request.Id))
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
-            await _propertyRepository.DeleteAsync(request.Id);
+            var blockers = await GetPropertyDeleteBlockersAsync(request.Id);
+            if (blockers.Count > 0)
+            {
+                throw new ConflictException(
+                    $"Khong the xoa bat dong san voi Id '{request.Id}' vi van con du lieu lien quan: {string.Join(", ", blockers)}.");
+            }
+
+            try
+            {
+                await _propertyRepository.DeleteAsync(request.Id);
+            }
+            catch (DbUpdateException)
+            {
+                throw new ConflictException(
+                    $"Khong the xoa bat dong san voi Id '{request.Id}' vi van con du lieu lien quan trong he thong.");
+            }
+
             return true;
+        }
+
+        private async Task<List<string>> GetPropertyDeleteBlockersAsync(string propertyId)
+        {
+            var blockers = new List<string>();
+
+            if (await _context.Contracts.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("hop dong");
+
+            if (await _context.Appointments.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("lich hen");
+
+            if (await _context.Messages.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("tin nhan");
+
+            if (await _context.Ratings.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("danh gia");
+
+            return blockers;
         }
     }
 }

@@ -2,9 +2,11 @@ using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.DTOs.Contract.Requests;
 using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
+using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -13,17 +15,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 {
     public class ContractService : IContractService
     {
+        private readonly AppDbContext _context;
         private readonly IContractRepository _contractRepository;
         private readonly IPropertyRepository _propertyRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
         public ContractService(
+            AppDbContext context,
             IContractRepository contractRepository,
             IPropertyRepository propertyRepository,
             IUserRepository userRepository,
             IMapper mapper)
         {
+            _context = context;
             _contractRepository = contractRepository;
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
@@ -96,12 +101,48 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task DeleteAsync(DeleteContractRequest request)
         {
-            var exists = await _contractRepository.ExistsAsync(request.Id);
-            if (!exists)
+            var existing = await _contractRepository.GetByIdAsync(request.Id);
+            if (existing == null)
             {
                 throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
-            await _contractRepository.DeleteAsync(request.Id);
+
+            var blockers = await GetContractDeleteBlockersAsync(existing);
+            if (blockers.Count > 0)
+            {
+                throw new ConflictException(
+                    $"Khong the xoa hop dong voi Id '{request.Id}' vi van con du lieu lien quan: {string.Join(", ", blockers)}.");
+            }
+
+            try
+            {
+                await _contractRepository.DeleteAsync(request.Id);
+            }
+            catch (DbUpdateException)
+            {
+                throw new ConflictException(
+                    $"Khong the xoa hop dong voi Id '{request.Id}' vi van con du lieu lien quan trong he thong.");
+            }
+        }
+
+        private async Task<List<string>> GetContractDeleteBlockersAsync(Contract contract)
+        {
+            var blockers = new List<string>();
+
+            if (string.Equals(contract.Status, "Active", StringComparison.OrdinalIgnoreCase))
+                blockers.Add("hop dong dang hoat dong");
+
+            if (await _context.Invoices.AnyAsync(x => x.ContractId == contract.Id))
+                blockers.Add("hoa don");
+
+            var hasPayments = await _context.Payments.AnyAsync(x => x.Invoice.ContractId == contract.Id);
+            if (hasPayments)
+                blockers.Add("thanh toan");
+
+            if (await _context.Messages.AnyAsync(x => x.ContractId == contract.Id))
+                blockers.Add("tin nhan");
+
+            return blockers;
         }
     }
 }
