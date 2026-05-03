@@ -7,6 +7,20 @@ namespace Backend_Boarding_house_management_system.Entities
         Tenant
     }
 
+    public enum ModerationStatusEnum
+    {
+        Pending = 0,
+        Approved = 1,
+        Rejected = 2
+    }
+
+    public enum AvailabilityStatusEnum
+    {
+        Available = 0,
+        Rented = 1,
+        Maintenance = 2
+    }
+
     public enum PropertyStatus
     {
         PendingApproval, 

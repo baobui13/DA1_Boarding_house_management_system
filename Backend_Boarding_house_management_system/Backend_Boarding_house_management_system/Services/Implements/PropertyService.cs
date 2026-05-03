@@ -90,6 +90,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = _mapper.Map<Property>(request);
             property.Id = Guid.NewGuid().ToString();
             property.CreatedAt = DateTime.UtcNow;
+            property.ModerationStatus = ModerationStatusEnum.Pending;
+            property.AvailabilityStatus = AvailabilityStatusEnum.Available;
 
             await _propertyRepository.AddAsync(property);
             return _mapper.Map<PropertyResponse>(property);
@@ -102,6 +104,58 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
             _mapper.Map(request, property);
+            property.UpdatedAt = DateTime.UtcNow;
+            await _propertyRepository.UpdateAsync(property);
+            return true;
+        }
+
+        public async Task<bool> ApprovePropertyAsync(ApprovePropertyRequest request)
+        {
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
+                throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            if (property.ModerationStatus != ModerationStatusEnum.Pending)
+                throw new BadRequestException("Chi co the duyet bat dong san dang trong trang Thai cho duyet.");
+
+            property.ModerationStatus = ModerationStatusEnum.Approved;
+            property.ApprovedAt = DateTime.UtcNow;
+            property.UpdatedAt = DateTime.UtcNow;
+            
+            await _propertyRepository.UpdateAsync(property);
+            return true;
+        }
+
+        public async Task<bool> RejectPropertyAsync(RejectPropertyRequest request)
+        {
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
+                throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            if (property.ModerationStatus != ModerationStatusEnum.Pending)
+                throw new BadRequestException("Chi co the tu choi bat dong san dang trong trang Thai cho duyet.");
+
+            property.ModerationStatus = ModerationStatusEnum.Rejected;
+            property.RejectionReason = request.RejectionReason;
+            property.RejectedAt = DateTime.UtcNow;
+            property.UpdatedAt = DateTime.UtcNow;
+            
+            await _propertyRepository.UpdateAsync(property);
+            return true;
+        }
+
+        public async Task<bool> UpdateAvailabilityStatusAsync(UpdateAvailabilityStatusRequest request)
+        {
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
+                throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            if (property.ModerationStatus != ModerationStatusEnum.Approved)
+                throw new BadRequestException("Chi co the cap nhat trang thai kha dung cho bat dong san da duoc duyet.");
+
+            property.AvailabilityStatus = request.AvailabilityStatus;
+            property.UpdatedAt = DateTime.UtcNow;
+            
             await _propertyRepository.UpdateAsync(property);
             return true;
         }

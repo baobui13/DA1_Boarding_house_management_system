@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.Contracts;
 
 namespace Backend_Boarding_house_management_system.Entities
 {
@@ -34,6 +33,7 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         [Column(TypeName = "decimal(5,2)")]
         public decimal Size { get; set; }
+        
         public string? Description { get; set; }
 
         [Required]
@@ -49,8 +49,16 @@ namespace Backend_Boarding_house_management_system.Entities
         public decimal WaterPrice { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Available";  // Available, Rented, Unavailable
+        public ModerationStatusEnum ModerationStatus { get; set; } = ModerationStatusEnum.Pending;
 
+        [Required]
+        public AvailabilityStatusEnum AvailabilityStatus { get; set; } = AvailabilityStatusEnum.Available;
+
+        public DateTime? ApprovedAt { get; set; }
+
+        public DateTime? RejectedAt { get; set; }
+
+        [StringLength(500)]
         public string? RejectionReason { get; set; }
 
         [Required]

@@ -27,7 +27,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             var user = await _dbSet.FindAsync(userId);
             if (user == null) return false;
             user.LockoutEnabled = isBlocked;
-            user.LockoutEnd = isBlocked ? DateTimeOffset.MaxValue : null;
+            user.LockoutEnd = isBlocked ? DateTimeOffset.UtcNow.AddYears(100) : null;
             _dbSet.Update(user);
             return await _context.SaveChangesAsync() > 0;
         }

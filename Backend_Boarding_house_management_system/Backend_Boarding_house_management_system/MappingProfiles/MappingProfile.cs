@@ -54,7 +54,11 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
                     opt => opt.MapFrom(src =>
                         src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow
                             ? "Blocked"
-                            : "Active"));
+                            : "Active"))
+                .ForMember(
+                    dest => dest.IsBlocked,
+                    opt => opt.MapFrom(src =>
+                        src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow));
             CreateMap<UpdateUserRequest, User>();
             
             // Area mappings
@@ -66,8 +70,11 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // Property mappings
             CreateMap<Property, PropertyResponse>();
             CreateMap<Property, PropertyDetailResponse>();
-            CreateMap<CreatePropertyRequest, Property>();
-            CreateMap<UpdatePropertyRequest, Property>();
+            CreateMap<CreatePropertyRequest, Property>()
+                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => ModerationStatusEnum.Pending))
+                .ForMember(dest => dest.AvailabilityStatus, opt => opt.MapFrom(src => AvailabilityStatusEnum.Available));
+            CreateMap<UpdatePropertyRequest, Property>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // PropertyImage mappings
             CreateMap<PropertyImage, PropertyImageResponse>();

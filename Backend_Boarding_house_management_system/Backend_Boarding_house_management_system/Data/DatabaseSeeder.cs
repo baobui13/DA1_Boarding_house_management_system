@@ -11,6 +11,12 @@ namespace Backend_Boarding_house_management_system.Data
 {
     public static class DatabaseSeeder
     {
+        // Helper method để ensure DateTime là UTC
+        private static DateTime EnsureUtc(DateTime dt)
+        {
+            return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+        }
+
         public static async Task SeedDataAsync(AppDbContext context)
         {
             // Kiểm tra nếu hệ thống đã có dữ liệu thì không seed lại
@@ -57,7 +63,9 @@ namespace Backend_Boarding_house_management_system.Data
                 FullName = "System Admin",
                 CCCD = "000000000000",
                 Role = "Admin",
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                CreatedAt = EnsureUtc(DateTime.UtcNow),
+                UpdatedAt = EnsureUtc(DateTime.UtcNow)
             };
             admin.PasswordHash = hasher.HashPassword(admin, "Password123!");
             users.Add(admin);
@@ -74,6 +82,8 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.Role, "Landlord")
                 .RuleFor(u => u.EmailConfirmed, true)
                 .RuleFor(u => u.ReputationScore, f => f.Random.Int(50, 100))
+                .RuleFor(u => u.CreatedAt, f => EnsureUtc(f.Date.Past(2)))
+                .RuleFor(u => u.UpdatedAt, (f, u) => EnsureUtc(f.Date.Between(u.CreatedAt, DateTime.UtcNow)))
                 .Generate(15);
             foreach (var l in landlords) l.PasswordHash = hasher.HashPassword(l, "Password123!");
             users.AddRange(landlords);
@@ -89,6 +99,8 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
                 .RuleFor(u => u.Role, "Tenant")
                 .RuleFor(u => u.EmailConfirmed, true)
+                .RuleFor(u => u.CreatedAt, f => EnsureUtc(f.Date.Past(2)))
+                .RuleFor(u => u.UpdatedAt, (f, u) => EnsureUtc(f.Date.Between(u.CreatedAt, DateTime.UtcNow)))
                 .Generate(35);
             foreach (var t in tenants) t.PasswordHash = hasher.HashPassword(t, "Password123!");
             users.AddRange(tenants);
@@ -123,9 +135,20 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(p => p.Price, f => f.Random.Decimal(1000000, 5000000))
                 .RuleFor(p => p.ElectricPrice, f => f.Random.Decimal(3000, 5000))
                 .RuleFor(p => p.WaterPrice, f => f.Random.Decimal(10000, 30000))
-                .RuleFor(p => p.Status, "Available") 
+                .RuleFor(p => p.ModerationStatus, f => f.PickRandom(
+                    ModerationStatusEnum.Pending,
+                    ModerationStatusEnum.Approved,
+                    ModerationStatusEnum.Approved))
+                .RuleFor(p => p.AvailabilityStatus, f => f.PickRandom(
+                    AvailabilityStatusEnum.Available,
+                    AvailabilityStatusEnum.Rented))
                 .RuleFor(p => p.Address, f => f.Address.FullAddress())
                 .RuleFor(p => p.Description, f => f.Lorem.Paragraph())
+                .RuleFor(p => p.CreatedAt, f => EnsureUtc(f.Date.Past(3)))
+                .RuleFor(p => p.UpdatedAt, (f, p) => EnsureUtc(f.Date.Between(p.CreatedAt, DateTime.UtcNow)))
+                .RuleFor(p => p.ApprovedAt, (f, p) => p.ModerationStatus == ModerationStatusEnum.Approved 
+                    ? EnsureUtc(f.Date.Between(p.CreatedAt, DateTime.UtcNow)) 
+                    : null)
                 .Generate(50);
             
             foreach(var p in properties) {
@@ -176,8 +199,8 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(c => c.Id, f => Guid.NewGuid().ToString())
                 .RuleFor(c => c.PropertyId, f => f.PickRandom(properties).Id)
                 .RuleFor(c => c.TenantId, f => f.PickRandom(tenants).Id)
-                .RuleFor(c => c.StartDate, f => f.Date.Past(1))
-                .RuleFor(c => c.EndDate, (f, c) => c.StartDate.AddMonths(f.Random.Int(6, 12)))
+                .RuleFor(c => c.StartDate, f => EnsureUtc(f.Date.Past(1)))
+                .RuleFor(c => c.EndDate, (f, c) => EnsureUtc(c.StartDate.AddMonths(f.Random.Int(6, 12))))
                 .RuleFor(c => c.Deposit, f => f.Random.Decimal(1000000, 5000000))
                 .RuleFor(c => c.Terms, f => f.Lorem.Paragraph())
                 .RuleFor(c => c.Status, f => f.PickRandom(contractStatuses))
@@ -186,7 +209,7 @@ namespace Backend_Boarding_house_management_system.Data
             foreach (var c in contracts.Where(x => x.Status == "Active"))
             {
                 var p = properties.First(px => px.Id == c.PropertyId);
-                p.Status = "Rented"; 
+                p.AvailabilityStatus = AvailabilityStatusEnum.Rented; 
             }
             context.Contracts.AddRange(contracts);
             return contracts;
@@ -204,13 +227,13 @@ namespace Backend_Boarding_house_management_system.Data
                     {
                         Id = Guid.NewGuid().ToString(),
                         ContractId = c.Id,
-                        Period = c.StartDate.AddMonths(i),
+                        Period = EnsureUtc(c.StartDate.AddMonths(i)),
                         RentAmount = properties.First(p => p.Id == c.PropertyId).Price,
                         ElectricityCost = rnd.Next(50000, 300000),
                         WaterCost = rnd.Next(30000, 100000),
                         Total = properties.First(p => p.Id == c.PropertyId).Price + rnd.Next(80000, 400000),
                         Status = rnd.Next(0, 3) == 0 ? "Pending" : "Paid",
-                        DueDate = c.StartDate.AddMonths(i).AddDays(5)
+                        DueDate = EnsureUtc(c.StartDate.AddMonths(i).AddDays(5))
                     });
                 }
             }
@@ -228,7 +251,7 @@ namespace Backend_Boarding_house_management_system.Data
                     Id = Guid.NewGuid().ToString(),
                     InvoiceId = inv.Id,
                     Amount = inv.Total,
-                    PaymentDate = inv.DueDate.AddDays(-rnd.Next(1, 5)),
+                    PaymentDate = EnsureUtc(inv.DueDate.AddDays(-rnd.Next(1, 5))),
                     Method = rnd.Next(0, 2) == 0 ? "BankTransfer" : "Cash"
                 });
             }
@@ -240,7 +263,7 @@ namespace Backend_Boarding_house_management_system.Data
                     Id = Guid.NewGuid().ToString(),
                     InvoiceId = inv.Id,
                     Amount = inv.Total / 2,
-                    PaymentDate = inv.DueDate.AddDays(-1),
+                    PaymentDate = EnsureUtc(inv.DueDate.AddDays(-1)),
                     Method = "Online"
                 });
             }
@@ -254,7 +277,7 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(a => a.Id, f => Guid.NewGuid().ToString())
                 .RuleFor(a => a.PropertyId, f => f.PickRandom(properties).Id)
                 .RuleFor(a => a.UserId, f => f.PickRandom(tenants).Id)
-                .RuleFor(a => a.AppointmentDateTime, f => f.Date.Future(1))
+                .RuleFor(a => a.AppointmentDateTime, f => EnsureUtc(f.Date.Future(1)))
                 .RuleFor(a => a.Status, f => f.PickRandom(appStatuses))
                 .RuleFor(a => a.Note, f => f.Lorem.Sentence())
                 .Generate(25);

@@ -471,7 +471,15 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("AreaId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AvailabilityStatus")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -495,6 +503,11 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<decimal?>("Longitude")
                         .HasColumnType("decimal(10,6)");
 
+                    b.Property<string>("ModerationStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -503,16 +516,15 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Size")
                         .HasColumnType("decimal(5,2)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -524,10 +536,13 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("AreaId");
 
+                    b.HasIndex("AvailabilityStatus")
+                        .HasDatabaseName("IX_Properties_AvailabilityStatus");
+
                     b.HasIndex("LandlordId");
 
-                    b.HasIndex("Status")
-                        .HasDatabaseName("IX_Properties_Status");
+                    b.HasIndex("ModerationStatus")
+                        .HasDatabaseName("IX_Properties_ModerationStatus");
 
                     b.ToTable("Properties");
                 });
@@ -601,7 +616,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("TenantId", "PropertyId")
+                        .IsUnique();
 
                     b.ToTable("Ratings");
                 });

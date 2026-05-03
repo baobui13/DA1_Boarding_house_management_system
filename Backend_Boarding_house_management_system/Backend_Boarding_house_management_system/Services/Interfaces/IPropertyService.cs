@@ -17,6 +17,9 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityPage page);
         Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request);
         Task<bool> UpdatePropertyAsync(UpdatePropertyRequest request);
+        Task<bool> ApprovePropertyAsync(ApprovePropertyRequest request);
+        Task<bool> RejectPropertyAsync(RejectPropertyRequest request);
+        Task<bool> UpdateAvailabilityStatusAsync(UpdateAvailabilityStatusRequest request);
         Task<bool> DeletePropertyAsync(DeletePropertyRequest request);
     }
 }

@@ -64,6 +64,30 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("ApproveProperty")]
+        public async Task<IActionResult> ApproveProperty([FromBody] ApprovePropertyRequest request)
+        {
+            await _propertyService.ApprovePropertyAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("RejectProperty")]
+        public async Task<IActionResult> RejectProperty([FromBody] RejectPropertyRequest request)
+        {
+            await _propertyService.RejectPropertyAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
+        [HttpPut("UpdateAvailabilityStatus")]
+        public async Task<IActionResult> UpdateAvailabilityStatus([FromBody] UpdateAvailabilityStatusRequest request)
+        {
+            await _propertyService.UpdateAvailabilityStatusAsync(request);
+            return Ok();
+        }
+
         [Authorize(Roles = "Landlord,Admin")]
         [HttpDelete("DeleteProperty")]
         public async Task<IActionResult> DeleteProperty([FromBody] DeletePropertyRequest request)
