@@ -14,11 +14,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class RoomAmenityService : IRoomAmenityService
     {
         private readonly IRoomAmenityRepository _roomAmenityRepository;
+        private readonly IPropertyRepository _propertyRepository;
+        private readonly IAmenityRepository _amenityRepository;
         private readonly IMapper _mapper;
 
-        public RoomAmenityService(IRoomAmenityRepository roomAmenityRepository, IMapper mapper)
+        public RoomAmenityService(
+            IRoomAmenityRepository roomAmenityRepository,
+            IPropertyRepository propertyRepository,
+            IAmenityRepository amenityRepository,
+            IMapper mapper)
         {
             _roomAmenityRepository = roomAmenityRepository;
+            _propertyRepository = propertyRepository;
+            _amenityRepository = amenityRepository;
             _mapper = mapper;
         }
 
@@ -27,7 +35,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = await _roomAmenityRepository.GetByIdAsync(request.Id);
             if (entity == null)
             {
-                throw new NotFoundException($"Không tìm thấy tiện ích phòng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tien ich phong voi Id '{request.Id}'.");
             }
             return _mapper.Map<RoomAmenityResponse>(entity);
         }
@@ -50,17 +58,22 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<RoomAmenityResponse> CreateAsync(CreateRoomAmenityRequest request)
         {
+            if (await _propertyRepository.GetByIdAsync(request.PropertyId) == null)
+                throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
+            if (await _amenityRepository.GetByIdAsync(request.AmenityId) == null)
+                throw new NotFoundException($"Khong tim thay tien ich voi Id '{request.AmenityId}'.");
+
             if (await _roomAmenityRepository.ExistsForPropertyAndAmenityAsync(request.PropertyId, request.AmenityId))
             {
-                throw new ConflictException($"Tiện ích này đã được thêm vào phòng.");
+                throw new ConflictException("Tien ich nay da duoc them vao phong.");
             }
 
             var entity = _mapper.Map<RoomAmenity>(request);
             entity.Id = Guid.NewGuid().ToString();
-            
+
             await _roomAmenityRepository.AddAsync(entity);
-            
-            // Reload to get AmenityName if possible, though mapper might not have it unless fetched
+
             var savedEntity = await _roomAmenityRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<RoomAmenityResponse>(savedEntity);
         }
@@ -70,7 +83,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var existing = await _roomAmenityRepository.GetByIdAsync(request.Id);
             if (existing == null)
             {
-                throw new NotFoundException($"Không tìm thấy tiện ích phòng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tien ich phong voi Id '{request.Id}'.");
             }
 
             _mapper.Map(request, existing);
@@ -82,7 +95,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var exists = await _roomAmenityRepository.ExistsAsync(request.Id);
             if (!exists)
             {
-                throw new NotFoundException($"Không tìm thấy tiện ích phòng với Id '{request.Id}'.");
+                throw new NotFoundException($"Khong tim thay tien ich phong voi Id '{request.Id}'.");
             }
             await _roomAmenityRepository.DeleteAsync(request.Id);
         }

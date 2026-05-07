@@ -20,8 +20,12 @@ namespace Backend_Boarding_house_management_system.Extensions
             services.AddScoped<IPropertyRepository, PropertyRepository>();
             services.AddScoped<IPropertyService, PropertyService>();
 
+            services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
+            services.AddScoped<IPropertyImageService, PropertyImageService>();
+
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IAmenityRepository, AmenityRepository>();
+
             services.AddScoped<IAmenityService, AmenityService>();
 
             services.AddScoped<IRoomAmenityRepository, RoomAmenityRepository>();
@@ -53,6 +57,12 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IViewHistoryRepository, ViewHistoryRepository>();
             services.AddScoped<IViewHistoryService, ViewHistoryService>();
+
+            services.AddScoped<IRatingRepository, RatingRepository>();
+            services.AddScoped<IRatingService, RatingService>();
+
+            services.AddScoped<IComplaintRepository, ComplaintRepository>();
+            services.AddScoped<IComplaintService, ComplaintService>();
         }
     }
 }

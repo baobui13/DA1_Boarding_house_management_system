@@ -19,7 +19,12 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasMaxLength(50);
 
             modelBuilder.Entity<Property>()
-                .Property(p => p.Status)
+                .Property(p => p.ModerationStatus)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<Property>()
+                .Property(p => p.AvailabilityStatus)
                 .HasConversion<string>()
                 .HasMaxLength(50);
 
@@ -236,7 +241,7 @@ namespace Backend_Boarding_house_management_system.Extensions
             // Property → Rating
             modelBuilder.Entity<Rating>()
                 .HasOne(r => r.Property)
-                .WithMany()
+                .WithMany(p => p.Ratings)
                 .HasForeignKey(r => r.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -264,8 +269,12 @@ namespace Backend_Boarding_house_management_system.Extensions
             });
 
             modelBuilder.Entity<Property>()
-                .HasIndex(p => p.Status)
-                .HasDatabaseName("IX_Properties_Status");
+                .HasIndex(p => p.ModerationStatus)
+                .HasDatabaseName("IX_Properties_ModerationStatus");
+
+            modelBuilder.Entity<Property>()
+                .HasIndex(p => p.AvailabilityStatus)
+                .HasDatabaseName("IX_Properties_AvailabilityStatus");
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(c => c.Status)
@@ -277,6 +286,13 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             modelBuilder.Entity<Appointment>()
                 .HasIndex(a => a.AppointmentDateTime);
+
+            modelBuilder.Entity<Rating>()
+                .HasIndex(r => new { r.TenantId, r.PropertyId })
+                .IsUnique();
+
+            modelBuilder.Entity<Complaint>()
+                .HasIndex(c => c.CreatorId);
 
             return modelBuilder;
         }

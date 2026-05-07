@@ -16,6 +16,10 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Requests
         public string? Description { get; set; }
         [Required]
         public decimal Price { get; set; }
+        [Required]
+        public decimal ElectricPrice { get; set; }
+        [Required]
+        public decimal WaterPrice { get; set; }
         public string Status { get; set; } = "Available";
     }
 }

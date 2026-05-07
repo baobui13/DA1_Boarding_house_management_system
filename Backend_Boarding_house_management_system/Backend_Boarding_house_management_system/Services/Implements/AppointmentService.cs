@@ -14,11 +14,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class AppointmentService : IAppointmentService
     {
         private readonly IAppointmentRepository _appointmentRepository;
+        private readonly IPropertyRepository _propertyRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public AppointmentService(IAppointmentRepository appointmentRepository, IMapper mapper)
+        public AppointmentService(
+            IAppointmentRepository appointmentRepository,
+            IPropertyRepository propertyRepository,
+            IUserRepository userRepository,
+            IMapper mapper)
         {
             _appointmentRepository = appointmentRepository;
+            _propertyRepository = propertyRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -49,6 +57,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AppointmentResponse> CreateAppointmentAsync(CreateAppointmentRequest request)
         {
+            if (await _propertyRepository.GetByIdAsync(request.PropertyId) == null)
+                throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
+            if (await _userRepository.GetByIdAsync(request.UserId) == null)
+                throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.UserId}'.");
+
             var appointment = _mapper.Map<Appointment>(request);
             appointment.Id = Guid.NewGuid().ToString();
             appointment.CreatedAt = DateTime.UtcNow;

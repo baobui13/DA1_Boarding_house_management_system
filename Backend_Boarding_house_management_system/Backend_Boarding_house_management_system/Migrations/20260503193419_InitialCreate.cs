@@ -45,8 +45,10 @@ namespace Backend_Boarding_house_management_system.Migrations
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     FullName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    CCCD = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Address = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Role = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ReputationScore = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     AvatarUrl = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
@@ -203,6 +205,32 @@ namespace Backend_Boarding_house_management_system.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Complaints",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatorId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RelatedType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    RelatedId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    AdminResponse = table.Column<string>(type: "text", nullable: true),
+                    ResolvedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Complaints", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Complaints_Users_CreatorId",
+                        column: x => x.CreatorId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Notifications",
                 columns: table => new
                 {
@@ -219,6 +247,28 @@ namespace Backend_Boarding_house_management_system.Migrations
                     table.PrimaryKey("PK_Notifications", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Notifications_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Token = table.Column<string>(type: "text", nullable: false),
+                    ExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsRevoked = table.Column<bool>(type: "boolean", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -281,8 +331,13 @@ namespace Backend_Boarding_house_management_system.Migrations
                     Size = table.Column<decimal>(type: "numeric(5,2)", nullable: false),
                     Description = table.Column<string>(type: "text", nullable: true),
                     Price = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RejectionReason = table.Column<string>(type: "text", nullable: true),
+                    ElectricPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    WaterPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ModerationStatus = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    AvailabilityStatus = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ApprovedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    RejectionReason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -308,7 +363,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RoomId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     UserId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     AppointmentDateTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
@@ -320,8 +375,8 @@ namespace Backend_Boarding_house_management_system.Migrations
                 {
                     table.PrimaryKey("PK_Appointments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Appointments_Properties_RoomId",
-                        column: x => x.RoomId,
+                        name: "FK_Appointments_Properties_PropertyId",
+                        column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -330,7 +385,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -338,7 +393,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RoomId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -360,8 +415,8 @@ namespace Backend_Boarding_house_management_system.Migrations
                 {
                     table.PrimaryKey("PK_Contracts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Contracts_Properties_RoomId",
-                        column: x => x.RoomId,
+                        name: "FK_Contracts_Properties_PropertyId",
+                        column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -370,7 +425,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         column: x => x.TenantId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -396,11 +451,40 @@ namespace Backend_Boarding_house_management_system.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Ratings",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    TenantId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Stars = table.Column<int>(type: "integer", nullable: false),
+                    Content = table.Column<string>(type: "text", nullable: false),
+                    AIAttitude = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ratings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Ratings_Properties_PropertyId",
+                        column: x => x.PropertyId,
+                        principalTable: "Properties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Ratings_Users_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RoomAmenities",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RoomId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     AmenityId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Note = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true)
@@ -415,8 +499,8 @@ namespace Backend_Boarding_house_management_system.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_RoomAmenities_Properties_RoomId",
-                        column: x => x.RoomId,
+                        name: "FK_RoomAmenities_Properties_PropertyId",
+                        column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -428,15 +512,15 @@ namespace Backend_Boarding_house_management_system.Migrations
                 {
                     Id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     UserId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    RoomId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ViewHistories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ViewHistories_Properties_RoomId",
-                        column: x => x.RoomId,
+                        name: "FK_ViewHistories_Properties_PropertyId",
+                        column: x => x.PropertyId,
                         principalTable: "Properties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -456,13 +540,16 @@ namespace Backend_Boarding_house_management_system.Migrations
                     ContractId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     Period = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     RentAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
-                    ElectricityUsage = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    OldElectricityReading = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    NewElectricityReading = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
                     ElectricityCost = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
-                    WaterUsage = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    OldWaterReading = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    NewWaterReading = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
                     WaterCost = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
                     OtherFees = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
                     Penalty = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     Total = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
+                    ReceiptUrl = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Note = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     InvoiceUrl = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
@@ -491,7 +578,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                     Content = table.Column<string>(type: "text", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsRead = table.Column<bool>(type: "boolean", nullable: false),
-                    RoomId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    PropertyId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     ContractId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
@@ -501,12 +588,14 @@ namespace Backend_Boarding_house_management_system.Migrations
                         name: "FK_Messages_Contracts_ContractId",
                         column: x => x.ContractId,
                         principalTable: "Contracts",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_Messages_Properties_RoomId",
-                        column: x => x.RoomId,
+                        name: "FK_Messages_Properties_PropertyId",
+                        column: x => x.PropertyId,
                         principalTable: "Properties",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_Messages_Users_ReceiverId",
                         column: x => x.ReceiverId,
@@ -550,9 +639,9 @@ namespace Backend_Boarding_house_management_system.Migrations
                 column: "AppointmentDateTime");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Appointments_RoomId",
+                name: "IX_Appointments_PropertyId",
                 table: "Appointments",
-                column: "RoomId");
+                column: "PropertyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Appointments_UserId",
@@ -591,9 +680,14 @@ namespace Backend_Boarding_house_management_system.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Contracts_RoomId",
+                name: "IX_Complaints_CreatorId",
+                table: "Complaints",
+                column: "CreatorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Contracts_PropertyId",
                 table: "Contracts",
-                column: "RoomId");
+                column: "PropertyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contracts_Status",
@@ -621,14 +715,14 @@ namespace Backend_Boarding_house_management_system.Migrations
                 column: "ContractId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_PropertyId",
+                table: "Messages",
+                column: "PropertyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Messages_ReceiverId",
                 table: "Messages",
                 column: "ReceiverId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Messages_RoomId",
-                table: "Messages",
-                column: "RoomId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Messages_SenderId",
@@ -651,14 +745,19 @@ namespace Backend_Boarding_house_management_system.Migrations
                 column: "AreaId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Properties_AvailabilityStatus",
+                table: "Properties",
+                column: "AvailabilityStatus");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Properties_LandlordId",
                 table: "Properties",
                 column: "LandlordId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Properties_Status",
+                name: "IX_Properties_ModerationStatus",
                 table: "Properties",
-                column: "Status");
+                column: "ModerationStatus");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PropertyImages_PropertyId",
@@ -666,14 +765,30 @@ namespace Backend_Boarding_house_management_system.Migrations
                 column: "PropertyId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Ratings_PropertyId",
+                table: "Ratings",
+                column: "PropertyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ratings_TenantId_PropertyId",
+                table: "Ratings",
+                columns: new[] { "TenantId", "PropertyId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RoomAmenities_AmenityId",
                 table: "RoomAmenities",
                 column: "AmenityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RoomAmenities_RoomId",
+                name: "IX_RoomAmenities_PropertyId",
                 table: "RoomAmenities",
-                column: "RoomId");
+                column: "PropertyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SearchHistories_UserId",
@@ -697,9 +812,9 @@ namespace Backend_Boarding_house_management_system.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ViewHistories_RoomId",
+                name: "IX_ViewHistories_PropertyId",
                 table: "ViewHistories",
-                column: "RoomId");
+                column: "PropertyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ViewHistories_UserId",
@@ -729,6 +844,9 @@ namespace Backend_Boarding_house_management_system.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Complaints");
+
+            migrationBuilder.DropTable(
                 name: "Messages");
 
             migrationBuilder.DropTable(
@@ -739,6 +857,12 @@ namespace Backend_Boarding_house_management_system.Migrations
 
             migrationBuilder.DropTable(
                 name: "PropertyImages");
+
+            migrationBuilder.DropTable(
+                name: "Ratings");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "RoomAmenities");

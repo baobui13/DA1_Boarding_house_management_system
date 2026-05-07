@@ -40,12 +40,12 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public ICollection<Message> MessagesSent { get; set; } = new List<Message>();
         public ICollection<Message> MessagesReceived { get; set; } = new List<Message>();
+        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+        public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         public ICollection<SearchHistory> SearchHistories { get; set; } = new List<SearchHistory>();
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
         public ICollection<TenantDocument> TenantDocuments { get; set; } = new List<TenantDocument>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
-        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
-        public ICollection<Complaint> Complaints { get; set; } = new List<Complaint>();
     }
 }

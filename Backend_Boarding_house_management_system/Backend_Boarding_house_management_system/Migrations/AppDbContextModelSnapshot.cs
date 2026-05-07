@@ -58,7 +58,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("RoomId")
+                    b.Property<string>("PropertyId")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -80,7 +80,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("AppointmentDateTime");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("PropertyId");
 
                     b.HasIndex("UserId");
 
@@ -133,6 +133,57 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.ToTable("Areas");
                 });
 
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Complaint", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AdminResponse")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatorId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RelatedId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RelatedType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
+
+                    b.ToTable("Complaints");
+                });
+
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Contract", b =>
                 {
                     b.Property<string>("Id")
@@ -170,13 +221,13 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<string>("HandoverNote")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("RefundAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("RoomId")
+                    b.Property<string>("PropertyId")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
@@ -199,7 +250,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("PropertyId");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_Contracts_Status");
@@ -229,16 +280,25 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<decimal?>("ElectricityCost")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("ElectricityUsage")
-                        .HasColumnType("decimal(10,2)");
-
                     b.Property<string>("InvoiceUrl")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<decimal?>("NewElectricityReading")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("NewWaterReading")
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<string>("Note")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<decimal?>("OldElectricityReading")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("OldWaterReading")
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<decimal?>("OtherFees")
                         .HasColumnType("decimal(18,2)");
@@ -248,6 +308,10 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Property<DateTime>("Period")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReceiptUrl")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<decimal>("RentAmount")
                         .HasColumnType("decimal(18,2)");
@@ -265,9 +329,6 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Property<decimal?>("WaterCost")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal?>("WaterUsage")
-                        .HasColumnType("decimal(10,2)");
 
                     b.HasKey("Id");
 
@@ -296,12 +357,12 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<bool>("IsRead")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ReceiverId")
-                        .IsRequired()
+                    b.Property<string>("PropertyId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("RoomId")
+                    b.Property<string>("ReceiverId")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -317,9 +378,9 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("ContractId");
 
-                    b.HasIndex("ReceiverId");
+                    b.HasIndex("PropertyId");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("ReceiverId");
 
                     b.HasIndex("SenderId");
 
@@ -410,7 +471,15 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("AreaId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AvailabilityStatus")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -419,6 +488,9 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<decimal>("ElectricPrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("LandlordId")
                         .IsRequired()
@@ -431,6 +503,11 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<decimal?>("Longitude")
                         .HasColumnType("decimal(10,6)");
 
+                    b.Property<string>("ModerationStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
@@ -439,28 +516,33 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<decimal>("Size")
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("WaterPrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AreaId");
 
+                    b.HasIndex("AvailabilityStatus")
+                        .HasDatabaseName("IX_Properties_AvailabilityStatus");
+
                     b.HasIndex("LandlordId");
 
-                    b.HasIndex("Status")
-                        .HasDatabaseName("IX_Properties_Status");
+                    b.HasIndex("ModerationStatus")
+                        .HasDatabaseName("IX_Properties_ModerationStatus");
 
                     b.ToTable("Properties");
                 });
@@ -497,6 +579,47 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.HasIndex("PropertyId");
 
                     b.ToTable("PropertyImages");
+                });
+
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Rating", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("AIAttitude")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PropertyId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Stars")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId");
+
+                    b.HasIndex("TenantId", "PropertyId")
+                        .IsUnique();
+
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RefreshToken", b =>
@@ -543,7 +666,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("RoomId")
+                    b.Property<string>("PropertyId")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -557,7 +680,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("AmenityId");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("PropertyId");
 
                     b.ToTable("RoomAmenities");
                 });
@@ -638,6 +761,11 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
+                    b.Property<string>("CCCD")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -680,6 +808,9 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("ReputationScore")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -716,7 +847,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("RoomId")
+                    b.Property<string>("PropertyId")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -731,7 +862,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoomId");
+                    b.HasIndex("PropertyId");
 
                     b.HasIndex("UserId");
 
@@ -872,19 +1003,19 @@ namespace Backend_Boarding_house_management_system.Migrations
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Appointment", b =>
                 {
-                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Room")
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
                         .WithMany("Appointments")
-                        .HasForeignKey("RoomId")
+                        .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Backend_Boarding_house_management_system.Entities.User", "User")
                         .WithMany("Appointments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Room");
+                    b.Navigation("Property");
 
                     b.Navigation("User");
                 });
@@ -900,21 +1031,32 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("Landlord");
                 });
 
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Complaint", b =>
+                {
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.User", "Creator")
+                        .WithMany("Complaints")
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Creator");
+                });
+
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Contract", b =>
                 {
-                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Room")
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
                         .WithMany("Contracts")
-                        .HasForeignKey("RoomId")
+                        .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Backend_Boarding_house_management_system.Entities.User", "Tenant")
                         .WithMany("ContractsAsTenant")
                         .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Room");
+                    b.Navigation("Property");
 
                     b.Navigation("Tenant");
                 });
@@ -934,17 +1076,19 @@ namespace Backend_Boarding_house_management_system.Migrations
                 {
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Contract", "Contract")
                         .WithMany("Messages")
-                        .HasForeignKey("ContractId");
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
+                        .WithMany("Messages")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Backend_Boarding_house_management_system.Entities.User", "Receiver")
                         .WithMany("MessagesReceived")
                         .HasForeignKey("ReceiverId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Room")
-                        .WithMany("Messages")
-                        .HasForeignKey("RoomId");
 
                     b.HasOne("Backend_Boarding_house_management_system.Entities.User", "Sender")
                         .WithMany("MessagesSent")
@@ -954,9 +1098,9 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Navigation("Contract");
 
-                    b.Navigation("Receiver");
+                    b.Navigation("Property");
 
-                    b.Navigation("Room");
+                    b.Navigation("Receiver");
 
                     b.Navigation("Sender");
                 });
@@ -1012,6 +1156,25 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("Property");
                 });
 
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Rating", b =>
+                {
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
+                        .WithMany("Ratings")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.User", "Tenant")
+                        .WithMany("Ratings")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+
+                    b.Navigation("Tenant");
+                });
+
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Backend_Boarding_house_management_system.Entities.User", "User")
@@ -1031,15 +1194,15 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Room")
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
                         .WithMany("RoomAmenities")
-                        .HasForeignKey("RoomId")
+                        .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Amenity");
 
-                    b.Navigation("Room");
+                    b.Navigation("Property");
                 });
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.SearchHistory", b =>
@@ -1066,9 +1229,9 @@ namespace Backend_Boarding_house_management_system.Migrations
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.ViewHistory", b =>
                 {
-                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Room")
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
                         .WithMany("ViewHistories")
-                        .HasForeignKey("RoomId")
+                        .HasForeignKey("PropertyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1078,7 +1241,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Room");
+                    b.Navigation("Property");
 
                     b.Navigation("User");
                 });
@@ -1166,6 +1329,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Navigation("PropertyImages");
 
+                    b.Navigation("Ratings");
+
                     b.Navigation("RoomAmenities");
 
                     b.Navigation("ViewHistories");
@@ -1177,6 +1342,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Navigation("Areas");
 
+                    b.Navigation("Complaints");
+
                     b.Navigation("ContractsAsTenant");
 
                     b.Navigation("MessagesReceived");
@@ -1186,6 +1353,8 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("Notifications");
 
                     b.Navigation("Properties");
+
+                    b.Navigation("Ratings");
 
                     b.Navigation("RefreshTokens");
 

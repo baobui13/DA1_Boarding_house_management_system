@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.Contracts;
 
 namespace Backend_Boarding_house_management_system.Entities
 {
@@ -34,6 +33,7 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         [Column(TypeName = "decimal(5,2)")]
         public decimal Size { get; set; }
+        
         public string? Description { get; set; }
 
         [Required]
@@ -41,8 +41,24 @@ namespace Backend_Boarding_house_management_system.Entities
         public decimal Price { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Available";  // Available, Rented, Unavailable
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal ElectricPrice { get; set; }
 
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal WaterPrice { get; set; }
+
+        [Required]
+        public ModerationStatusEnum ModerationStatus { get; set; } = ModerationStatusEnum.Pending;
+
+        [Required]
+        public AvailabilityStatusEnum AvailabilityStatus { get; set; } = AvailabilityStatusEnum.Available;
+
+        public DateTime? ApprovedAt { get; set; }
+
+        public DateTime? RejectedAt { get; set; }
+
+        [StringLength(500)]
         public string? RejectionReason { get; set; }
 
         [Required]
@@ -62,6 +78,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<Contract> Contracts { get; set; } = new List<Contract>();
         public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
         public ICollection<Message> Messages { get; set; } = new List<Message>();
+        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
     }
 }

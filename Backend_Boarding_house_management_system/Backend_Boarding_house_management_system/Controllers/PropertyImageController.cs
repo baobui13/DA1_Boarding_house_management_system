@@ -29,6 +29,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("GetPropertyImageDetailById")]
+        public async Task<ActionResult<PropertyImageDetailResponse>> GetPropertyImageDetailById([FromQuery] GetPropertyImageByIdRequest request)
+        {
+            var image = await _propertyImageService.GetPropertyImageDetailByIdAsync(request);
+            return Ok(image);
+        }
+
+        [AllowAnonymous]
         [HttpGet("GetPropertyImagesByFilter")]
         public async Task<ActionResult<PropertyImageListResponse>> GetPropertyImagesByFilter(
             [FromQuery] EntityFilter<PropertyImage> filter,

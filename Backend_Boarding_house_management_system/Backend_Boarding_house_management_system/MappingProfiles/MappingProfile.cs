@@ -31,6 +31,10 @@ using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
 using Backend_Boarding_house_management_system.DTOs.SearchHistory.Responses;
 using Backend_Boarding_house_management_system.DTOs.ViewHistory.Requests;
 using Backend_Boarding_house_management_system.DTOs.ViewHistory.Responses;
+using Backend_Boarding_house_management_system.DTOs.Rating.Requests;
+using Backend_Boarding_house_management_system.DTOs.Rating.Responses;
+using Backend_Boarding_house_management_system.DTOs.Complaint.Requests;
+using Backend_Boarding_house_management_system.DTOs.Complaint.Responses;
 using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.MappingProfiles
@@ -44,21 +48,37 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<RegisterRequest, User>();
 
             // User mappings
-            CreateMap<User, UserResponse>();
+            CreateMap<User, UserResponse>()
+                .ForMember(
+                    dest => dest.Status,
+                    opt => opt.MapFrom(src =>
+                        src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow
+                            ? "Blocked"
+                            : "Active"))
+                .ForMember(
+                    dest => dest.IsBlocked,
+                    opt => opt.MapFrom(src =>
+                        src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow));
             CreateMap<UpdateUserRequest, User>();
             
             // Area mappings
             CreateMap<Area, AreaResponse>();
+            CreateMap<Area, AreaDetailResponse>();
             CreateMap<CreateAreaRequest, Area>();
             CreateMap<UpdateAreaRequest, Area>();
             
             // Property mappings
             CreateMap<Property, PropertyResponse>();
-            CreateMap<CreatePropertyRequest, Property>();
-            CreateMap<UpdatePropertyRequest, Property>();
+            CreateMap<Property, PropertyDetailResponse>();
+            CreateMap<CreatePropertyRequest, Property>()
+                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => ModerationStatusEnum.Pending))
+                .ForMember(dest => dest.AvailabilityStatus, opt => opt.MapFrom(src => AvailabilityStatusEnum.Available));
+            CreateMap<UpdatePropertyRequest, Property>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // PropertyImage mappings
             CreateMap<PropertyImage, PropertyImageResponse>();
+            CreateMap<PropertyImage, PropertyImageDetailResponse>();
             CreateMap<CreatePropertyImageRequest, PropertyImage>();
 
             // Amenity mappings
@@ -87,6 +107,9 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
 
             // Invoice mappings
             CreateMap<Invoice, InvoiceResponse>();
+            CreateMap<Invoice, InvoiceDetailResponse>()
+                .ForMember(dest => dest.Property, opt => opt.MapFrom(src => src.Contract != null ? src.Contract.Property : null))
+                .ForMember(dest => dest.Tenant, opt => opt.MapFrom(src => src.Contract != null ? src.Contract.Tenant : null));
             CreateMap<CreateInvoiceRequest, Invoice>();
             CreateMap<UpdateInvoiceRequest, Invoice>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -103,6 +126,10 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
 
             // Payment mappings
             CreateMap<Payment, PaymentResponse>();
+            CreateMap<Payment, PaymentDetailResponse>()
+                .ForMember(dest => dest.Contract, opt => opt.MapFrom(src => src.Invoice != null ? src.Invoice.Contract : null))
+                .ForMember(dest => dest.Property, opt => opt.MapFrom(src => src.Invoice != null && src.Invoice.Contract != null ? src.Invoice.Contract.Property : null))
+                .ForMember(dest => dest.Tenant, opt => opt.MapFrom(src => src.Invoice != null && src.Invoice.Contract != null ? src.Invoice.Contract.Tenant : null));
             CreateMap<CreatePaymentRequest, Payment>();
 
             // TenantDocument mappings
@@ -118,6 +145,20 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // ViewHistory mappings
             CreateMap<ViewHistory, ViewHistoryResponse>();
             CreateMap<CreateViewHistoryRequest, ViewHistory>();
+
+            // Rating mappings
+            CreateMap<Rating, RatingResponse>();
+            CreateMap<Rating, RatingDetailResponse>();
+            CreateMap<CreateRatingRequest, Rating>();
+            CreateMap<UpdateRatingRequest, Rating>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            // Complaint mappings
+            CreateMap<Complaint, ComplaintResponse>();
+            CreateMap<Complaint, ComplaintDetailResponse>();
+            CreateMap<CreateComplaintRequest, Complaint>();
+            CreateMap<UpdateComplaintRequest, Complaint>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         }
     }
 }

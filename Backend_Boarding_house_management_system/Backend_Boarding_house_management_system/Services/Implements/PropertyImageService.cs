@@ -14,12 +14,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class PropertyImageService : IPropertyImageService
     {
         private readonly IPropertyImageRepository _propertyImageRepository;
+        private readonly IPropertyRepository _propertyRepository;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
 
-        public PropertyImageService(IPropertyImageRepository propertyImageRepository, IMapper mapper, IPhotoService photoService)
+        public PropertyImageService(
+            IPropertyImageRepository propertyImageRepository,
+            IPropertyRepository propertyRepository,
+            IMapper mapper,
+            IPhotoService photoService)
         {
             _propertyImageRepository = propertyImageRepository;
+            _propertyRepository = propertyRepository;
             _mapper = mapper;
             _photoService = photoService;
         }
@@ -31,6 +37,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
 
             return _mapper.Map<PropertyImageResponse>(image);
+        }
+
+        public async Task<PropertyImageDetailResponse> GetPropertyImageDetailByIdAsync(GetPropertyImageByIdRequest request)
+        {
+            var image = await _propertyImageRepository.GetByIdWithDetailsAsync(request.Id);
+            if (image == null)
+                throw new NotFoundException($"Khong tim thay hinh anh voi Id '{request.Id}'.");
+
+            return _mapper.Map<PropertyImageDetailResponse>(image);
         }
 
         public async Task<PropertyImageListResponse> GetPropertyImagesByFilterAsync(
@@ -50,6 +65,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyImageResponse> CreatePropertyImageAsync(CreatePropertyImageRequest request)
         {
+            if (await _propertyRepository.GetByIdAsync(request.PropertyId) == null)
+                throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
             var uploadResult = await _photoService.AddPhotoAsync(request.File);
             if (uploadResult.Error != null)
                 throw new BadRequestException("Upload anh len Cloudinary that bai: " + uploadResult.Error.Message);

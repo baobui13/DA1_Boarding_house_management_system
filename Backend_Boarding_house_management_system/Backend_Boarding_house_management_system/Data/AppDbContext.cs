@@ -22,13 +22,13 @@ namespace Backend_Boarding_house_management_system.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
+        public DbSet<Complaint> Complaints { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<SearchHistory> SearchHistories { get; set; }
         public DbSet<ViewHistory> ViewHistories { get; set; }
         public DbSet<TenantDocument> TenantDocuments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<Rating> Ratings { get; set; }
-        public DbSet<Complaint> Complaints { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

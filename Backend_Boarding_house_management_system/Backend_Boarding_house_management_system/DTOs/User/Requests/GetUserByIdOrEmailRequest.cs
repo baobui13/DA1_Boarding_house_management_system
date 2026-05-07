@@ -4,7 +4,6 @@ namespace Backend_Boarding_house_management_system.DTOs.User.Requests
 {
     public class GetUserByIdOrEmailRequest
     {
-        [Required]
         public string? Id { get; set; }
 
         [EmailAddress]

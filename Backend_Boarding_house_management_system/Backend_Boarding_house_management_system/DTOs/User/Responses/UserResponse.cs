@@ -12,6 +12,10 @@ namespace Backend_Boarding_house_management_system.DTOs.User.Responses
 
         public string Role { get; set; } = null!;
 
+        public string Status { get; set; } = null!;
+
+        public bool IsBlocked { get; set; }
+
         public string? Address { get; set; }
 
         public string? AvatarUrl { get; set; }

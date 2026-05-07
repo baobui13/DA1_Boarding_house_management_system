@@ -30,6 +30,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [Authorize(Roles = "Landlord,Tenant,Admin")]
+        [HttpGet("GetInvoiceDetailById")]
+        public async Task<ActionResult<InvoiceDetailResponse>> GetInvoiceDetailById([FromQuery] GetInvoiceByIdRequest request)
+        {
+            var result = await _invoiceService.GetDetailByIdAsync(request);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Landlord,Tenant,Admin")]
         [HttpGet("GetInvoicesByFilter")]
         public async Task<ActionResult<InvoiceListResponse>> GetInvoicesByFilter(
             [FromQuery] EntityFilter<Invoice> filter,

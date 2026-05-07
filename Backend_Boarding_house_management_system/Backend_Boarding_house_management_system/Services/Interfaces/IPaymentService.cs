@@ -10,6 +10,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
     public interface IPaymentService
     {
         Task<PaymentResponse> GetByIdAsync(GetPaymentByIdRequest request);
+        Task<PaymentDetailResponse> GetDetailByIdAsync(GetPaymentByIdRequest request);
         Task<PaymentListResponse> GetByFilterAsync(
             EntityFilter<Payment> filter,
             EntitySort<Payment> sort,

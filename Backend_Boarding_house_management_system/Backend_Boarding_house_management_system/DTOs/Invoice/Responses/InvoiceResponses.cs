@@ -2,6 +2,11 @@ using Backend_Boarding_house_management_system.DTOs.Base;
 
 namespace Backend_Boarding_house_management_system.DTOs.Invoice.Responses
 {
+    using Backend_Boarding_house_management_system.DTOs.Contract.Responses;
+    using Backend_Boarding_house_management_system.DTOs.Payment.Responses;
+    using Backend_Boarding_house_management_system.DTOs.Property.Responses;
+    using Backend_Boarding_house_management_system.DTOs.User.Responses;
+
     public class InvoiceResponse
     {
         public string Id { get; set; } = null!;
@@ -28,5 +33,13 @@ namespace Backend_Boarding_house_management_system.DTOs.Invoice.Responses
 
     public class InvoiceListResponse : PagedResponse<InvoiceResponse>
     {
+    }
+
+    public class InvoiceDetailResponse : InvoiceResponse
+    {
+        public ContractResponse? Contract { get; set; }
+        public PropertyResponse? Property { get; set; }
+        public UserResponse? Tenant { get; set; }
+        public List<PaymentResponse> Payments { get; set; } = new();
     }
 }

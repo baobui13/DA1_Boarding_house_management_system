@@ -10,6 +10,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
     public interface IAreaService
     {
         Task<AreaResponse> GetAreaByIdAsync(GetAreaByIdRequest request);
+        Task<AreaDetailResponse> GetAreaDetailByIdAsync(GetAreaByIdRequest request);
         Task<AreaListResponse> GetAreasByFilterAsync(
             EntityFilter<Area> filter,
             EntitySort<Area> sort,

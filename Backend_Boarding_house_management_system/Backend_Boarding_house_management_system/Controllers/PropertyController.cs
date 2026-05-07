@@ -30,6 +30,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("GetPropertyDetailById")]
+        public async Task<ActionResult<PropertyDetailResponse>> GetPropertyDetailById([FromQuery] GetPropertyByIdRequest request)
+        {
+            var property = await _propertyService.GetPropertyDetailByIdAsync(request);
+            return Ok(property);
+        }
+
+        [AllowAnonymous]
         [HttpGet("GetPropertiesByFilter")]
         public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter(
             [FromQuery] EntityFilter<Property> filter,
@@ -53,6 +61,30 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<IActionResult> UpdateProperty([FromBody] UpdatePropertyRequest request)
         {
             await _propertyService.UpdatePropertyAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("ApproveProperty")]
+        public async Task<IActionResult> ApproveProperty([FromBody] ApprovePropertyRequest request)
+        {
+            await _propertyService.ApprovePropertyAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("RejectProperty")]
+        public async Task<IActionResult> RejectProperty([FromBody] RejectPropertyRequest request)
+        {
+            await _propertyService.RejectPropertyAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
+        [HttpPut("UpdateAvailabilityStatus")]
+        public async Task<IActionResult> UpdateAvailabilityStatus([FromBody] UpdateAvailabilityStatusRequest request)
+        {
+            await _propertyService.UpdateAvailabilityStatusAsync(request);
             return Ok();
         }
 

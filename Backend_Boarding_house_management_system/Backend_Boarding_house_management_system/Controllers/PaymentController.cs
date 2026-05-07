@@ -31,6 +31,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [Authorize(Roles = "Landlord,Tenant,Admin")]
+        [HttpGet("GetPaymentDetailById")]
+        public async Task<ActionResult<PaymentDetailResponse>> GetPaymentDetailById([FromQuery] GetPaymentByIdRequest request)
+        {
+            var result = await _paymentService.GetDetailByIdAsync(request);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Landlord,Tenant,Admin")]
         [HttpGet("GetPaymentsByFilter")]
         public async Task<ActionResult<PaymentListResponse>> GetPaymentsByFilter(
             [FromQuery] EntityFilter<Payment> filter,
