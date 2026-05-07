@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend_Boarding_house_management_system.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260503193419_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260506164142_Migration1")]
+    partial class Migration1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -763,11 +763,6 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
-
-                    b.Property<string>("CCCD")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()

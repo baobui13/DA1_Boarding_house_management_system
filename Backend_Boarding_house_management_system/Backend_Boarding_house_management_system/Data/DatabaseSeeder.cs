@@ -61,7 +61,6 @@ namespace Backend_Boarding_house_management_system.Data
                 NormalizedEmail = "ADMIN@TEST.COM",
                 NormalizedUserName = "ADMIN@TEST.COM",
                 FullName = "System Admin",
-                CCCD = "000000000000",
                 Role = "Admin",
                 EmailConfirmed = true,
                 CreatedAt = EnsureUtc(DateTime.UtcNow),
@@ -77,7 +76,6 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
-                .RuleFor(u => u.CCCD, f => f.Random.Replace("0791########"))
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
                 .RuleFor(u => u.Role, "Landlord")
                 .RuleFor(u => u.EmailConfirmed, true)
@@ -95,7 +93,6 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
-                .RuleFor(u => u.CCCD, f => f.Random.Replace("0791########"))
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
                 .RuleFor(u => u.Role, "Tenant")
                 .RuleFor(u => u.EmailConfirmed, true)
