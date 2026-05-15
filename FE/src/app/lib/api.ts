@@ -50,11 +50,23 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     requestBody = JSON.stringify(body);
   }
 
-  const response = await fetch(buildUrl(path, query), {
-    method,
-    headers: requestHeaders,
-    body: requestBody,
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(buildUrl(path, query), {
+      method,
+      headers: requestHeaders,
+      body: requestBody,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error && /fetch|load failed|network/i.test(error.message)
+        ? "Khong the ket noi backend. Hay kiem tra backend dang chay va CORS da duoc bat."
+        : error instanceof Error
+        ? error.message
+        : "Khong the ket noi backend.";
+    throw new ApiError(message, 0);
+  }
 
   const contentType = response.headers.get("content-type") || "";
   const payload = contentType.includes("application/json") ? await response.json().catch(() => null) : await response.text();

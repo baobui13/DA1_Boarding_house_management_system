@@ -3,7 +3,7 @@ import type { PagedResponse } from "./types";
 
 export interface ContractResponse {
   id: string;
-  roomId: string;
+  propertyId: string;
   tenantId: string;
   startDate: string;
   endDate: string;
@@ -33,5 +33,52 @@ export async function getContractById(token: string, id: string) {
   return apiRequest<ContractResponse>("Contract/GetContractById", {
     authToken: token,
     query: { id },
+  });
+}
+
+export async function createContract(
+  token: string,
+  input: {
+    propertyId: string;
+    tenantId: string;
+    startDate: string;
+    endDate: string;
+    deposit: number;
+    terms?: string | null;
+    contractFileUrl?: string | null;
+    status?: string;
+  },
+) {
+  return apiRequest<ContractResponse>("Contract/CreateContract", {
+    method: "POST",
+    authToken: token,
+    body: {
+      ...input,
+      status: input.status ?? "Active",
+    },
+  });
+}
+
+export async function updateContract(
+  token: string,
+  input: {
+    id: string;
+    endDate?: string | null;
+    terms?: string | null;
+    contractFileUrl?: string | null;
+    status?: string | null;
+    actualEndDate?: string | null;
+    handoverNote?: string | null;
+    deductionAmount?: number | null;
+    deductionReason?: string | null;
+    refundAmount?: number | null;
+    handoverConfirmedBy?: string | null;
+    handoverConfirmedAt?: string | null;
+  },
+) {
+  return apiRequest<void>("Contract/UpdateContract", {
+    method: "PUT",
+    authToken: token,
+    body: input,
   });
 }

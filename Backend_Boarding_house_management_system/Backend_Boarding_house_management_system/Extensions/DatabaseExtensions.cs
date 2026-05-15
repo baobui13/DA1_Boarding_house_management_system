@@ -36,12 +36,28 @@ namespace Backend_Boarding_house_management_system.Extensions
                 {
                     logger.LogInformation("I [INFO] Attempting to connect to the database and check migrations...");
 
+                    await EnsureCriticalSchemaAsync(dbContext);
+                    await EnsureMigrationHistoryConsistencyAsync(dbContext);
+
                     // MigrateAsync sẽ TỰ ĐỘNG kết nối. Nếu sai Pass/Port, nó sẽ ném ra lỗi chi tiết rớt xuống catch.
                     // Nếu kết nối thành công, nó sẽ tự động tạo bảng luôn. Gộp 2 việc làm 1!
                     await dbContext.Database.MigrateAsync();
 
-                    // Seed data
-                    await Backend_Boarding_house_management_system.Data.DatabaseSeeder.SeedDataAsync(dbContext);
+                    var forceReseedPropertyData = string.Equals(
+                        Environment.GetEnvironmentVariable("QLT_FORCE_RESEED_PROPERTY_DATA"),
+                        "true",
+                        StringComparison.OrdinalIgnoreCase
+                    );
+
+                    if (forceReseedPropertyData)
+                    {
+                        logger.LogInformation("I [INFO] Force reseeding property catalog for development data...");
+                        await Backend_Boarding_house_management_system.Data.DatabaseSeeder.ReseedPropertyCatalogAsync(dbContext);
+                    }
+                    else
+                    {
+                        await Backend_Boarding_house_management_system.Data.DatabaseSeeder.SeedDataAsync(dbContext);
+                    }
 
                     logger.LogInformation("O [SUCCESS] Successfully connected to PostgreSQL Database (Supabase) and migrations applied.");
                 }
@@ -58,6 +74,115 @@ namespace Backend_Boarding_house_management_system.Extensions
             }
 
             return app;
+        }
+
+        private static async Task EnsureCriticalSchemaAsync(AppDbContext dbContext)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Users"
+                ADD COLUMN IF NOT EXISTS "CCCD" character varying(20) NOT NULL DEFAULT '';
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Users"
+                ADD COLUMN IF NOT EXISTS "ReputationScore" integer NOT NULL DEFAULT 0;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "ElectricPrice" numeric(18,2) NOT NULL DEFAULT 0;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "WaterPrice" numeric(18,2) NOT NULL DEFAULT 0;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "ModerationStatus" integer NOT NULL DEFAULT 0;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "AvailabilityStatus" integer NOT NULL DEFAULT 0;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "ApprovedAt" timestamp with time zone NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "RejectedAt" timestamp with time zone NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Properties"
+                ADD COLUMN IF NOT EXISTS "RejectionReason" character varying(500) NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Invoices"
+                ADD COLUMN IF NOT EXISTS "OldElectricityReading" numeric(10,2) NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Invoices"
+                ADD COLUMN IF NOT EXISTS "NewElectricityReading" numeric(10,2) NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Invoices"
+                ADD COLUMN IF NOT EXISTS "OldWaterReading" numeric(10,2) NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Invoices"
+                ADD COLUMN IF NOT EXISTS "NewWaterReading" numeric(10,2) NULL;
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "Invoices"
+                ADD COLUMN IF NOT EXISTS "ReceiptUrl" character varying(255) NULL;
+            """);
+        }
+
+        private static async Task EnsureMigrationHistoryConsistencyAsync(AppDbContext dbContext)
+        {
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+                    "MigrationId" character varying(150) NOT NULL,
+                    "ProductVersion" character varying(32) NOT NULL,
+                    CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+                );
+            """);
+
+            await dbContext.Database.ExecuteSqlRawAsync("""
+                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+                SELECT '20260503193419_InitialCreate', '10.0.5'
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'Amenities'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'Users'
+                )
+                AND EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'Areas'
+                )
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM "__EFMigrationsHistory"
+                    WHERE "MigrationId" = '20260503193419_InitialCreate'
+                );
+            """);
         }
     }
 }

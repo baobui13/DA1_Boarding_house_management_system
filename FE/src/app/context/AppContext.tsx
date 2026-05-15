@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   buildSession,
+  buildSessionFromAuth,
   getUserByEmail,
   loginRequest,
   logoutRequest,
@@ -28,7 +29,13 @@ interface AppContextType {
   setRole: (role: Role) => void;
 }
 
-const AppContext = createContext<AppContextType | null>(null);
+type AppContextStore = {
+  appContext?: React.Context<AppContextType | null>;
+};
+
+const appContextStore = globalThis as typeof globalThis & AppContextStore;
+const AppContext = appContextStore.appContext ?? createContext<AppContextType | null>(null);
+appContextStore.appContext = AppContext;
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<StoredSession | null>(null);
@@ -39,6 +46,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthReady(true);
   }, []);
 
+  useEffect(() => {
+    if (!session?.token || !session.user.email) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const userResponse = await getUserByEmail(session.user.email);
+        if (cancelled) return;
+
+        const refreshedSession = buildSession(
+          {
+            token: session.token,
+            refreshToken: session.refreshToken,
+            email: session.user.email,
+            fullName: session.user.name,
+            role: session.user.role,
+            avatarUrl: session.user.avatar,
+          },
+          userResponse,
+        );
+
+        persistSession(refreshedSession);
+      } catch {
+        // Keep the stored session when the refresh probe fails.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.refreshToken, session?.token, session?.user.avatar, session?.user.email, session?.user.name, session?.user.role]);
+
   const persistSession = (nextSession: StoredSession | null) => {
     setSession(nextSession);
     writeStoredSession(nextSession);
@@ -46,8 +88,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const authResponse = await loginRequest(email, password);
-    const userResponse = await getUserByEmail(authResponse.email);
-    const nextSession = buildSession(authResponse, userResponse);
+    let nextSession = buildSessionFromAuth(authResponse);
+
+    try {
+      const userResponse = await getUserByEmail(authResponse.email);
+      nextSession = buildSession(authResponse, userResponse);
+    } catch {
+      // Backend DTO currently requires Id even when endpoint name suggests email lookup.
+      // Fall back to claims embedded in the login token so sign-in can still complete.
+    }
+
     persistSession(nextSession);
     return nextSession.user;
   };

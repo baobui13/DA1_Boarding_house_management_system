@@ -22,6 +22,19 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements.Base
         protected virtual IQueryable<TEntity> GetQueryWithIncludes()
             => _dbSet;
 
+        protected EntityPage EnsurePage(EntityPage? page, uint defaultPageNumber = 1, uint defaultPageSize = 10)
+        {
+            page ??= new EntityPage();
+            page.PageNumber ??= defaultPageNumber;
+
+            if (page.PageSize is null or 0)
+            {
+                page.PageSize = defaultPageSize;
+            }
+
+            return page;
+        }
+
         public virtual async Task<TEntity?> GetByIdAsync(TKey id)
             => await _dbSet.FindAsync(id);
 
@@ -35,6 +48,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements.Base
             EntitySort<TEntity> sort,
             EntityPage page)
         {
+            page = EnsurePage(page);
             var query = GetQueryWithIncludes().AsNoTracking();
 
             query = query.Where(filter);

@@ -28,6 +28,7 @@ export interface UserResponse {
   address?: string | null;
   avatarUrl?: string | null;
   phoneNumber?: string | null;
+  isBlocked?: boolean;
   createdAt: string;
   updatedAt?: string | null;
 }
@@ -51,9 +52,12 @@ export interface PropertyResponse {
   description?: string | null;
   price: number;
   status: string;
+  moderationStatus: string;
   rejectionReason?: string | null;
   createdAt: string;
   updatedAt?: string | null;
+  electricPrice?: number | null;
+  waterPrice?: number | null;
 }
 
 export interface PropertyImageResponse {
@@ -67,16 +71,35 @@ export interface PropertyImageResponse {
 
 export interface RoomAmenityResponse {
   id: string;
-  roomId: string;
+  propertyId: string;
   amenityId: string;
   amenityName: string;
   status: string;
   note?: string | null;
 }
 
+export interface AmenityResponse {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
 export interface PropertyListing extends PropertyResponse {
   images: string[];
   amenities: string[];
+}
+
+export interface AreaResponse {
+  id: string;
+  name: string;
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  roomCount: number;
+  description?: string | null;
+  landlordId: string;
+  createdAt: string;
+  updatedAt?: string | null;
 }
 
 export interface StoredSession {

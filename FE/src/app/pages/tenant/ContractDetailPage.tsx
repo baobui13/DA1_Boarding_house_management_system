@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, FileText, CheckCircle2, AlertCircle, XCircle, TriangleAlert } from "lucide-react";
+import { ArrowLeft, FileText, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { getContractById, type ContractResponse } from "../../lib/contracts";
+import { getPropertyById } from "../../lib/properties";
 import { formatCurrency } from "../../lib/format";
 
 export default function ContractDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { token } = useApp();
+  const { token, currentUser } = useApp();
   const [contract, setContract] = useState<ContractResponse | null>(null);
+  const [propertyName, setPropertyName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -17,7 +19,7 @@ export default function ContractDetailPage() {
     let cancelled = false;
 
     (async () => {
-      if (!token) {
+      if (!token || !currentUser) {
         setError("Thiếu token đăng nhập.");
         setLoading(false);
         return;
@@ -25,7 +27,14 @@ export default function ContractDetailPage() {
 
       try {
         const response = await getContractById(token, id);
-        if (!cancelled) setContract(response);
+        if (response.tenantId !== currentUser.id) {
+          throw new Error("Bạn không có quyền xem hợp đồng này.");
+        }
+        const property = await getPropertyById(response.propertyId).catch(() => null);
+        if (!cancelled) {
+          setContract(response);
+          setPropertyName(property?.propertyName || "");
+        }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Không tải được hợp đồng.");
       } finally {
@@ -36,7 +45,7 @@ export default function ContractDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, token]);
+  }, [currentUser?.id, id, token]);
 
   const statusConfig = (() => {
     const status = contract?.status.toLowerCase();
@@ -71,15 +80,6 @@ export default function ContractDetailPage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-        <div className="flex items-start gap-3">
-          <TriangleAlert className="w-5 h-5 mt-0.5 shrink-0" />
-          <p style={{ fontSize: "13px" }}>
-            `ContractController.GetContractById` hiện chưa implement ở backend. Trang này đã chuyển sang API thật và hiển thị lỗi backend thực tế.
-          </p>
-        </div>
-      </div>
-
       {loading ? (
         <div className="h-48 rounded-2xl bg-gray-100 animate-pulse" />
       ) : error ? (
@@ -93,7 +93,7 @@ export default function ContractDetailPage() {
               <FileText className="w-6 h-6" />
               <h2 style={{ fontSize: "18px", fontWeight: 700 }}>HỢP ĐỒNG THUÊ</h2>
             </div>
-            <p style={{ fontSize: "13px" }}>RoomId: {contract.roomId}</p>
+            <p style={{ fontSize: "13px" }}>{propertyName || `Tài sản #${contract.propertyId}`}</p>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <Info label="TenantId" value={contract.tenantId} />

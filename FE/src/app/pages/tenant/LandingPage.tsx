@@ -8,7 +8,7 @@ import { formatCurrency } from "../../lib/format";
 const districts = ["Bình Thạnh", "Quận 7", "Quận 10", "Gò Vấp", "Thủ Đức", "Quận 3"];
 
 function isVisibleListing(item: PropertyListing) {
-  return !["rejected", "unavailable"].includes(item.status.toLowerCase());
+  return !["rejected", "unavailable", "rented"].includes(item.status.toLowerCase());
 }
 
 export default function LandingPage() {
@@ -27,7 +27,10 @@ export default function LandingPage() {
       setError("");
 
       try {
-        const response = await getPropertyListings();
+        const response = await getPropertyListings({
+          pageSize: 5,
+          page: 1,
+        });
         if (!cancelled) {
           setListings(response.items.filter(isVisibleListing));
         }
@@ -47,7 +50,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  const suggestedRooms = useMemo(() => listings.slice(0, 4), [listings]);
+  const suggestedRooms = useMemo(() => listings.slice(0, 5), [listings]);
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -159,12 +162,12 @@ export default function LandingPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-600">{error}</div>
         ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="bg-gray-100 rounded-2xl animate-pulse aspect-[4/5]" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="bg-gray-100 rounded-2xl animate-pulse aspect-[4/5]" />
+              ))}
+            </div>
+          ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {suggestedRooms.map((room) => (
               <div
                 key={room.id}

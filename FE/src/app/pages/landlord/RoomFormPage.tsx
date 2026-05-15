@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Save, Home, MapPin, DollarSign, Maximize2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Save, Home, MapPin, DollarSign, Maximize2, AlertTriangle, ImagePlus, Star, Trash2 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { createProperty, getPropertyById, updateProperty } from "../../lib/properties";
+import { getAmenities } from "../../lib/amenities";
+import { getAreas } from "../../lib/areas";
+import {
+  createProperty,
+  createPropertyAmenity,
+  createPropertyImage,
+  deletePropertyImage,
+  deletePropertyAmenity,
+  getPropertyAmenities,
+  getPropertyById,
+  getPropertyImages,
+  updatePropertyImage,
+  updateProperty,
+} from "../../lib/properties";
+import type { AmenityResponse, AreaResponse, PropertyImageResponse } from "../../lib/types";
 
 export default function RoomFormPage() {
   const { id } = useParams();
@@ -11,31 +25,55 @@ export default function RoomFormPage() {
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
   const [error, setError] = useState("");
+  const [areas, setAreas] = useState<AreaResponse[]>([]);
+  const [amenities, setAmenities] = useState<AmenityResponse[]>([]);
+  const [images, setImages] = useState<PropertyImageResponse[]>([]);
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [primaryImageId, setPrimaryImageId] = useState<string>("");
   const [formData, setFormData] = useState({
     propertyName: "",
     address: "",
     price: 0,
     size: 0,
+    electricPrice: 0,
+    waterPrice: 0,
     status: "Available",
     description: "",
+    areaId: "",
+    amenities: [] as string[],
   });
 
   useEffect(() => {
-    if (!isEdit || !id) return;
-
     let cancelled = false;
     (async () => {
       try {
-        const property = await getPropertyById(id);
+        const [areaResponse, amenityResponse, property, roomAmenities, propertyImages] = await Promise.all([
+          currentUser ? getAreas({ landlordId: currentUser.id }) : Promise.resolve({ items: [] as AreaResponse[] }),
+          getAmenities(),
+          isEdit && id ? getPropertyById(id) : Promise.resolve(null),
+          isEdit && id ? getPropertyAmenities(id) : Promise.resolve([]),
+          isEdit && id ? getPropertyImages(id) : Promise.resolve([]),
+        ]);
         if (!cancelled) {
-          setFormData({
-            propertyName: property.propertyName,
-            address: property.address || "",
-            price: Number(property.price),
-            size: Number(property.size),
-            status: property.status,
-            description: property.description || "",
-          });
+          setAreas(areaResponse.items);
+          setAmenities(amenityResponse);
+          if (property) {
+            setFormData({
+              propertyName: property.propertyName,
+              address: property.address || "",
+              price: Number(property.price),
+              size: Number(property.size),
+              electricPrice: Number(property.electricPrice || 0),
+              waterPrice: Number(property.waterPrice || 0),
+              status: property.status,
+              description: property.description || "",
+              areaId: property.areaId || "",
+              amenities: roomAmenities.map((item) => item.amenityName),
+            });
+          }
+          setImages(propertyImages);
+          setPrimaryImageId(propertyImages.find((item) => item.isPrimary)?.id || propertyImages[0]?.id || "");
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Không tải được dữ liệu.");
@@ -47,14 +85,41 @@ export default function RoomFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, isEdit]);
+  }, [currentUser, id, isEdit]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: ["price", "size"].includes(name) ? Number(value) || 0 : value,
+      [name]: ["price", "size", "electricPrice", "waterPrice"].includes(name) ? Number(value) || 0 : value,
     }));
+  };
+
+  const toggleAmenity = (name: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      amenities: prev.amenities.includes(name)
+        ? prev.amenities.filter((item) => item !== name)
+        : [...prev.amenities, name],
+    }));
+  };
+
+  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const incoming = Array.from(e.target.files || []).filter((file) => file.type.startsWith("image/"));
+    setNewFiles((prev) => [...prev, ...incoming]);
+    e.target.value = "";
+  };
+
+  const removePendingFile = (targetFile: File) => {
+    setNewFiles((prev) => prev.filter((file) => file !== targetFile));
+  };
+
+  const markImageForRemoval = (imageId: string) => {
+    setRemovedImageIds((prev) => (prev.includes(imageId) ? prev : [...prev, imageId]));
+    if (primaryImageId === imageId) {
+      const fallback = images.find((item) => item.id !== imageId && !removedImageIds.includes(item.id));
+      setPrimaryImageId(fallback?.id || "");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,10 +131,35 @@ export default function RoomFormPage() {
     }
 
     try {
+      let propertyId = id;
       if (isEdit && id) {
         await updateProperty(token, { id, ...formData });
       } else {
-        await createProperty(token, { landlordId: currentUser.id, ...formData });
+        const created = await createProperty(token, { landlordId: currentUser.id, ...formData });
+        propertyId = created.id;
+      }
+
+      if (propertyId) {
+        await syncRoomAmenities(token, propertyId, formData.amenities, amenities);
+        await Promise.all(removedImageIds.map((imageId) => deletePropertyImage(token, imageId)));
+
+        let currentImages = await getPropertyImages(propertyId);
+        for (let index = 0; index < newFiles.length; index += 1) {
+          const file = newFiles[index];
+          const createdImage = await createPropertyImage(token, {
+            propertyId,
+            file,
+            isPrimary: currentImages.length === 0 && index === 0,
+          });
+          currentImages = [...currentImages, createdImage];
+        }
+
+        if (primaryImageId) {
+          await updatePropertyImage(token, {
+            id: primaryImageId,
+            isPrimary: true,
+          });
+        }
       }
       navigate("/landlord/properties");
     } catch (err) {
@@ -96,7 +186,7 @@ export default function RoomFormPage() {
         <div className="flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 mt-0.5 shrink-0" />
           <p style={{ fontSize: "13px" }}>
-            Backend chưa có model/API `Room` riêng, nên form này chỉ lưu các field có thật của `Property`: tên, địa chỉ, giá, diện tích, status, mô tả.
+            Backend hiện có ảnh phòng qua `PropertyImage` và tiện ích phòng qua `RoomAmenity`. Ảnh khu và tiện ích khu vẫn chưa có API riêng.
           </p>
         </div>
       </div>
@@ -138,6 +228,31 @@ export default function RoomFormPage() {
                   <input type="number" name="size" value={formData.size} onChange={handleChange} required className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none" />
                 </div>
               </div>
+              <div>
+                <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Giá điện</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input type="number" name="electricPrice" value={formData.electricPrice} onChange={handleChange} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Giá nước</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input type="number" name="waterPrice" value={formData.waterPrice} onChange={handleChange} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none" />
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Thuộc khu</label>
+                <select name="areaId" value={formData.areaId} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none">
+                  <option value="">Chưa gán khu</option>
+                  {areas.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="md:col-span-2">
                 <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Trạng thái</label>
                 <select name="status" value={formData.status} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none">
@@ -148,6 +263,89 @@ export default function RoomFormPage() {
                   <option value="Unavailable">Unavailable</option>
                   <option value="Rejected">Rejected</option>
                 </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 mb-2" style={{ fontSize: "13px", fontWeight: 500 }}>Tiện ích phòng</label>
+                <div className="flex flex-wrap gap-2">
+                  {amenities.map((amenity) => {
+                    const active = formData.amenities.includes(amenity.name);
+                    return (
+                      <button
+                        key={amenity.id}
+                        type="button"
+                        onClick={() => toggleAmenity(amenity.name)}
+                        className={`rounded-full border px-3 py-1.5 transition-colors ${
+                          active ? "border-orange-200 bg-orange-50 text-orange-600" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
+                        }`}
+                        style={{ fontSize: "12px", fontWeight: 600 }}
+                      >
+                        {amenity.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="md:col-span-2 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="block text-gray-700" style={{ fontSize: "13px", fontWeight: 500 }}>Ảnh phòng</label>
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-orange-600 hover:bg-orange-100" style={{ fontSize: "12px", fontWeight: 700 }}>
+                    <ImagePlus className="w-4 h-4" />
+                    Thêm ảnh
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleFilesSelected} />
+                  </label>
+                </div>
+
+                <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-gray-500 mb-3" style={{ fontSize: "12px" }}>
+                    Khu hiện chưa có API ảnh riêng. Ảnh bên dưới chỉ áp dụng cho phòng/tài sản.
+                  </p>
+
+                  {images.filter((item) => !removedImageIds.includes(item.id)).length === 0 && newFiles.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-8 text-center text-gray-400" style={{ fontSize: "12px" }}>
+                      Chưa có ảnh nào cho phòng này.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                      {images
+                        .filter((item) => !removedImageIds.includes(item.id))
+                        .map((image) => (
+                          <div key={image.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                            <img src={image.imageUrl} alt="" className="h-28 w-full object-cover" />
+                            <div className="flex items-center justify-between gap-2 p-2">
+                              <button
+                                type="button"
+                                onClick={() => setPrimaryImageId(image.id)}
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
+                                  primaryImageId === image.id ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"
+                                }`}
+                                style={{ fontSize: "11px", fontWeight: 700 }}
+                              >
+                                <Star className="w-3.5 h-3.5" />
+                                Ảnh chính
+                              </button>
+                              <button type="button" onClick={() => markImageForRemoval(image.id)} className="text-red-500 hover:text-red-600">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                      {newFiles.map((file, index) => (
+                        <div key={`${file.name}-${index}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                          <img src={URL.createObjectURL(file)} alt="" className="h-28 w-full object-cover" />
+                          <div className="flex items-center justify-between gap-2 p-2">
+                            <span className="truncate text-gray-500" style={{ fontSize: "11px", fontWeight: 600 }}>
+                              Ảnh mới
+                            </span>
+                            <button type="button" onClick={() => removePendingFile(file)} className="text-red-500 hover:text-red-600">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Mô tả</label>
@@ -165,5 +363,37 @@ export default function RoomFormPage() {
         </form>
       )}
     </div>
+  );
+}
+
+async function syncRoomAmenities(
+  token: string,
+  propertyId: string,
+  selectedAmenityNames: string[],
+  amenityOptions: AmenityResponse[],
+) {
+  const currentAmenities = await getPropertyAmenities(propertyId);
+  const selectedSet = new Set(selectedAmenityNames);
+  const currentByName = new Map(currentAmenities.map((item) => [item.amenityName, item]));
+  const optionByName = new Map(amenityOptions.map((item) => [item.name, item]));
+
+  await Promise.all(
+    currentAmenities
+      .filter((item) => !selectedSet.has(item.amenityName))
+      .map((item) => deletePropertyAmenity(token, item.id)),
+  );
+
+  await Promise.all(
+    Array.from(selectedSet)
+      .filter((name) => !currentByName.has(name))
+      .map((name) => {
+        const amenity = optionByName.get(name);
+        if (!amenity) return Promise.resolve();
+        return createPropertyAmenity(token, {
+          propertyId,
+          amenityId: amenity.id,
+          status: "Working",
+        });
+      }),
   );
 }

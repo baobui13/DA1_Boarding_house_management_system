@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, Check, TriangleAlert, RefreshCw } from "lucide-react";
+import { Bell, Check, RefreshCw } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { getNotifications, type NotificationResponse } from "../../lib/notifications";
+import { getNotifications, type NotificationResponse, updateNotificationRead } from "../../lib/notifications";
 
 export default function NotificationsPage() {
   const { token, currentUser } = useApp();
@@ -9,6 +9,7 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadNotifications = async () => {
     if (!token || !currentUser) {
@@ -41,6 +42,26 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
+  const handleMarkAsRead = async (notification: NotificationResponse) => {
+    if (!token || notification.isRead) return;
+
+    setUpdatingId(notification.id);
+    try {
+      await updateNotificationRead(token, notification.id, true);
+      setNotifications((prev) =>
+        prev.map((item) =>
+          item.id === notification.id
+            ? { ...item, isRead: true }
+            : item,
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không cập nhật được trạng thái thông báo.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
@@ -60,15 +81,6 @@ export default function NotificationsPage() {
           <RefreshCw className="w-4 h-4" />
           Tải lại
         </button>
-      </div>
-
-      <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
-        <div className="flex items-start gap-3">
-          <TriangleAlert className="w-5 h-5 mt-0.5 shrink-0" />
-          <p style={{ fontSize: "13px" }}>
-            Backend có khai báo `NotificationController`, nhưng các action hiện vẫn chưa implement. Trang này đã bỏ mock và đang hiển thị lỗi thật từ API.
-          </p>
-        </div>
       </div>
 
       <div className="flex gap-2 mb-5">
@@ -119,10 +131,15 @@ export default function NotificationsPage() {
                   </p>
                 </div>
                 {!notification.isRead && (
-                  <span className="inline-flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-lg" style={{ fontSize: "11px" }}>
+                  <button
+                    onClick={() => void handleMarkAsRead(notification)}
+                    disabled={updatingId === notification.id}
+                    className="inline-flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-lg disabled:opacity-60"
+                    style={{ fontSize: "11px" }}
+                  >
                     <Check className="w-3 h-3" />
-                    Mới
-                  </span>
+                    {updatingId === notification.id ? "Đang lưu" : "Đánh dấu đã đọc"}
+                  </button>
                 )}
               </div>
             </div>

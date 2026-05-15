@@ -20,6 +20,11 @@ import {
 import { useApp } from "../context/AppContext";
 import type { Role } from "../lib/types";
 
+const publicNav = [
+  { path: "/", label: "Trang Chủ", icon: Home },
+  { path: "/search", label: "Tìm Kiếm", icon: Search },
+];
+
 const tenantNav = [
   { path: "/", label: "Trang Chủ", icon: Home },
   { path: "/search", label: "Tìm Kiếm", icon: Search },
@@ -59,7 +64,7 @@ export function Layout() {
   const unreadCount = 0;
 
   const getNavItems = () => {
-    if (!currentUser) return tenantNav;
+    if (!currentUser) return publicNav;
     if (currentUser.role === "landlord") return landlordNav;
     if (currentUser.role === "admin") return adminNav;
     return tenantNav;
@@ -77,7 +82,7 @@ export function Layout() {
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 flex flex-col
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:shadow-none lg:border-r border-gray-100`}
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:self-start lg:shadow-none lg:border-r border-gray-100`}
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
@@ -135,29 +140,33 @@ export function Layout() {
           })}
 
           <div className="pt-2 border-t border-gray-100 mt-2 space-y-1">
-            <Link
-              to="/notifications"
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
-                ${location.pathname === "/notifications" ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
-            >
-              <Bell className="shrink-0" style={{ width: "18px", height: "18px" }} />
-              <span style={{ fontSize: "14px", fontWeight: 500 }}>Thông Báo</span>
-              {unreadCount > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
-                  {unreadCount}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/profile"
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
-                ${location.pathname === "/profile" ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
-            >
-              <User className="shrink-0" style={{ width: "18px", height: "18px" }} />
-              <span style={{ fontSize: "14px", fontWeight: 500 }}>Hồ Sơ</span>
-            </Link>
+            {currentUser ? (
+              <>
+                <Link
+                  to="/notifications"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
+                    ${location.pathname === "/notifications" ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+                >
+                  <Bell className="shrink-0" style={{ width: "18px", height: "18px" }} />
+                  <span style={{ fontSize: "14px", fontWeight: 500 }}>Thông Báo</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to="/profile"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150
+                    ${location.pathname === "/profile" ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+                >
+                  <User className="shrink-0" style={{ width: "18px", height: "18px" }} />
+                  <span style={{ fontSize: "14px", fontWeight: 500 }}>Hồ Sơ</span>
+                </Link>
+              </>
+            ) : null}
           </div>
         </nav>
 
@@ -208,14 +217,16 @@ export function Layout() {
 
           <div className="flex-1" />
 
-          <Link to="/notifications" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            )}
-          </Link>
+          {currentUser ? (
+            <Link to="/notifications" className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+            </Link>
+          ) : null}
 
-          {currentUser && (
+          {currentUser ? (
             <Link to="/profile">
               <img
                 src={currentUser.avatar}
@@ -223,7 +234,7 @@ export function Layout() {
                 className="w-8 h-8 rounded-full object-cover border-2 border-orange-200 hover:border-orange-400 transition-colors"
               />
             </Link>
-          )}
+          ) : null}
         </header>
 
         {/* Page Content */}

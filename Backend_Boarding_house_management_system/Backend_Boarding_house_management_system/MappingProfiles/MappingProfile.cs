@@ -57,8 +57,8 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
                             : "Active"))
                 .ForMember(
                     dest => dest.IsBlocked,
-                    opt => opt.MapFrom(src =>
-                        src.LockoutEnabled && src.LockoutEnd.HasValue && src.LockoutEnd.Value > DateTimeOffset.UtcNow));
+                    opt => opt.MapFrom(src => src.LockoutEnd.HasValue && src.LockoutEnd > DateTimeOffset.UtcNow)
+                );
             CreateMap<UpdateUserRequest, User>();
             
             // Area mappings
@@ -68,11 +68,16 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             CreateMap<UpdateAreaRequest, Area>();
             
             // Property mappings
-            CreateMap<Property, PropertyResponse>();
-            CreateMap<Property, PropertyDetailResponse>();
+            CreateMap<Property, PropertyResponse>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.AvailabilityStatus.ToString()))
+                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => src.ModerationStatus.ToString()));
+            CreateMap<Property, PropertyDetailResponse>()
+                .IncludeBase<Property, PropertyResponse>();
             CreateMap<CreatePropertyRequest, Property>()
-                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => ModerationStatusEnum.Pending))
-                .ForMember(dest => dest.AvailabilityStatus, opt => opt.MapFrom(src => AvailabilityStatusEnum.Available));
+                .ForMember(dest => dest.ModerationStatus, opt => opt.Ignore())
+                .ForMember(dest => dest.AvailabilityStatus, opt => opt.Ignore())
+                .ForMember(dest => dest.ApprovedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.RejectedAt, opt => opt.Ignore());
             CreateMap<UpdatePropertyRequest, Property>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 

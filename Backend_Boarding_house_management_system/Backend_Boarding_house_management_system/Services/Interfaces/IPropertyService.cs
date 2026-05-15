@@ -11,6 +11,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
     {
         Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request);
         Task<PropertyDetailResponse> GetPropertyDetailByIdAsync(GetPropertyByIdRequest request);
+        Task<PropertyListResponse> GetModerationPropertiesAsync(GetModerationPropertiesRequest request);
         Task<PropertyListResponse> GetPropertiesByFilterAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,

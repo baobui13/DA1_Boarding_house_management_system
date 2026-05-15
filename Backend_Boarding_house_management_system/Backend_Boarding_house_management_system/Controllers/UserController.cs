@@ -37,6 +37,13 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(users);
         }
 
+        [HttpGet("GetUserSummary")]
+        public async Task<ActionResult<UserSummaryResponse>> GetUserSummary()
+        {
+            var summary = await _userService.GetUserSummaryAsync();
+            return Ok(summary);
+        }
+
         [HttpPut("UpdateUser")]
         public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest request)
         {

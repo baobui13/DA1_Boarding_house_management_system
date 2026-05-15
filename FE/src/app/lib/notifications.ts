@@ -17,3 +17,11 @@ export async function getNotifications(token: string, query: Record<string, stri
     query: { pageSize: 100, ...query },
   });
 }
+
+export async function updateNotificationRead(token: string, id: string, isRead: boolean) {
+  return apiRequest<void>("Notification/UpdateNotification", {
+    method: "PUT",
+    authToken: token,
+    body: { id, isRead },
+  });
+}

@@ -2,6 +2,7 @@ import { apiRequest } from "./api";
 import type { AppUser, AuthResponse, Role, StoredSession, UserResponse } from "./types";
 
 const SESSION_KEY = "qlt.session";
+const NAME_IDENTIFIER_CLAIM = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
 
 export function normalizeRole(role: string): Role {
   const normalized = role.trim().toLowerCase();
@@ -65,6 +66,21 @@ export async function getUserByEmail(email: string) {
   });
 }
 
+function readClaimFromToken(token: string | undefined, claimName: string) {
+  if (!token) return null;
+
+  try {
+    const [, payload = ""] = token.split(".");
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedPayload = atob(normalizedPayload.padEnd(Math.ceil(normalizedPayload.length / 4) * 4, "="));
+    const parsedPayload = JSON.parse(decodedPayload) as Record<string, unknown>;
+    const claimValue = parsedPayload[claimName];
+    return typeof claimValue === "string" ? claimValue : null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildSession(auth: AuthResponse, user: UserResponse): StoredSession {
   const appUser: AppUser = {
     id: user.id,
@@ -80,5 +96,24 @@ export function buildSession(auth: AuthResponse, user: UserResponse): StoredSess
     token: auth.token || "",
     refreshToken: auth.refreshToken,
     user: appUser,
+  };
+}
+
+export function buildSessionFromAuth(auth: AuthResponse): StoredSession {
+  const userId = readClaimFromToken(auth.token, NAME_IDENTIFIER_CLAIM) || auth.email;
+
+  return {
+    token: auth.token || "",
+    refreshToken: auth.refreshToken,
+    user: {
+      id: userId,
+      name: auth.fullName,
+      email: auth.email,
+      phone: "",
+      role: normalizeRole(auth.role),
+      avatar:
+        auth.avatarUrl ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(auth.fullName)}&background=f97316&color=fff`,
+    },
   };
 }

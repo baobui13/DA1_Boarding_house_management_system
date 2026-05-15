@@ -28,6 +28,11 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasConversion<string>()
                 .HasMaxLength(50);
 
+            modelBuilder.Entity<Property>()
+                .Property(p => p.ModerationStatus)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
             modelBuilder.Entity<RoomAmenity>()
                 .Property(ra => ra.Status)
                 .HasConversion<string>()

@@ -15,6 +15,7 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Requests
         public decimal? ElectricPrice { get; set; }
         public decimal? WaterPrice { get; set; }
         public string? Status { get; set; }
+        public string? ModerationStatus { get; set; }
         public string? AreaId { get; set; }
         public string? RejectionReason { get; set; }
     }

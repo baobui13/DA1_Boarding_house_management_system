@@ -59,6 +59,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             };
         }
 
+        public async Task<UserSummaryResponse> GetUserSummaryAsync()
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            return new UserSummaryResponse
+            {
+                TotalUsers = await _context.Users.CountAsync(),
+                TotalActive = await _context.Users.CountAsync(user => user.LockoutEnd == null || user.LockoutEnd <= now),
+                TotalLocked = await _context.Users.CountAsync(user => user.LockoutEnd != null && user.LockoutEnd > now),
+                TotalLandlords = await _context.Users.CountAsync(user => user.Role == "Landlord")
+            };
+        }
+
         public async Task<bool> UpdateUserAsync(UpdateUserRequest request)
         {
             var user = await _userRepository.GetByIdAsync(request.Id);
