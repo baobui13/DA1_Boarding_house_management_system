@@ -9,15 +9,46 @@ const districts = ["Tất cả", "Bình Thạnh", "Quận 7", "Quận 10", "Gò 
 
 type SortOption = "price_asc" | "price_desc" | "newest";
 
+function isVisibleListing(item: PropertyListing) {
+  return !["rejected", "unavailable", "rented"].includes(item.status.toLowerCase());
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
 function extractDistrict(address?: string | null) {
   if (!address) return "Khác";
   const district = districts.find((item) => item !== "Tất cả" && address.toLowerCase().includes(item.toLowerCase()));
   return district || "Khác";
 }
 
+function getStatusSearchTerms(status: string) {
+  const normalized = normalizeSearchText(status);
+
+  if (normalized === "rented") {
+    return ["rented", "da thue", "thue", "occupied"];
+  }
+
+  if (normalized === "available") {
+    return ["available", "con trong", "trong", "vacant"];
+  }
+
+  if (normalized === "working" || normalized === "maintenance") {
+    return ["working", "maintenance", "dang sua", "bao tri", "sua chua"];
+  }
+
+  return [normalized];
+}
+
 export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const PAGE_SIZE = 12;
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [selectedDistrict, setSelectedDistrict] = useState("Tất cả");
   const [priceMin, setPriceMin] = useState(0);
@@ -27,6 +58,7 @@ export default function SearchPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"split" | "list">("split");
   const [listings, setListings] = useState<PropertyListing[]>([]);
+  const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,9 +70,12 @@ export default function SearchPage() {
       setError("");
 
       try {
-        const response = await getPropertyListings();
+        const response = await getPropertyListings({
+          page: 1,
+          pageSize: 100,
+        });
         if (!cancelled) {
-          setListings(response.items);
+          setListings(response.items.filter(isVisibleListing));
         }
       } catch (err) {
         if (!cancelled) {
@@ -58,6 +93,10 @@ export default function SearchPage() {
     };
   }, []);
 
+  useEffect(() => {
+    setPageNumber(1);
+  }, [query, selectedDistrict, priceMin, priceMax, selectedAmenities, sortBy]);
+
   const allAmenities = useMemo(() => {
     return Array.from(new Set(listings.flatMap((item) => item.amenities))).slice(0, 10);
   }, [listings]);
@@ -66,11 +105,16 @@ export default function SearchPage() {
     return listings
       .filter((item) => {
         if (!query) return true;
-        const q = query.toLowerCase();
+        const q = normalizeSearchText(query);
+        const searchFields = [
+          normalizeSearchText(item.propertyName),
+          normalizeSearchText(item.address || ""),
+          normalizeSearchText(extractDistrict(item.address)),
+          ...getStatusSearchTerms(item.status),
+        ];
+
         return (
-          item.propertyName.toLowerCase().includes(q) ||
-          (item.address || "").toLowerCase().includes(q) ||
-          extractDistrict(item.address).toLowerCase().includes(q)
+          searchFields.some((field) => field.includes(q))
         );
       })
       .filter((item) => selectedDistrict === "Tất cả" || extractDistrict(item.address) === selectedDistrict)
@@ -82,6 +126,24 @@ export default function SearchPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
   }, [listings, priceMax, priceMin, query, selectedAmenities, selectedDistrict, sortBy]);
+
+  const totalCount = filteredRooms.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const pagedRooms = useMemo(
+    () => filteredRooms.slice((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE),
+    [filteredRooms, pageNumber],
+  );
+  const pageStart = totalCount === 0 ? 0 : (pageNumber - 1) * PAGE_SIZE + 1;
+  const pageEnd = totalCount === 0 ? 0 : Math.min(pageNumber * PAGE_SIZE, totalCount);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage === pageNumber) {
+      return;
+    }
+
+    setPageNumber(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const toggleAmenity = (amenity: string) => {
     setSelectedAmenities((prev) =>
@@ -229,7 +291,7 @@ export default function SearchPage() {
 
       <div className="bg-gray-50 px-4 py-2 border-b border-gray-100">
         <span className="text-gray-500" style={{ fontSize: "13px" }}>
-          {loading ? "Đang tải dữ liệu..." : `Tìm thấy ${filteredRooms.length} tin`}
+          {loading ? "Đang tải dữ liệu..." : `Trang ${pageNumber}/${totalPages} · tải ${pageStart}-${pageEnd} / ${totalCount} tin`}
         </span>
       </div>
 
@@ -248,59 +310,88 @@ export default function SearchPage() {
                 <p style={{ fontSize: "15px" }}>Không tìm thấy phòng phù hợp</p>
               </div>
             ) : (
-              filteredRooms.map((room) => (
-                <div
-                  key={room.id}
-                  onClick={() => navigate(`/rooms/${room.id}`)}
-                  className="bg-white rounded-xl border border-gray-100 overflow-hidden cursor-pointer transition-all hover:shadow-md flex gap-0"
-                >
-                  <div className="w-28 sm:w-40 shrink-0 relative">
-                    <img
-                      src={room.images[0] || "https://placehold.co/400x300?text=No+Image"}
-                      alt={room.propertyName}
-                      className="w-full h-full object-cover"
-                      style={{ minHeight: "100px" }}
-                    />
+              <>
+                {pagedRooms.map((room) => (
+                  <div
+                    key={room.id}
+                    onClick={() => navigate(`/rooms/${room.id}`)}
+                    className="bg-white rounded-xl border border-gray-100 overflow-hidden cursor-pointer transition-all hover:shadow-md flex gap-0"
+                  >
+                    <div className="w-28 sm:w-40 shrink-0 relative">
+                      <img
+                        src={room.images[0] || "https://placehold.co/400x300?text=No+Image"}
+                        alt={room.propertyName}
+                        className="w-full h-full object-cover"
+                        style={{ minHeight: "100px" }}
+                      />
+                    </div>
+                    <div className="flex-1 p-3">
+                      <h3 className="text-gray-900 mb-1" style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>
+                        {room.propertyName}
+                      </h3>
+                      <div className="flex items-center gap-1 text-gray-400 mb-1.5">
+                        <MapPin className="w-3 h-3 shrink-0" />
+                        <span className="truncate" style={{ fontSize: "12px" }}>
+                          {room.address || "Chưa có địa chỉ"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-gray-500" style={{ fontSize: "12px" }}>
+                          {room.size}m²
+                        </span>
+                        <span className="text-gray-500" style={{ fontSize: "12px" }}>
+                          {extractDistrict(room.address)}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {room.amenities.slice(0, 3).map((amenity) => (
+                          <span key={amenity} className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md" style={{ fontSize: "10px" }}>
+                            {amenity}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-orange-600" style={{ fontSize: "16px", fontWeight: 700 }}>
+                          {formatCurrency(room.price)}
+                          <span className="text-gray-400" style={{ fontSize: "11px", fontWeight: 400 }}>
+                            /tháng
+                          </span>
+                        </span>
+                        <span className="text-gray-400 capitalize" style={{ fontSize: "11px" }}>
+                          {room.status}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 p-3">
-                    <h3 className="text-gray-900 mb-1" style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>
-                      {room.propertyName}
-                    </h3>
-                    <div className="flex items-center gap-1 text-gray-400 mb-1.5">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="truncate" style={{ fontSize: "12px" }}>
-                        {room.address || "Chưa có địa chỉ"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-gray-500" style={{ fontSize: "12px" }}>
-                        {room.size}m²
-                      </span>
-                      <span className="text-gray-500" style={{ fontSize: "12px" }}>
-                        {extractDistrict(room.address)}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {room.amenities.slice(0, 3).map((amenity) => (
-                        <span key={amenity} className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md" style={{ fontSize: "10px" }}>
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-orange-600" style={{ fontSize: "16px", fontWeight: 700 }}>
-                        {formatCurrency(room.price)}
-                        <span className="text-gray-400" style={{ fontSize: "11px", fontWeight: 400 }}>
-                          /tháng
-                        </span>
-                      </span>
-                      <span className="text-gray-400 capitalize" style={{ fontSize: "11px" }}>
-                        {room.status}
-                      </span>
-                    </div>
+                ))}
+
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 border border-gray-100">
+                  <p className="text-gray-500" style={{ fontSize: "13px", fontWeight: 600 }}>
+                    Hiển thị tối đa {PAGE_SIZE} tin mỗi trang để tải nhanh hơn
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => changePage(Math.max(1, pageNumber - 1))}
+                      disabled={pageNumber === 1}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      style={{ fontSize: "13px", fontWeight: 700 }}
+                    >
+                      Trước
+                    </button>
+                    <span className="px-2 text-gray-500" style={{ fontSize: "13px", fontWeight: 700 }}>
+                      {pageNumber}/{totalPages}
+                    </span>
+                    <button
+                      onClick={() => changePage(Math.min(totalPages, pageNumber + 1))}
+                      disabled={pageNumber >= totalPages}
+                      className="rounded-xl border border-gray-200 px-3 py-2 text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      style={{ fontSize: "13px", fontWeight: 700 }}
+                    >
+                      Sau
+                    </button>
                   </div>
                 </div>
-              ))
+              </>
             )}
           </div>
         </div>

@@ -74,12 +74,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!string.Equals(tenant.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("User duoc chon khong phai tenant.");
 
+            var hasActiveContract = await _context.Contracts.AnyAsync(contract =>
+                contract.PropertyId == request.PropertyId &&
+                IsOccupyingContractStatus(contract.Status));
+            if (hasActiveContract)
+                throw new ConflictException("Phong nay da co hop dong dang hieu luc.");
+
             var entity = _mapper.Map<Contract>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
             entity.Status = "Active";
 
             await _contractRepository.AddAsync(entity);
+            await SyncPropertyAvailabilityAsync(request.PropertyId);
 
             var savedEntity = await _contractRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<ContractResponse>(savedEntity);
@@ -93,10 +100,23 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
 
+            var nextStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status : request.Status;
+            var isActivating = IsOccupyingContractStatus(nextStatus);
+            if (isActivating)
+            {
+                var hasAnotherActiveContract = await _context.Contracts.AnyAsync(contract =>
+                    contract.PropertyId == existing.PropertyId &&
+                    contract.Id != existing.Id &&
+                    IsOccupyingContractStatus(contract.Status));
+                if (hasAnotherActiveContract)
+                    throw new ConflictException("Phong nay da co hop dong dang hieu luc khac.");
+            }
+
             _mapper.Map(request, existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _contractRepository.UpdateAsync(existing);
+            await SyncPropertyAvailabilityAsync(existing.PropertyId);
         }
 
         public async Task DeleteAsync(DeleteContractRequest request)
@@ -143,6 +163,48 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 blockers.Add("tin nhan");
 
             return blockers;
+        }
+
+        private async Task SyncPropertyAvailabilityAsync(string propertyId)
+        {
+            var property = await _propertyRepository.GetByIdAsync(propertyId);
+            if (property == null)
+            {
+                return;
+            }
+
+            var hasOccupyingContract = await _context.Contracts.AnyAsync(contract =>
+                contract.PropertyId == propertyId &&
+                IsOccupyingContractStatus(contract.Status));
+
+            if (hasOccupyingContract)
+            {
+                property.AvailabilityStatus = AvailabilityStatusEnum.Rented;
+            }
+            else if (property.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+            {
+                property.AvailabilityStatus = AvailabilityStatusEnum.Available;
+            }
+
+            property.UpdatedAt = DateTime.UtcNow;
+            await _propertyRepository.UpdateAsync(property);
+        }
+
+        private static bool IsOccupyingContractStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            return status.Trim().ToLowerInvariant() switch
+            {
+                "active" => true,
+                "nearexpiry" => true,
+                "signed" => true,
+                "approved" => true,
+                _ => false,
+            };
         }
     }
 }

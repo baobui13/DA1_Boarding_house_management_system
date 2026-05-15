@@ -21,17 +21,6 @@ namespace Backend_Boarding_house_management_system.Entities
         Maintenance = 2
     }
 
-    public enum PropertyStatus
-    {
-        PendingApproval, 
-        Approved,
-        Rejected, 
-        Available,
-        Rented,
-        Repairing,
-        NearExpiry
-    }
-
     public enum AmenityStatus
     {
         Working,

@@ -21,5 +21,6 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Requests
         [Required]
         public decimal WaterPrice { get; set; }
         public string Status { get; set; } = "Available";
+        public string ModerationStatus { get; set; } = "PendingApproval";
     }
 }

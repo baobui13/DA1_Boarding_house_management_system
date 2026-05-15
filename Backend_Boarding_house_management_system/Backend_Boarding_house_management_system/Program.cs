@@ -14,6 +14,7 @@ using Plainquire.Sort.Swashbuckle;
 using System.Text;
 using System.Text.Json.Serialization;
 using AutoMapper;
+using System.Linq;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +62,23 @@ builder.Services.AddSwaggerGen(options =>
     options.AddPageSupport();
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendDevPolicy", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174",
+                "http://localhost:4173",
+                "http://127.0.0.1:4173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddMaps(typeof(Program).Assembly);
@@ -87,6 +105,8 @@ await app.CheckCloudinaryConnectionAsync();
 // Kiểm tra kết nối tới các dịch vụ authentication (JWT & Google) khi ứng dụng khởi động
 app.CheckAuthenticationConnections();
 
+await SyncPropertyAvailabilityStatusesAsync(app.Services);
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -107,6 +127,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 
+app.UseCors("FrontendDevPolicy");
+
 app.UseAuthentication();
 
 app.UseAuthorization();
@@ -114,3 +136,50 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var occupiedPropertyIds = await db.Contracts
+        .AsNoTracking()
+        .Where(contract =>
+            contract.Status == "Active" ||
+            contract.Status == "NearExpiry" ||
+            contract.Status == "Signed" ||
+            contract.Status == "Approved")
+        .Select(contract => contract.PropertyId)
+        .Distinct()
+        .ToListAsync();
+
+    var occupiedSet = occupiedPropertyIds.ToHashSet(StringComparer.Ordinal);
+    var properties = await db.Properties.ToListAsync();
+    var hasChanges = false;
+
+    foreach (var property in properties)
+    {
+        if (occupiedSet.Contains(property.Id))
+        {
+            if (property.AvailabilityStatus != AvailabilityStatusEnum.Rented)
+            {
+                property.AvailabilityStatus = AvailabilityStatusEnum.Rented;
+                property.UpdatedAt = DateTime.UtcNow;
+                hasChanges = true;
+            }
+            continue;
+        }
+
+        if (property.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+        {
+            property.AvailabilityStatus = AvailabilityStatusEnum.Available;
+            property.UpdatedAt = DateTime.UtcNow;
+            hasChanges = true;
+        }
+    }
+
+    if (hasChanges)
+    {
+        await db.SaveChangesAsync();
+    }
+}

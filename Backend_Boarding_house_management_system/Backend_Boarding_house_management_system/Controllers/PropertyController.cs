@@ -48,6 +48,14 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(properties);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpGet("GetModerationProperties")]
+        public async Task<ActionResult<PropertyListResponse>> GetModerationProperties([FromQuery] GetModerationPropertiesRequest request)
+        {
+            var properties = await _propertyService.GetModerationPropertiesAsync(request);
+            return Ok(properties);
+        }
+
         [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateProperty")]
         public async Task<ActionResult<PropertyResponse>> CreateProperty([FromBody] CreatePropertyRequest request)

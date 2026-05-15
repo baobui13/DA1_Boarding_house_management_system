@@ -53,6 +53,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return _mapper.Map<PropertyDetailResponse>(property);
         }
 
+        public async Task<PropertyListResponse> GetModerationPropertiesAsync(GetModerationPropertiesRequest request)
+        {
+            var status = ParseModerationStatus(request.Status, ModerationStatusEnum.Pending);
+            var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+            var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+
+            var query = _context.Properties
+                .AsNoTracking()
+                .Where(property => property.ModerationStatus == status)
+                .OrderByDescending(property => property.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PropertyListResponse
+            {
+                Items = _mapper.Map<List<PropertyResponse>>(items),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<PropertyListResponse> GetPropertiesByFilterAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
@@ -90,8 +116,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = _mapper.Map<Property>(request);
             property.Id = Guid.NewGuid().ToString();
             property.CreatedAt = DateTime.UtcNow;
-            property.ModerationStatus = ModerationStatusEnum.Pending;
-            property.AvailabilityStatus = AvailabilityStatusEnum.Available;
+            property.ModerationStatus = ParseModerationStatus(request.ModerationStatus, ModerationStatusEnum.Pending);
+            property.AvailabilityStatus = ParseAvailabilityStatus(request.Status, AvailabilityStatusEnum.Available);
+            property.UpdatedAt = DateTime.UtcNow;
 
             await _propertyRepository.AddAsync(property);
             return _mapper.Map<PropertyResponse>(property);
@@ -103,7 +130,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
+            var requestedStatus = request.Status;
+            var requestedModerationStatus = request.ModerationStatus;
             _mapper.Map(request, property);
+            property.AvailabilityStatus = ParseAvailabilityStatus(requestedStatus, property.AvailabilityStatus);
+            property.ModerationStatus = ParseModerationStatus(requestedModerationStatus, property.ModerationStatus);
             property.UpdatedAt = DateTime.UtcNow;
             await _propertyRepository.UpdateAsync(property);
             return true;
@@ -202,6 +233,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 blockers.Add("danh gia");
 
             return blockers;
+        }
+
+        private static ModerationStatusEnum ParseModerationStatus(string? value, ModerationStatusEnum fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return fallback;
+            return Enum.TryParse<ModerationStatusEnum>(value, true, out var parsed)
+                ? parsed
+                : fallback;
+        }
+
+        private static AvailabilityStatusEnum ParseAvailabilityStatus(string? value, AvailabilityStatusEnum fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return fallback;
+
+            if (Enum.TryParse<AvailabilityStatusEnum>(value, true, out var parsed))
+            {
+                return parsed;
+            }
+
+            return value.Trim().ToLowerInvariant() switch
+            {
+                "unavailable" => AvailabilityStatusEnum.Maintenance,
+                "repairing" => AvailabilityStatusEnum.Maintenance,
+                "nearexpiry" => AvailabilityStatusEnum.Maintenance,
+                _ => fallback,
+            };
         }
     }
 }

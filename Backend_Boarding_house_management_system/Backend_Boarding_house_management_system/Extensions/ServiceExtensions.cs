@@ -19,6 +19,8 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IPropertyRepository, PropertyRepository>();
             services.AddScoped<IPropertyService, PropertyService>();
+            services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
+            services.AddScoped<IPropertyImageService, PropertyImageService>();
 
             services.AddScoped<IPropertyImageRepository, PropertyImageRepository>();
             services.AddScoped<IPropertyImageService, PropertyImageService>();

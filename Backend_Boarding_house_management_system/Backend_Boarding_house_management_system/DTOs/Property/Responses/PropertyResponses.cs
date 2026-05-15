@@ -22,18 +22,13 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
         public decimal Price { get; set; }
         public decimal ElectricPrice { get; set; }
         public decimal WaterPrice { get; set; }
-        public ModerationStatusEnum ModerationStatus { get; set; }
-        public AvailabilityStatusEnum AvailabilityStatus { get; set; }
+        public string Status { get; set; } = null!;
+        public string ModerationStatus { get; set; } = null!;
         public DateTime? ApprovedAt { get; set; }
         public DateTime? RejectedAt { get; set; }
         public string? RejectionReason { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-
-        // Convenience properties for frontend
-        public bool IsApproved => ModerationStatus == ModerationStatusEnum.Approved;
-        public bool IsAvailable => AvailabilityStatus == AvailabilityStatusEnum.Available;
-        public bool IsRejected => ModerationStatus == ModerationStatusEnum.Rejected;
     }
 
     public class PropertyListResponse : Backend_Boarding_house_management_system.DTOs.Base.PagedResponse<PropertyResponse>

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Users, Search, Lock, Unlock, TriangleAlert } from "lucide-react";
+import { Users, Search, Lock, Unlock } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { blockUser, getUsers } from "../../lib/users";
+import { blockUser, getUserSummary, getUsers } from "../../lib/users";
 import { normalizeRole } from "../../lib/auth";
 import type { Role, UserResponse } from "../../lib/types";
 
 type RoleFilter = "all" | Role;
 type StatusFilter = "all" | "active" | "locked";
+const PAGE_SIZE = 12;
 
 const roleLabels: Record<Role, { label: string; color: string }> = {
   tenant: { label: "Khách thuê", color: "text-blue-600 bg-blue-100" },
@@ -14,15 +15,32 @@ const roleLabels: Record<Role, { label: string; color: string }> = {
   admin: { label: "Admin", color: "text-purple-600 bg-purple-100" },
 };
 
+function toBackendRole(role: Role) {
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
 export default function UserManagement() {
   const { token } = useApp();
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [summaryTotals, setSummaryTotals] = useState({
+    totalUsers: 0,
+    totalActive: 0,
+    totalLocked: 0,
+    totalLandlords: 0,
+  });
   const [statusOverrides, setStatusOverrides] = useState<Record<string, "active" | "locked">>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const loadSummaryTotals = async () => {
+    const summary = await getUserSummary();
+    setSummaryTotals(summary);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -32,9 +50,18 @@ export default function UserManagement() {
       setError("");
 
       try {
-        const response = await getUsers();
+        const [response] = await Promise.all([
+          getUsers({
+            page: pageNumber,
+            pageSize: PAGE_SIZE,
+            role: roleFilter === "all" ? undefined : toBackendRole(roleFilter),
+            isBlocked: statusFilter === "all" ? undefined : statusFilter === "locked",
+          }),
+          loadSummaryTotals(),
+        ]);
         if (!cancelled) {
           setUsers(response.items);
+          setTotalCount(response.totalCount);
         }
       } catch (err) {
         if (!cancelled) {
@@ -50,9 +77,13 @@ export default function UserManagement() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [pageNumber, roleFilter, statusFilter]);
 
-  const getStatus = (user: UserResponse) => statusOverrides[user.id] || "active";
+  useEffect(() => {
+    setPageNumber(1);
+  }, [search, roleFilter, statusFilter]);
+
+  const getStatus = (user: UserResponse) => statusOverrides[user.id] || (user.isBlocked ? "locked" : "active");
 
   const filtered = useMemo(() => {
     return users
@@ -80,14 +111,22 @@ export default function UserManagement() {
     try {
       await blockUser(token, user.id, nextStatus === "locked");
       setStatusOverrides((prev) => ({ ...prev, [user.id]: nextStatus }));
+      await loadSummaryTotals();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Khóa/Mở khóa thất bại.");
     }
   };
 
-  const totalActive = users.filter((user) => getStatus(user) === "active").length;
-  const totalLocked = users.filter((user) => getStatus(user) === "locked").length;
-  const totalLandlords = users.filter((user) => normalizeRole(user.role) === "landlord").length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  const changePage = (nextPage: number) => {
+    if (nextPage === pageNumber) {
+      return;
+    }
+
+    setPageNumber(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -95,27 +134,15 @@ export default function UserManagement() {
         <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
           Quản Lý Người Dùng
         </h1>
-        <p className="text-gray-500 mt-0.5" style={{ fontSize: "14px" }}>
-          Danh sách lấy từ `User/GetUsersByFilter`.
-        </p>
-      </div>
-
-      <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-        <div className="flex items-start gap-3">
-          <TriangleAlert className="w-5 h-5 mt-0.5 shrink-0" />
-          <p style={{ fontSize: "13px" }}>
-            Backend hiện không trả trạng thái khóa trong `UserResponse`, nên trạng thái ban đầu đang được frontend mặc định là `active`. Sau khi bấm khóa/mở khóa, frontend chỉ biết trạng thái mới từ thao tác vừa gửi.
-          </p>
-        </div>
       </div>
 
       {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-600">{error}</div>}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <StatCard color="blue" label="Tổng người dùng" value={String(users.length)} />
-        <StatCard color="green" label="Đang hoạt động" value={String(totalActive)} />
-        <StatCard color="red" label="Bị khóa" value={String(totalLocked)} />
-        <StatCard color="orange" label="Chủ trọ" value={String(totalLandlords)} />
+        <StatCard color="blue" label="Tổng người dùng" value={String(summaryTotals.totalUsers)} />
+        <StatCard color="green" label="Tổng hoạt động" value={String(summaryTotals.totalActive)} />
+        <StatCard color="red" label="Tổng bị khóa" value={String(summaryTotals.totalLocked)} />
+        <StatCard color="orange" label="Tổng chủ trọ" value={String(summaryTotals.totalLandlords)} />
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-col sm:flex-row gap-3">
@@ -171,8 +198,8 @@ export default function UserManagement() {
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="text-left px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>NGƯỜI DÙNG</th>
                 <th className="text-left px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>LIÊN HỆ</th>
-                <th className="text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>VAI TRÒ</th>
-                <th className="text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>TRẠNG THÁI</th>
+                <th className="w-36 text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>VAI TRÒ</th>
+                <th className="w-36 text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>TRẠNG THÁI</th>
                 <th className="text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>NGÀY THAM GIA</th>
                 <th className="text-center px-4 py-3 text-gray-500" style={{ fontSize: "12px", fontWeight: 600 }}>THAO TÁC</th>
               </tr>
@@ -215,13 +242,13 @@ export default function UserManagement() {
                         <p className="text-gray-400" style={{ fontSize: "11px" }}>{user.phoneNumber || "Chưa có"}</p>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`px-2.5 py-1 rounded-xl ${roleCfg.color}`} style={{ fontSize: "11px", fontWeight: 600 }}>
+                        <span className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-xl ${roleCfg.color}`} style={{ fontSize: "11px", fontWeight: 600 }}>
                           {roleCfg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`px-2.5 py-1 rounded-xl ${status === "active" ? "text-green-600 bg-green-100" : "text-red-500 bg-red-100"}`}
+                          className={`inline-flex whitespace-nowrap px-2.5 py-1 rounded-xl ${status === "active" ? "text-green-600 bg-green-100" : "text-red-500 bg-red-100"}`}
                           style={{ fontSize: "11px", fontWeight: 600 }}
                         >
                           {status === "active" ? "Hoạt động" : "Bị khóa"}
@@ -260,6 +287,28 @@ export default function UserManagement() {
             <p style={{ fontSize: "14px" }}>Không tìm thấy người dùng</p>
           </div>
         )}
+      </div>
+
+      <div className="mt-4 flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => changePage(Math.max(1, pageNumber - 1))}
+          disabled={pageNumber <= 1 || loading}
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Trước
+        </button>
+        <span className="px-2 text-gray-500" style={{ fontSize: "13px", fontWeight: 600 }}>
+          {pageNumber}/{totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={() => changePage(Math.min(totalPages, pageNumber + 1))}
+          disabled={pageNumber >= totalPages || loading}
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Sau
+        </button>
       </div>
     </div>
   );

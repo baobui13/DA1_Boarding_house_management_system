@@ -30,6 +30,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             EntitySort<Payment> sort,
             EntityPage page)
         {
+            page = EnsurePage(page);
             var query = GetDetailsQuery().AsNoTracking();
             query = query.Where(filter);
             query = query.OrderBy(sort);

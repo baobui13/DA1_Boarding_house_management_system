@@ -16,6 +16,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntitySort<User> sort,
             EntityPage page);
 
+        Task<UserSummaryResponse> GetUserSummaryAsync();
+
         Task<bool> UpdateUserAsync(UpdateUserRequest request);
 
         Task<bool> UpdateUserAvatarAsync(UpdateUserAvatarRequest request);

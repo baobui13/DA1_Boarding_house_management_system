@@ -10,8 +10,8 @@ import {
   Pencil,
   Check,
   X,
-  TriangleAlert,
 } from "lucide-react";
+import { createAppointment } from "../../lib/appointments";
 import { getPropertyListing, deleteProperty } from "../../lib/properties";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
@@ -19,7 +19,7 @@ import { useApp } from "../../context/AppContext";
 
 export default function RoomDetailPage() {
   const { id = "" } = useParams();
-  const { token } = useApp();
+  const { token, currentUser } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isLandlordView = searchParams.get("view") === "landlord";
@@ -31,6 +31,9 @@ export default function RoomDetailPage() {
   const [bookingDate, setBookingDate] = useState("");
   const [bookingTime, setBookingTime] = useState("14:00");
   const [bookingNote, setBookingNote] = useState("");
+  const [bookingError, setBookingError] = useState("");
+  const [bookingSuccess, setBookingSuccess] = useState("");
+  const [submittingBooking, setSubmittingBooking] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +94,66 @@ export default function RoomDetailPage() {
       navigate("/landlord/properties");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Xóa tin thất bại.");
+    }
+  };
+
+  const resetBookingState = () => {
+    setBookingError("");
+    setBookingSuccess("");
+  };
+
+  const handleOpenBookingForm = () => {
+    resetBookingState();
+    setShowBookingForm(true);
+  };
+
+  const handleCloseBookingForm = () => {
+    resetBookingState();
+    setShowBookingForm(false);
+  };
+
+  const handleCreateAppointment = async () => {
+    if (!token || !currentUser) {
+      setBookingError("Bạn cần đăng nhập để đặt lịch xem phòng.");
+      return;
+    }
+
+    if (!bookingDate) {
+      setBookingError("Vui lòng chọn ngày hẹn.");
+      return;
+    }
+
+    const appointmentDate = new Date(`${bookingDate}T${bookingTime}:00`);
+    if (Number.isNaN(appointmentDate.getTime())) {
+      setBookingError("Thời gian hẹn không hợp lệ.");
+      return;
+    }
+
+    if (appointmentDate.getTime() <= Date.now()) {
+      setBookingError("Vui lòng chọn thời gian trong tương lai.");
+      return;
+    }
+
+    setSubmittingBooking(true);
+    setBookingError("");
+    setBookingSuccess("");
+
+    try {
+      await createAppointment(token, {
+        propertyId: room.id,
+        userId: currentUser.id,
+        appointmentDateTime: appointmentDate.toISOString(),
+        note: bookingNote.trim() || undefined,
+      });
+
+      setBookingSuccess("Đã gửi lịch hẹn thành công.");
+      setBookingDate("");
+      setBookingTime("14:00");
+      setBookingNote("");
+    } catch (err) {
+      setBookingError(err instanceof Error ? err.message : "Không gửi được lịch hẹn.");
+    } finally {
+      setSubmittingBooking(false);
     }
   };
 
@@ -209,19 +272,6 @@ export default function RoomDetailPage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
-            <div className="flex items-start gap-3">
-              <TriangleAlert className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-amber-800" style={{ fontSize: "14px", fontWeight: 600 }}>
-                  API đặt lịch xem phòng chưa khả dụng
-                </p>
-                <p className="text-amber-700 mt-1" style={{ fontSize: "13px" }}>
-                  `AppointmentController` trong backend hiện đang `throw NotImplementedException`, nên frontend chỉ có thể báo trạng thái này thay vì gửi lịch hẹn thật.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="lg:col-span-1">
@@ -260,16 +310,13 @@ export default function RoomDetailPage() {
                 ) : (
                   <>
                     <button
-                      onClick={() => setShowBookingForm(true)}
+                      onClick={handleOpenBookingForm}
                       className="w-full flex items-center justify-center gap-2 py-3 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors"
                       style={{ fontSize: "15px", fontWeight: 600 }}
                     >
                       <Calendar className="w-4.5 h-4.5" style={{ width: "18px", height: "18px" }} />
-                      Xem tình trạng đặt lịch
+                      Đặt lịch xem phòng
                     </button>
-                    <p className="text-gray-500 text-center" style={{ fontSize: "13px" }}>
-                      Tính năng này đang bị chặn bởi backend.
-                    </p>
                   </>
                 )}
               </div>
@@ -285,7 +332,7 @@ export default function RoomDetailPage() {
               <h3 className="text-gray-900" style={{ fontSize: "17px", fontWeight: 700 }}>
                 Đặt lịch xem phòng
               </h3>
-              <button onClick={() => setShowBookingForm(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={handleCloseBookingForm} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -295,6 +342,7 @@ export default function RoomDetailPage() {
                 type="date"
                 value={bookingDate}
                 onChange={(e) => setBookingDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none"
               />
               <input
@@ -310,8 +358,32 @@ export default function RoomDetailPage() {
                 placeholder="Ghi chú"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none resize-none"
               />
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700" style={{ fontSize: "13px" }}>
-                Không thể gửi lịch hẹn vì backend chưa implement `CreateAppointment`.
+              {bookingError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-600" style={{ fontSize: "13px" }}>
+                  {bookingError}
+                </div>
+              ) : null}
+              {bookingSuccess ? (
+                <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700" style={{ fontSize: "13px" }}>
+                  {bookingSuccess}
+                </div>
+              ) : null}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCloseBookingForm}
+                  className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                  style={{ fontSize: "14px" }}
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={() => void handleCreateAppointment()}
+                  disabled={submittingBooking}
+                  className="flex-1 py-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition-colors disabled:opacity-60"
+                  style={{ fontSize: "14px", fontWeight: 600 }}
+                >
+                  {submittingBooking ? "Đang gửi..." : "Gửi lịch hẹn"}
+                </button>
               </div>
             </div>
           </div>

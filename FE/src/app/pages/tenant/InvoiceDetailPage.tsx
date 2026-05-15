@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Receipt, CheckCircle2, AlertCircle, XCircle, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Receipt, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { getInvoiceById, type InvoiceResponse } from "../../lib/invoices";
+import { getContractById } from "../../lib/contracts";
 import { formatCurrency } from "../../lib/format";
 
 export default function InvoiceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { token } = useApp();
+  const { token, currentUser } = useApp();
   const [invoice, setInvoice] = useState<InvoiceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -17,7 +18,7 @@ export default function InvoiceDetailPage() {
     let cancelled = false;
 
     (async () => {
-      if (!token) {
+      if (!token || !currentUser) {
         setError("Thiếu token đăng nhập.");
         setLoading(false);
         return;
@@ -25,6 +26,10 @@ export default function InvoiceDetailPage() {
 
       try {
         const response = await getInvoiceById(token, id);
+        const contract = await getContractById(token, response.contractId);
+        if (contract.tenantId !== currentUser.id) {
+          throw new Error("Bạn không có quyền xem hóa đơn này.");
+        }
         if (!cancelled) setInvoice(response);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Không tải được hóa đơn.");
@@ -36,7 +41,7 @@ export default function InvoiceDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, token]);
+  }, [currentUser?.id, id, token]);
 
   const statusConfig = (() => {
     const status = invoice?.status.toLowerCase();
@@ -68,15 +73,6 @@ export default function InvoiceDetailPage() {
               <span style={{ fontSize: "13px", fontWeight: 600 }}>{statusConfig.label}</span>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-        <div className="flex items-start gap-3">
-          <TriangleAlert className="w-5 h-5 mt-0.5 shrink-0" />
-          <p style={{ fontSize: "13px" }}>
-            `InvoiceController.GetInvoiceById` hiện chưa implement ở backend. Trang này đã chuyển sang gọi API thật, nên nếu backend chưa chạy sẽ thấy lỗi thật bên dưới.
-          </p>
         </div>
       </div>
 
