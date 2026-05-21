@@ -28,21 +28,30 @@ builder.Services.AddApplicationRepositoriesAndServices();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Cấu hình CORS
+var frontendOrigins = new[]
+{
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5175"
+};
+
+// Cấu hình CORS cho frontend local/dev
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:5174")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+        policy
+            .WithOrigins(frontendOrigins)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -60,23 +69,6 @@ builder.Services.AddSwaggerGen(options =>
     options.AddFilterSupport();
     options.AddSortSupport();
     options.AddPageSupport();
-});
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("FrontendDevPolicy", policy =>
-    {
-        policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173",
-                "http://localhost:5174",
-                "http://127.0.0.1:5174",
-                "http://localhost:4173",
-                "http://127.0.0.1:4173")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
 });
 
 builder.Services.AddAutoMapper(cfg =>
@@ -126,8 +118,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
-
-app.UseCors("FrontendDevPolicy");
 
 app.UseAuthentication();
 
