@@ -4,7 +4,9 @@
 
   ## Running the code
 
-  Run `npm i` to install the dependencies.
+  1. Tạo file `.env` từ `.env.example`
+  2. Chạy `npm i`
+  3. Chạy `npm run dev`
 
-  Run `npm run dev` to start the development server.
+  Frontend mặc định gọi backend tại `http://localhost:5046/api`, nên cần chạy backend trước.
   
