@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -14,7 +14,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string TenantId { get; set; } = null!;
 
         [Required]
-        public string DocumentType { get; set; } = null!;  // IDCard, ResidencePermit, Other
+        public DocumentType DocumentType { get; set; }  // IDCard, ResidencePermit, Other
 
         [Required]
         [StringLength(255)]

@@ -103,9 +103,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!string.Equals(landlord.Role, "Landlord", StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("User duoc chon khong phai landlord.");
 
+            Area? area = null;
             if (!string.IsNullOrWhiteSpace(request.AreaId))
             {
-                var area = await _areaRepository.GetByIdAsync(request.AreaId);
+                area = await _areaRepository.GetByIdAsync(request.AreaId);
                 if (area == null)
                     throw new NotFoundException($"Khong tim thay khu vuc voi Id '{request.AreaId}'.");
 
@@ -121,6 +122,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             property.UpdatedAt = DateTime.UtcNow;
 
             await _propertyRepository.AddAsync(property);
+
+            if (area != null)
+            {
+                area.RoomCount += 1;
+                await _areaRepository.UpdateAsync(area);
+            }
+
             return _mapper.Map<PropertyResponse>(property);
         }
 
@@ -193,7 +201,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<bool> DeletePropertyAsync(DeletePropertyRequest request)
         {
-            if (!await _propertyRepository.ExistsAsync(request.Id))
+            var property = await _propertyRepository.GetByIdAsync(request.Id);
+            if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
             var blockers = await GetPropertyDeleteBlockersAsync(request.Id);
@@ -203,9 +212,21 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     $"Khong the xoa bat dong san voi Id '{request.Id}' vi van con du lieu lien quan: {string.Join(", ", blockers)}.");
             }
 
+            var areaId = property.AreaId;
+
             try
             {
                 await _propertyRepository.DeleteAsync(request.Id);
+
+                if (!string.IsNullOrWhiteSpace(areaId))
+                {
+                    var area = await _areaRepository.GetByIdAsync(areaId);
+                    if (area != null)
+                    {
+                        area.RoomCount = Math.Max(0, area.RoomCount - 1);
+                        await _areaRepository.UpdateAsync(area);
+                    }
+                }
             }
             catch (DbUpdateException)
             {
@@ -231,6 +252,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             if (await _context.Ratings.AnyAsync(x => x.PropertyId == propertyId))
                 blockers.Add("danh gia");
+
+            if (await _context.Complaints.AnyAsync(x => x.RelatedType == ComplaintRelatedType.Property && x.RelatedId == propertyId && x.Status != ComplaintStatus.Resolved))
+                blockers.Add("khiếu nại chưa giải quyết");
 
             return blockers;
         }

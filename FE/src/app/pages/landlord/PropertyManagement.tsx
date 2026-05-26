@@ -112,7 +112,7 @@ export default function PropertyManagement() {
       ]);
 
       setAreas(areaResponse.items);
-      setProperties(propertyResponse.items);
+      setProperties(propertyResponse.items.filter((p) => p.moderationStatus === "Approved"));
       setAmenityOptions(amenityResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tải được dữ liệu.");
@@ -642,11 +642,9 @@ export default function PropertyManagement() {
             value={roomForm.status}
             onChange={(value) => setRoomForm((prev) => ({ ...prev, status: value }))}
             options={[
-              { value: "Available", label: "Available" },
-              { value: "Approved", label: "Approved" },
-              { value: "Rented", label: "Rented" },
-              { value: "Unavailable", label: "Unavailable" },
-              { value: "Rejected", label: "Rejected" },
+              { value: "Available", label: "Trống (Sẵn sàng cho thuê)" },
+              { value: "Rented", label: "Đã cho thuê" },
+              { value: "Maintenance", label: "Đang sửa chữa" },
             ]}
           />
           <AmenitySelector
@@ -921,7 +919,7 @@ function RoomStatusBadge({ status }: { status: string }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-amber-600" style={{ fontSize: "12px", fontWeight: 700 }}>
       <Hammer className="w-3.5 h-3.5" />
-      Đang sửa
+      Đang sửa chữa
     </span>
   );
 }

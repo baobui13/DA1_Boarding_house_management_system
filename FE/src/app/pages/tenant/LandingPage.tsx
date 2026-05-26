@@ -8,7 +8,9 @@ import { formatCurrency } from "../../lib/format";
 const districts = ["Bình Thạnh", "Quận 7", "Quận 10", "Gò Vấp", "Thủ Đức", "Quận 3"];
 
 function isVisibleListing(item: PropertyListing) {
-  return !["rejected", "unavailable", "rented"].includes(item.status.toLowerCase());
+  const isApproved = item.moderationStatus?.toLowerCase() === "approved";
+  const isAvailable = item.status?.toLowerCase() === "available";
+  return isApproved && isAvailable;
 }
 
 export default function LandingPage() {

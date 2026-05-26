@@ -35,3 +35,27 @@ export async function createAppointment(
     body: input,
   });
 }
+
+export async function updateAppointment(
+  token: string,
+  input: {
+    id: string;
+    appointmentDateTime?: string | null;
+    status?: string | null;
+    note?: string | null;
+  },
+) {
+  return apiRequest<void>("Appointment/UpdateAppointment", {
+    method: "PUT",
+    authToken: token,
+    body: input,
+  });
+}
+
+export async function deleteAppointment(token: string, id: string) {
+  return apiRequest<void>("Appointment/DeleteAppointment", {
+    method: "DELETE",
+    authToken: token,
+    body: { id },
+  });
+}

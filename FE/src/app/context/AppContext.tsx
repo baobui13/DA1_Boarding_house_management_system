@@ -47,6 +47,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const handleRefreshed = (e: Event) => {
+      const customEvent = e as CustomEvent<StoredSession | null>;
+      setSession(customEvent.detail);
+    };
+
+    window.addEventListener("qlt-session-refreshed", handleRefreshed);
+    return () => {
+      window.removeEventListener("qlt-session-refreshed", handleRefreshed);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!session?.token || !session.user.email) {
       return;
     }

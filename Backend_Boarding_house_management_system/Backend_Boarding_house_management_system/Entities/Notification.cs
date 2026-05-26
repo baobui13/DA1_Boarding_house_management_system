@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -14,7 +14,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string UserId { get; set; } = null!;
 
         [Required]
-        public string Type { get; set; } = null!;  // Invoice, Appointment, Contract, Message, System
+        public NotificationType Type { get; set; }  // Invoice, Appointment, Contract, Message, System
 
         [Required]
         [StringLength(255)]

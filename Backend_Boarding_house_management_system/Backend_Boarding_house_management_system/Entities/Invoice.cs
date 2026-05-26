@@ -55,7 +55,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string? Note { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Pending";  // Pending, Partial, Paid
+        public InvoiceStatus Status { get; set; } = InvoiceStatus.Pending;  // Pending, Partial, Paid
 
         [StringLength(255)]
         public string? InvoiceUrl { get; set; }

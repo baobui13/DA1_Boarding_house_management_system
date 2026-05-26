@@ -65,6 +65,13 @@ namespace Backend_Boarding_house_management_system.Extensions
 
             services.AddScoped<IComplaintRepository, ComplaintRepository>();
             services.AddScoped<IComplaintService, ComplaintService>();
+
+            // AI Chatbot Service
+            services.AddHttpClient("AiService", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
+            services.AddScoped<IChatbotService, ChatbotService>();
         }
     }
 }

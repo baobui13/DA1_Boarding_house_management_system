@@ -1,10 +1,12 @@
 using AutoMapper;
+using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.DTOs.Rating.Requests;
 using Backend_Boarding_house_management_system.DTOs.Rating.Responses;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Page;
 using Plainquire.Sort;
@@ -16,17 +18,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IRatingRepository _ratingRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPropertyRepository _propertyRepository;
+        private readonly AppDbContext _context;
         private readonly IMapper _mapper;
 
         public RatingService(
             IRatingRepository ratingRepository,
             IUserRepository userRepository,
             IPropertyRepository propertyRepository,
+            AppDbContext context,
             IMapper mapper)
         {
             _ratingRepository = ratingRepository;
             _userRepository = userRepository;
             _propertyRepository = propertyRepository;
+            _context = context;
             _mapper = mapper;
         }
 
@@ -72,17 +77,41 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!string.Equals(tenant.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("User duoc chon khong phai tenant.");
 
-            if (!await _propertyRepository.ExistsAsync(request.PropertyId))
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
 
             if (await _ratingRepository.ExistsByTenantAndPropertyAsync(request.TenantId, request.PropertyId))
                 throw new ConflictException("Tenant nay da danh gia bat dong san nay roi.");
+
+            // Kiểm tra xem Tenant có hợp đồng thuê phòng này hay không để chặn đánh giá ảo
+            var hasRented = await _context.Contracts.AnyAsync(c =>
+                c.PropertyId == request.PropertyId &&
+                c.TenantId == request.TenantId &&
+                (c.Status == ContractStatus.Active || c.Status == ContractStatus.Expired || c.Status == ContractStatus.Terminated));
+            if (!hasRented)
+                throw new BadRequestException("Bạn chỉ có thể đánh giá phòng trọ mà bạn đang hoặc đã từng thuê.");
 
             var rating = _mapper.Map<Rating>(request);
             rating.Id = Guid.NewGuid().ToString();
             rating.CreatedAt = DateTime.UtcNow;
 
             await _ratingRepository.AddAsync(rating);
+
+            // Cập nhật điểm uy tín ReputationScore của Landlord dựa trên thái độ đánh giá
+            var landlord = await _userRepository.GetByIdAsync(property.LandlordId);
+            if (landlord != null)
+            {
+                int change = rating.AIAttitude switch
+                {
+                    RatingAttitude.Positive => 1,
+                    RatingAttitude.Negative => -1,
+                    _ => 0
+                };
+                landlord.ReputationScore += change;
+                await _userRepository.UpdateAsync(landlord);
+            }
+
             return _mapper.Map<RatingResponse>(rating);
         }
 

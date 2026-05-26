@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend_Boarding_house_management_system.Entities
@@ -21,7 +21,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public DateTime PaymentDate { get; set; } = DateTime.UtcNow;
 
         [Required]
-        public string Method { get; set; } = null!;  // Cash, BankTransfer, Online
+        public PaymentMethod Method { get; set; }  // Cash, BankTransfer, Online
 
         [StringLength(255)]
         public string? Note { get; set; }

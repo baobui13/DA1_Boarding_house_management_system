@@ -413,7 +413,7 @@ namespace Backend_Boarding_house_management_system.Data
                         Id = Guid.NewGuid().ToString(),
                         PropertyId = p.Id,
                         AmenityId = a.Id,
-                        Status = "Working"
+                        Status = AmenityStatus.Working
                     });
                 }
             }
@@ -433,7 +433,7 @@ namespace Backend_Boarding_house_management_system.Data
                     StartDate = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                     EndDate = new DateTime(2027, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                     Deposit = 9600000m,
-                    Status = "Active",
+                    Status = ContractStatus.Active,
                     Terms = "Thanh toán vào ngày 5 hàng tháng. Không hút thuốc trong phòng. Giữ yên tĩnh sau 22h."
                 },
                 new
@@ -442,7 +442,7 @@ namespace Backend_Boarding_house_management_system.Data
                     StartDate = new DateTime(2025, 1, 15, 0, 0, 0, DateTimeKind.Utc),
                     EndDate = new DateTime(2026, 1, 15, 0, 0, 0, DateTimeKind.Utc),
                     Deposit = 8600000m,
-                    Status = "Expired",
+                    Status = ContractStatus.Expired,
                     Terms = "Hợp đồng trước đây của khách thuê trong thời gian còn là sinh viên, đã bàn giao phòng đầy đủ."
                 },
                 new
@@ -451,7 +451,7 @@ namespace Backend_Boarding_house_management_system.Data
                     StartDate = new DateTime(2025, 6, 1, 0, 0, 0, DateTimeKind.Utc),
                     EndDate = new DateTime(2025, 12, 31, 0, 0, 0, DateTimeKind.Utc),
                     Deposit = 13000000m,
-                    Status = "Terminated",
+                    Status = ContractStatus.Terminated,
                     Terms = "Khách thuê chuyển nơi làm việc nên chấm dứt sớm, đã đối soát điện nước và bàn giao nội thất."
                 }
             };
@@ -473,18 +473,18 @@ namespace Backend_Boarding_house_management_system.Data
                         Status = item.Status,
                         CreatedAt = now,
                         UpdatedAt = now,
-                        ActualEndDate = item.Status == "Expired" ? DateOnly.FromDateTime(item.EndDate) : item.Status == "Terminated" ? new DateOnly(2025, 12, 20) : null,
-                        HandoverNote = item.Status == "Terminated" ? "Khách thuê chuyển việc sang quận khác, bàn giao sớm và đã chốt công nợ." : item.Status == "Expired" ? "Đã bàn giao đúng hạn, phòng sạch và hoàn trả đủ trang thiết bị." : null,
-                        DeductionAmount = item.Status == "Terminated" ? 500000m : 0m,
-                        DeductionReason = item.Status == "Terminated" ? "Khấu trừ vệ sinh tổng quát và thay khóa cửa." : null,
-                        RefundAmount = item.Status == "Expired" ? item.Deposit : item.Status == "Terminated" ? item.Deposit - 500000m : 0m,
-                        HandoverConfirmedBy = item.Status == "Active" ? null : "System Admin",
-                        HandoverConfirmedAt = item.Status == "Active" ? null : now,
+                        ActualEndDate = item.Status == ContractStatus.Expired ? DateOnly.FromDateTime(item.EndDate) : item.Status == ContractStatus.Terminated ? new DateOnly(2025, 12, 20) : null,
+                        HandoverNote = item.Status == ContractStatus.Terminated ? "Khách thuê chuyển việc sang quận khác, bàn giao sớm và đã chốt công nợ." : item.Status == ContractStatus.Expired ? "Đã bàn giao đúng hạn, phòng sạch và hoàn trả đủ trang thiết bị." : null,
+                        DeductionAmount = item.Status == ContractStatus.Terminated ? 500000m : 0m,
+                        DeductionReason = item.Status == ContractStatus.Terminated ? "Khấu trừ vệ sinh tổng quát và thay khóa cửa." : null,
+                        RefundAmount = item.Status == ContractStatus.Expired ? item.Deposit : item.Status == ContractStatus.Terminated ? item.Deposit - 500000m : 0m,
+                        HandoverConfirmedBy = item.Status == ContractStatus.Active ? null : "System Admin",
+                        HandoverConfirmedAt = item.Status == ContractStatus.Active ? null : now,
                     };
                 })
                 .ToList();
 
-            foreach (var contract in contracts.Where(item => item.Status == "Active"))
+            foreach (var contract in contracts.Where(item => item.Status == ContractStatus.Active))
             {
                 propertyByName.First(pair => pair.Value.Id == contract.PropertyId).Value.AvailabilityStatus = AvailabilityStatusEnum.Rented;
             }
@@ -514,7 +514,7 @@ namespace Backend_Boarding_house_management_system.Data
                 decimal waterUnitPrice,
                 decimal otherFees,
                 decimal penalty,
-                string status,
+                InvoiceStatus status,
                 string? note = null)
             {
                 var electricityCost = (newElectric - oldElectric) * electricUnitPrice;
@@ -541,8 +541,8 @@ namespace Backend_Boarding_house_management_system.Data
                     Status = status,
                     DueDate = period.AddMonths(1).AddDays(4),
                     CreatedAt = period.AddDays(1),
-                    UpdatedAt = status == "Paid" || status == "Partial" ? period.AddMonths(1).AddDays(2) : null,
-                    ReceiptUrl = status == "Paid" ? "https://example.com/receipts/demo-paid.pdf" : null,
+                    UpdatedAt = status == InvoiceStatus.Paid || status == InvoiceStatus.Partial ? period.AddMonths(1).AddDays(2) : null,
+                    ReceiptUrl = status == InvoiceStatus.Paid ? "https://example.com/receipts/demo-paid.pdf" : null,
                     InvoiceUrl = null
                 };
             }
@@ -552,22 +552,22 @@ namespace Backend_Boarding_house_management_system.Data
             if (contractByPropertyName.TryGetValue("Studio ban công Đinh Tiên Hoàng", out var dinhTienHoangContract))
             {
                 var property = propertyById[dinhTienHoangContract.PropertyId];
-                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 3, 1170, 1240, 21, 24, 3500m, 15000m, 200000m, 0m, "Paid", "Tháng đầu khách vào ở ổn định."));
-                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 4, 1240, 1315, 24, 27, 3500m, 15000m, 200000m, 0m, "Paid"));
-                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 5, 1315, 1392, 27, 30, 3500m, 15000m, 200000m, 0m, "Pending", "Khách thuê hẹn thanh toán vào cuối tuần này."));
+                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 3, 1170, 1240, 21, 24, 3500m, 15000m, 200000m, 0m, InvoiceStatus.Paid, "Tháng đầu khách vào ở ổn định."));
+                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 4, 1240, 1315, 24, 27, 3500m, 15000m, 200000m, 0m, InvoiceStatus.Paid));
+                invoices.Add(CreateInvoice(dinhTienHoangContract, property, 2026, 5, 1315, 1392, 27, 30, 3500m, 15000m, 200000m, 0m, InvoiceStatus.Pending, "Khách thuê hẹn thanh toán vào cuối tuần này."));
             }
 
             if (contractByPropertyName.TryGetValue("Phòng gác lửng gần HUTECH", out var hutechContract))
             {
                 var property = propertyById[hutechContract.PropertyId];
-                invoices.Add(CreateInvoice(hutechContract, property, 2025, 12, 790, 860, 15, 18, 3200m, 14000m, 150000m, 0m, "Paid", "Hóa đơn tháng cuối trước khi hết hạn hợp đồng."));
+                invoices.Add(CreateInvoice(hutechContract, property, 2025, 12, 790, 860, 15, 18, 3200m, 14000m, 150000m, 0m, InvoiceStatus.Paid, "Hóa đơn tháng cuối trước khi hết hạn hợp đồng."));
             }
 
             if (contractByPropertyName.TryGetValue("Studio full nội thất Nguyễn Thị Thập", out var quan7Contract))
             {
                 var property = propertyById[quan7Contract.PropertyId];
-                invoices.Add(CreateInvoice(quan7Contract, property, 2025, 11, 520, 610, 12, 14, 3800m, 18000m, 300000m, 0m, "Paid"));
-                invoices.Add(CreateInvoice(quan7Contract, property, 2025, 12, 610, 650, 14, 15, 3800m, 18000m, 300000m, 150000m, "Partial", "Khách thuê trả trước phần lớn, phần còn lại được trừ vào cọc khi chấm dứt hợp đồng."));
+                invoices.Add(CreateInvoice(quan7Contract, property, 2025, 11, 520, 610, 12, 14, 3800m, 18000m, 300000m, 0m, InvoiceStatus.Paid));
+                invoices.Add(CreateInvoice(quan7Contract, property, 2025, 12, 610, 650, 14, 15, 3800m, 18000m, 300000m, 150000m, InvoiceStatus.Partial, "Khách thuê trả trước phần lớn, phần còn lại được trừ vào cọc khi chấm dứt hợp đồng."));
             }
 
             context.Invoices.AddRange(invoices);
@@ -577,7 +577,7 @@ namespace Backend_Boarding_house_management_system.Data
         private static void SeedPayments(AppDbContext context, List<Invoice> invoices)
         {
             var payments = new List<Payment>();
-            foreach (var inv in invoices.Where(x => x.Status == "Paid"))
+            foreach (var inv in invoices.Where(x => x.Status == InvoiceStatus.Paid))
             {
                 payments.Add(new Payment
                 {
@@ -585,12 +585,12 @@ namespace Backend_Boarding_house_management_system.Data
                     InvoiceId = inv.Id,
                     Amount = inv.Total,
                     PaymentDate = EnsureUtc(inv.DueDate.AddDays(-2)),
-                    Method = "BankTransfer",
+                    Method = PaymentMethod.BankTransfer,
                     CreatedAt = EnsureUtc(inv.DueDate.AddDays(-2)),
                     Note = "Thanh toán đủ hóa đơn"
                 });
             }
-            foreach (var inv in invoices.Where(x => x.Status == "Partial"))
+            foreach (var inv in invoices.Where(x => x.Status == InvoiceStatus.Partial))
             {
                 payments.Add(new Payment
                 {
@@ -598,7 +598,7 @@ namespace Backend_Boarding_house_management_system.Data
                     InvoiceId = inv.Id,
                     Amount = inv.Total / 2,
                     PaymentDate = EnsureUtc(inv.DueDate.AddDays(-1)),
-                    Method = "Online",
+                    Method = PaymentMethod.Online,
                     CreatedAt = EnsureUtc(inv.DueDate.AddDays(-1)),
                     Note = "Thanh toán một phần"
                 });
@@ -616,21 +616,21 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     PropertyName = "Studio ban công gần sân bay",
                     AppointmentDateTime = new DateTime(2026, 5, 14, 9, 30, 0, DateTimeKind.Utc),
-                    Status = "Confirmed",
+                    Status = AppointmentStatus.Confirmed,
                     Note = "Khách thuê từng cân nhắc chuyển công tác gần sân bay nên đã hẹn xem phòng này."
                 },
                 new
                 {
                     PropertyName = "Phòng máy lạnh Kha Vạn Cân",
                     AppointmentDateTime = new DateTime(2026, 5, 18, 18, 30, 0, DateTimeKind.Utc),
-                    Status = "Pending",
+                    Status = AppointmentStatus.Pending,
                     Note = "Khách thuê hỏi giúp cho em họ đang tìm phòng gần khu Thủ Đức."
                 },
                 new
                 {
                     PropertyName = "Phòng giá tốt Phan Văn Trị",
                     AppointmentDateTime = new DateTime(2026, 5, 9, 19, 0, 0, DateTimeKind.Utc),
-                    Status = "Cancelled",
+                    Status = AppointmentStatus.Cancelled,
                     Note = "Khách thuê bận họp đột xuất nên đã chủ động hủy lịch."
                 }
             };
@@ -646,7 +646,7 @@ namespace Backend_Boarding_house_management_system.Data
                     Status = item.Status,
                     Note = item.Note,
                     CreatedAt = item.AppointmentDateTime.AddDays(-2),
-                    UpdatedAt = item.Status == "Pending" ? null : item.AppointmentDateTime.AddDays(-1)
+                    UpdatedAt = item.Status == AppointmentStatus.Pending ? null : item.AppointmentDateTime.AddDays(-1)
                 })
                 .ToList();
             context.Appointments.AddRange(appointments);
@@ -666,7 +666,7 @@ namespace Backend_Boarding_house_management_system.Data
                     PropertyId = hutechProperty.Id,
                     Stars = 5,
                     Content = "Phòng đúng mô tả, chủ hỗ trợ nhanh, vị trí rất tiện cho việc đi học và đi làm.",
-                    AIAttitude = "Positive",
+                    AIAttitude = RatingAttitude.Positive,
                     CreatedAt = new DateTime(2025, 12, 28, 8, 0, 0, DateTimeKind.Utc)
                 });
             }
@@ -680,7 +680,7 @@ namespace Backend_Boarding_house_management_system.Data
                     PropertyId = dinhTienHoangProperty.Id,
                     Stars = 4,
                     Content = "Phòng sáng, sạch và yên tĩnh. Chỉ mong khu để xe rộng thêm một chút vào giờ cao điểm.",
-                    AIAttitude = "Positive",
+                    AIAttitude = RatingAttitude.Positive,
                     CreatedAt = new DateTime(2026, 4, 20, 10, 30, 0, DateTimeKind.Utc)
                 });
             }
@@ -691,9 +691,9 @@ namespace Backend_Boarding_house_management_system.Data
         private static void SeedComplaints(AppDbContext context, User tenant, List<Contract> contracts, List<Invoice> invoices, List<Property> properties)
         {
             var propertyById = properties.ToDictionary(item => item.Id, item => item);
-            var activeContract = contracts.FirstOrDefault(contract => contract.Status == "Active");
-            var pendingInvoice = invoices.FirstOrDefault(invoice => invoice.Status == "Pending");
-            var terminatedContract = contracts.FirstOrDefault(contract => contract.Status == "Terminated");
+            var activeContract = contracts.FirstOrDefault(contract => contract.Status == ContractStatus.Active);
+            var pendingInvoice = invoices.FirstOrDefault(invoice => invoice.Status == InvoiceStatus.Pending);
+            var terminatedContract = contracts.FirstOrDefault(contract => contract.Status == ContractStatus.Terminated);
             var complaints = new List<Complaint>();
 
             if (pendingInvoice != null && activeContract != null)
@@ -702,11 +702,11 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     CreatorId = tenant.Id,
-                    RelatedType = "Invoice",
+                    RelatedType = ComplaintRelatedType.Invoice,
                     RelatedId = pendingInvoice.Id,
                     Title = "Xin gia hạn ngày thanh toán hóa đơn tháng 05/2026",
                     Content = $"Khách thuê đã báo trước về việc lùi ngày nhận lương và mong được gia hạn thêm 3 ngày để thanh toán hóa đơn của {propertyById[activeContract.PropertyId].PropertyName}.",
-                    Status = "Processing",
+                    Status = ComplaintStatus.Processing,
                     CreatedAt = new DateTime(2026, 5, 6, 9, 0, 0, DateTimeKind.Utc)
                 });
             }
@@ -717,11 +717,11 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     CreatorId = tenant.Id,
-                    RelatedType = "Contract",
+                    RelatedType = ComplaintRelatedType.Contract,
                     RelatedId = terminatedContract.Id,
                     Title = "Xác nhận khấu trừ tiền cọc sau khi chấm dứt hợp đồng",
                     Content = "Khách thuê đề nghị gửi biên bản ảnh trước và sau dọn phòng để đối chiếu khoản khấu trừ vệ sinh và thay khóa.",
-                    Status = "Resolved",
+                    Status = ComplaintStatus.Resolved,
                     AdminResponse = "Đã đối chiếu với chủ trọ và bổ sung biên bản bàn giao trong mục chi tiết hợp đồng.",
                     ResolvedAt = new DateTime(2026, 1, 5, 15, 0, 0, DateTimeKind.Utc),
                     CreatedAt = new DateTime(2025, 12, 22, 15, 0, 0, DateTimeKind.Utc)
@@ -795,33 +795,33 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = contract.TenantId,
-                    Type = "Invoice",
+                    Type = NotificationType.Invoice,
                     Content = $"Hóa đơn {invoice.Period:MM/yyyy} cho {property.PropertyName} đã được tạo. Tổng cộng {invoice.Total:N0}đ, hạn thanh toán {invoice.DueDate:dd/MM/yyyy}.",
-                    IsRead = invoice.Status == "Paid",
+                    IsRead = invoice.Status == InvoiceStatus.Paid,
                     Timestamp = invoice.CreatedAt,
                     RelatedId = invoice.Id
                 });
 
-                if (invoice.Status == "Pending")
+                if (invoice.Status == InvoiceStatus.Pending)
                 {
                     notifications.Add(new Notification
                     {
                         Id = Guid.NewGuid().ToString(),
                         UserId = contract.TenantId,
-                        Type = "Invoice",
+                        Type = NotificationType.Invoice,
                         Content = $"Nhắc thanh toán hóa đơn {invoice.Period:MM/yyyy} cho {property.PropertyName}. Vui lòng thanh toán trước {invoice.DueDate:dd/MM/yyyy}.",
                         IsRead = false,
                         Timestamp = invoice.DueDate.AddDays(-2),
                         RelatedId = invoice.Id
                     });
                 }
-                else if (invoice.Status == "Partial")
+                else if (invoice.Status == InvoiceStatus.Partial)
                 {
                     notifications.Add(new Notification
                     {
                         Id = Guid.NewGuid().ToString(),
                         UserId = contract.TenantId,
-                        Type = "Invoice",
+                        Type = NotificationType.Invoice,
                         Content = $"Hóa đơn {invoice.Period:MM/yyyy} cho {property.PropertyName} đã thanh toán một phần. Vui lòng hoàn tất số còn lại trước {invoice.DueDate:dd/MM/yyyy}.",
                         IsRead = false,
                         Timestamp = invoice.UpdatedAt ?? invoice.CreatedAt,
@@ -839,15 +839,15 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = appointment.UserId,
-                    Type = "Appointment",
+                    Type = NotificationType.Appointment,
                     Content = appointment.Status switch
                     {
-                        "Confirmed" => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã được xác nhận.",
-                        "Rejected" => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã bị từ chối.",
-                        "Cancelled" => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã bị hủy.",
+                        AppointmentStatus.Confirmed => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã được xác nhận.",
+                        AppointmentStatus.Rejected => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã bị từ chối.",
+                        AppointmentStatus.Cancelled => $"Lịch xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đã bị hủy.",
                         _ => $"Yêu cầu xem phòng {property.PropertyName} lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy} đang chờ xác nhận."
                     },
-                    IsRead = appointment.Status == "Cancelled",
+                    IsRead = appointment.Status == AppointmentStatus.Cancelled,
                     Timestamp = appointment.UpdatedAt ?? appointment.CreatedAt,
                     RelatedId = appointment.Id
                 });
@@ -856,9 +856,9 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = property.LandlordId,
-                    Type = "Appointment",
+                    Type = NotificationType.Appointment,
                     Content = $"Có yêu cầu xem phòng mới từ {tenantName} cho {property.PropertyName} vào lúc {appointment.AppointmentDateTime:HH:mm dd/MM/yyyy}.",
-                    IsRead = appointment.Status != "Pending",
+                    IsRead = appointment.Status != AppointmentStatus.Pending,
                     Timestamp = appointment.CreatedAt,
                     RelatedId = appointment.Id
                 });
@@ -871,14 +871,14 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = contract.TenantId,
-                    Type = "Contract",
+                    Type = NotificationType.Contract,
                     Content = contract.Status switch
                     {
-                        "Expired" => $"Hợp đồng thuê {property.PropertyName} đã hết hạn vào ngày {contract.EndDate:dd/MM/yyyy}.",
-                        "Terminated" => $"Hợp đồng thuê {property.PropertyName} đã được chấm dứt. Số tiền hoàn cọc dự kiến là {contract.RefundAmount:N0}đ.",
+                        ContractStatus.Expired => $"Hợp đồng thuê {property.PropertyName} đã hết hạn vào ngày {contract.EndDate:dd/MM/yyyy}.",
+                        ContractStatus.Terminated => $"Hợp đồng thuê {property.PropertyName} đã được chấm dứt. Số tiền hoàn cọc dự kiến là {contract.RefundAmount:N0}đ.",
                         _ => $"Hợp đồng thuê {property.PropertyName} đang có hiệu lực đến ngày {contract.EndDate:dd/MM/yyyy}."
                     },
-                    IsRead = contract.Status == "Active",
+                    IsRead = contract.Status == ContractStatus.Active,
                     Timestamp = contract.CreatedAt,
                     RelatedId = contract.Id
                 });
@@ -891,7 +891,7 @@ namespace Backend_Boarding_house_management_system.Data
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = user.Id,
-                    Type = "System",
+                    Type = NotificationType.System,
                     Content = "Hệ thống đã cập nhật dữ liệu mẫu khu trọ tại TP. Hồ Chí Minh để bạn tiện kiểm tra giao diện và luồng nghiệp vụ.",
                     IsRead = false,
                     Timestamp = DateTime.UtcNow,
@@ -924,12 +924,12 @@ namespace Backend_Boarding_house_management_system.Data
                 new("Studio full nội thất Nguyễn Thị Thập", 1, "88 Nguyễn Thị Thập, Phường Tân Phú, Quận 7, TP. Hồ Chí Minh", 10.737310m, 106.717180m, 34m, 6500000m, 3800m, 18000m, AvailabilityStatusEnum.Available, ModerationStatusEnum.Approved, "Studio full nội thất, nằm trong khu dân cư yên tĩnh gần Crescent Mall.", null, ["Wifi", "Điều hòa", "Tủ lạnh", "Máy giặt", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Phòng cửa sổ lớn Sunrise City", 1, "90 Nguyễn Thị Thập, Phường Tân Hưng, Quận 7, TP. Hồ Chí Minh", 10.739020m, 106.708950m, 26m, 5200000m, 3600m, 16000m, AvailabilityStatusEnum.Rented, ModerationStatusEnum.Approved, "Phòng nhiều ánh sáng tự nhiên, gần Lotte Mart Quận 7 và trục Nguyễn Hữu Thọ.", null, ["Wifi", "Điều hòa", "WC riêng", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1771337744364-e7dd00c2921c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1764836168197-3aa3a890a0f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Căn hộ mini cho nuôi thú cưng", 1, "92 Nguyễn Thị Thập, Phường Bình Thuận, Quận 7, TP. Hồ Chí Minh", 10.741220m, 106.706410m, 30m, 5900000m, 3600m, 17000m, AvailabilityStatusEnum.Maintenance, ModerationStatusEnum.Rejected, "Căn hộ mini cho phép nuôi thú cưng, có khu vực bếp và máy giặt riêng.", "Tin đăng bị từ chối do bộ ảnh chưa phản ánh đúng hiện trạng phòng và thiếu giấy tờ xác thực quyền cho thuê.", ["Wifi", "Điều hòa", "Cho nuôi thú cưng", "Máy giặt", "Bếp riêng"], new[] { "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
-                new("Phòng máy lạnh Kha Vạn Cân", 2, "66 Kha Vạn Cân, Phường Linh Đông, TP. Thủ Đức, TP. Hồ Chí Minh", 10.857920m, 106.756120m, 22m, 3400000m, 3000m, 14000m, AvailabilityStatusEnum.Available, ModerationStatusEnum.Pending, "Phòng máy lạnh thoáng, phù hợp sinh viên Thủ Đức, gần tuyến xe buýt về trung tâm.", null, ["Wifi", "Điều hòa", "WC riêng", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
+                new("Phòng máy lạnh Kha Vạn Cân", 2, "66 Kha Vạn Cân, Phường Linh Đông, TP. Thủ Đức, TP. Hồ Chí Minh", 10.857920m, 106.756120m, 22m, 3400000m, 3000m, 14000m, AvailabilityStatusEnum.Maintenance, ModerationStatusEnum.Pending, "Phòng máy lạnh thoáng, phù hợp sinh viên Thủ Đức, gần tuyến xe buýt về trung tâm.", null, ["Wifi", "Điều hòa", "WC riêng", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Phòng yên tĩnh gần ĐH SPKT", 2, "70 Kha Vạn Cân, Phường Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh", 10.850950m, 106.771250m, 27m, 3900000m, 3000m, 14000m, AvailabilityStatusEnum.Rented, ModerationStatusEnum.Approved, "Phòng sạch, khu dân cư an ninh, tiện đi SPKT và Vincom Thủ Đức.", null, ["Wifi", "Điều hòa", "WC riêng", "Giữ xe", "Nóng lạnh"], new[] { "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1771337744364-e7dd00c2921c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Studio ban công gần sân bay", 3, "12 Hậu Giang, Phường 4, Quận Tân Bình, TP. Hồ Chí Minh", 10.801260m, 106.659110m, 25m, 5600000m, 3700m, 16000m, AvailabilityStatusEnum.Available, ModerationStatusEnum.Approved, "Studio có ban công, gần sân bay Tân Sơn Nhất và công viên Hoàng Văn Thụ.", null, ["Wifi", "Điều hòa", "Ban công", "Thang máy", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1764836168197-3aa3a890a0f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Phòng mới sửa khu Bảy Hiền", 3, "26 Cộng Hòa, Phường 13, Quận Tân Bình, TP. Hồ Chí Minh", 10.801640m, 106.644650m, 21m, 3600000m, 3100m, 14500m, AvailabilityStatusEnum.Maintenance, ModerationStatusEnum.Pending, "Phòng đang hoàn thiện cải tạo, dự kiến mở lại trong tháng với nội thất mới.", null, ["Wifi", "Điều hòa", "WC riêng"], new[] { "https://images.unsplash.com/photo-1771337744364-e7dd00c2921c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
                 new("Phòng giá tốt Phan Văn Trị", 4, "45 Phan Văn Trị, Phường 10, Quận Gò Vấp, TP. Hồ Chí Minh", 10.831990m, 106.679730m, 20m, 2950000m, 2800m, 12000m, AvailabilityStatusEnum.Available, ModerationStatusEnum.Approved, "Phòng giá tốt gần Emart và công viên Gia Định, phù hợp người đi làm độc thân.", null, ["Wifi", "WC riêng", "Giữ xe"], new[] { "https://images.unsplash.com/photo-1771337744364-e7dd00c2921c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" }),
-                new("Phòng có bếp riêng công viên Gia Định", 4, "51 Phan Văn Trị, Phường 10, Quận Gò Vấp, TP. Hồ Chí Minh", 10.833100m, 106.680920m, 29m, 4100000m, 3200m, 15000m, AvailabilityStatusEnum.Available, ModerationStatusEnum.Rejected, "Phòng có bếp riêng và cửa sổ lớn, khu vực đông dân cư và tiện sinh hoạt.", "Tin đăng bị từ chối do mô tả diện tích chưa khớp hồ sơ phòng và thiếu thông tin liên hệ xác minh.", ["Wifi", "Bếp riêng", "WC riêng", "Cho nuôi thú cưng"], new[] { "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" })
+                new("Phòng có bếp riêng công viên Gia Định", 4, "51 Phan Văn Trị, Phường 10, Quận Gò Vấp, TP. Hồ Chí Minh", 10.833100m, 106.680920m, 29m, 4100000m, 3200m, 15000m, AvailabilityStatusEnum.Maintenance, ModerationStatusEnum.Rejected, "Phòng có bếp riêng và cửa sổ lớn, khu vực đông dân cư và tiện sinh hoạt.", "Tin đăng bị từ chối do mô tả diện tích chưa khớp hồ sơ phòng và thiếu thông tin liên hệ xác minh.", ["Wifi", "Bếp riêng", "WC riêng", "Cho nuôi thú cưng"], new[] { "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200", "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200" })
             };
         }
     }

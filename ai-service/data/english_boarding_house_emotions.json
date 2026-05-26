@@ -1,0 +1,2990 @@
+[
+    {
+        "text": "The electricity and water bill this month is twice as high as last month. How did you even calculate this?",
+        "label": 0
+    },
+    {
+        "text": "The electricity and water meter is running like crazy, that can't be right!",
+        "label": 0
+    },
+    {
+        "text": "I demand to see the original electricity and water bill, because this amount is just ridiculous!",
+        "label": 0
+    },
+    {
+        "text": "How can one person's water bill be more expensive than a whole family's?",
+        "label": 0
+    },
+    {
+        "text": "Calculating the electricity and water bills so vaguely like this, you're just ripping off your tenants!",
+        "label": 0
+    },
+    {
+        "text": "A different price every month? It's clear the landlord is trying to make extra money!",
+        "label": 0
+    },
+    {
+        "text": "I suspect there's a problem with the electricity and water meter; it needs to be checked again!",
+        "label": 0
+    },
+    {
+        "text": "This electricity and water bill amount is unbelievable, it's outrageous!",
+        "label": 0
+    },
+    {
+        "text": "Don't try to trick me with baseless calculations like that!",
+        "label": 0
+    },
+    {
+        "text": "I will not pay this exorbitant electricity and water bill!",
+        "label": 0
+    },
+    {
+        "text": "I'm absolutely furious with this nonsensical way of calculating the electricity and water!",
+        "label": 0
+    },
+    {
+        "text": "Is this your way of subtly trying to kick out your tenants?",
+        "label": 0
+    },
+    {
+        "text": "I've never seen anyone so blatantly fraudulent with their utility calculations!",
+        "label": 0
+    },
+    {
+        "text": "If there's no clear explanation, I won't be staying here anymore!",
+        "label": 0
+    },
+    {
+        "text": "The electricity and water bills aren't transparent; how can I possibly trust this?",
+        "label": 0
+    },
+    {
+        "text": "I've had enough with these sky-high electricity and water bills!",
+        "label": 0
+    },
+    {
+        "text": "The electricity and water bills are already high, and you won't even show the readings. Who are you trying to fool?",
+        "label": 0
+    },
+    {
+        "text": "Landlord, you need to explain this ridiculous electricity and water calculation sheet right now!",
+        "label": 0
+    },
+    {
+        "text": "I feel like I'm being scammed regarding the electricity and water bills!",
+        "label": 0
+    },
+    {
+        "text": "I'll get a lawyer if the landlord insists on this electricity and water amount!",
+        "label": 0
+    },
+    {
+        "text": "The room next door is playing loud music again in the middle of the night, I can't stand it!",
+        "label": 0
+    },
+    {
+        "text": "Those people in the other room are shouting and laughing loudly again, aren't they going to let anyone sleep?",
+        "label": 0
+    },
+    {
+        "text": "I've reminded them so many times, but they still haven't changed their ways!",
+        "label": 0
+    },
+    {
+        "text": "Where's the landlord? Why don't you come down and sort out this noise problem?",
+        "label": 0
+    },
+    {
+        "text": "With all this banging and dragging chairs around, how can anyone live peacefully?",
+        "label": 0
+    },
+    {
+        "text": "Still having a party at this hour? They're truly so inconsiderate!",
+        "label": 0
+    },
+    {
+        "text": "I've lost sleep for several nights in a row because of the noise from the room next door!",
+        "label": 0
+    },
+    {
+        "text": "If the noise continues, I will call the police!",
+        "label": 0
+    },
+    {
+        "text": "I'm so fed up with these inconsiderate neighbors!",
+        "label": 0
+    },
+    {
+        "text": "Is anyone managing this boarding house? It's way too noisy!",
+        "label": 0
+    },
+    {
+        "text": "I want to complain about the excessive noise coming from the room next door!",
+        "label": 0
+    },
+    {
+        "text": "I can't sleep because of the noise, I'm about to go crazy!",
+        "label": 0
+    },
+    {
+        "text": "I paid to live in peace, not to be tortured by noise!",
+        "label": 0
+    },
+    {
+        "text": "The landlord needs to take stricter measures with these noisy rooms!",
+        "label": 0
+    },
+    {
+        "text": "It's the same every night, it's truly unacceptable!",
+        "label": 0
+    },
+    {
+        "text": "I need to sleep, not listen to karaoke from the room next door!",
+        "label": 0
+    },
+    {
+        "text": "I won't stay here anymore if the noise situation doesn't improve!",
+        "label": 0
+    },
+    {
+        "text": "Do you have any respect for other people, constantly making so much noise?",
+        "label": 0
+    },
+    {
+        "text": "If this continues, I'll probably have to move somewhere else just to get some peace!",
+        "label": 0
+    },
+    {
+        "text": "If the landlord doesn't solve it, I'll talk to the people in the next room myself!",
+        "label": 0
+    },
+    {
+        "text": "The landlord promised to fix the clogged pipe a week ago, but there's no sign of anyone doing it!",
+        "label": 0
+    },
+    {
+        "text": "The Wi-Fi has been unstable for a month, and the landlord keeps promising to fix it but never does. It's unbearable!",
+        "label": 0
+    },
+    {
+        "text": "The toilet is broken, water keeps leaking, and no one answers the phone when I call. What kind of business is this?",
+        "label": 0
+    },
+    {
+        "text": "It's been a week and the faucet is still dripping. The landlord is outrageously slow!",
+        "label": 0
+    },
+    {
+        "text": "Promising to fix it and then breaking that promise? Who can trust you if you keep doing this?",
+        "label": 0
+    },
+    {
+        "text": "I've paid my rent in full, but basic amenities aren't being fixed!",
+        "label": 0
+    },
+    {
+        "text": "If this situation continues, I won't pay rent anymore!",
+        "label": 0
+    },
+    {
+        "text": "The landlord keeps saying 'someone will come over' and 'wait a bit.' How long am I supposed to wait?",
+        "label": 0
+    },
+    {
+        "text": "It's incredibly frustrating not having Wi-Fi to work. The landlord is truly irresponsible!",
+        "label": 0
+    },
+    {
+        "text": "The leaking pipe damaged my belongings; how will the landlord compensate me for this?",
+        "label": 0
+    },
+    {
+        "text": "Empty promises, then abandoning the tenants. That's truly despicable!",
+        "label": 0
+    },
+    {
+        "text": "I've reported the damage so many times, but the landlord keeps ignoring it, showing complete disregard for tenants!",
+        "label": 0
+    },
+    {
+        "text": "When I call, it always goes to voicemail, and messages aren't answered. Is the landlord trying to avoid me?",
+        "label": 0
+    },
+    {
+        "text": "I need a clear explanation for this delay in repairs!",
+        "label": 0
+    },
+    {
+        "text": "If this continues, I absolutely cannot accept this terrible service!",
+        "label": 0
+    },
+    {
+        "text": "Even fixing a lightbulb takes a whole week. The landlord is incredibly slow!",
+        "label": 0
+    },
+    {
+        "text": "I am very frustrated with the landlord's lack of responsibility!",
+        "label": 0
+    },
+    {
+        "text": "Don't lie to me anymore about those repairs!",
+        "label": 0
+    },
+    {
+        "text": "I will find an outside technician to fix it and deduct the cost directly from my rent!",
+        "label": 0
+    },
+    {
+        "text": "I demand the landlord come fix it immediately or compensate me for the damages!",
+        "label": 0
+    },
+    {
+        "text": "Suddenly increasing the rent without a single warning? What's going on, landlord?",
+        "label": 0
+    },
+    {
+        "text": "The contract clearly states that the rent won't increase for 6 months, so why is it increasing now?",
+        "label": 0
+    },
+    {
+        "text": "I will not accept this baseless rent increase!",
+        "label": 0
+    },
+    {
+        "text": "The landlord isn't upholding the contract; this is clearly a scam!",
+        "label": 0
+    },
+    {
+        "text": "We've already signed the contract, and you're unilaterally breaking it. Does the landlord disregard the law?",
+        "label": 0
+    },
+    {
+        "text": "If this continues, I'll have to move out quickly; I can't possibly stay!",
+        "label": 0
+    },
+    {
+        "text": "The rent increases one month, then again the next? How are we supposed to live like this?",
+        "label": 0
+    },
+    {
+        "text": "Why wasn't I informed beforehand as stipulated in the contract?",
+        "label": 0
+    },
+    {
+        "text": "I feel like the landlord is forcing me. This is outrageous!",
+        "label": 0
+    },
+    {
+        "text": "If you don't adhere to the contract, I will sue the landlord!",
+        "label": 0
+    },
+    {
+        "text": "I'm absolutely furious with this fraudulent and irresponsible way of doing business!",
+        "label": 0
+    },
+    {
+        "text": "I will not pay this increased rent!",
+        "label": 0
+    },
+    {
+        "text": "Is the landlord trying to make things difficult to force me to move out?",
+        "label": 0
+    },
+    {
+        "text": "Increasing the rent without a valid reason is truly unreasonable!",
+        "label": 0
+    },
+    {
+        "text": "Who on earth increases rent without a month or even half a month's notice?",
+        "label": 0
+    },
+    {
+        "text": "Landlord, please re-read the terms in the contract!",
+        "label": 0
+    },
+    {
+        "text": "This sudden rent increase has made me furious!",
+        "label": 0
+    },
+    {
+        "text": "I thought signing the contract would settle things, but who knew I'd still be tricked!",
+        "label": 0
+    },
+    {
+        "text": "We had a clear agreement, yet you still went back on your word. I'm so disappointed!",
+        "label": 0
+    },
+    {
+        "text": "I will find a lawyer to review this contract!",
+        "label": 0
+    },
+    {
+        "text": "I already paid a deposit to reserve the room, so why did the landlord rent it to someone else?",
+        "label": 0
+    },
+    {
+        "text": "The landlord is blatantly keeping my deposit like that, and still has the nerve to preach morals?",
+        "label": 0
+    },
+    {
+        "text": "I've clearly transferred the deposit, so if there's no room for me now, what am I supposed to do?",
+        "label": 0
+    },
+    {
+        "text": "Return my deposit immediately, or I'll call the police!",
+        "label": 0
+    },
+    {
+        "text": "You scammer! How dare you take my deposit and not keep the room!",
+        "label": 0
+    },
+    {
+        "text": "I trusted the landlord, and now I'm being scammed so badly!",
+        "label": 0
+    },
+    {
+        "text": "Where am I supposed to live now that I've lost my deposit and don't have a room?",
+        "label": 0
+    },
+    {
+        "text": "I thought I found a decent place to live, but instead I got an unethical landlord!",
+        "label": 0
+    },
+    {
+        "text": "The landlord said the room is already booked, so where's my deposit?",
+        "label": 0
+    },
+    {
+        "text": "That's outrageous! How dare you cheat a poor student like me out of their deposit!",
+        "label": 0
+    },
+    {
+        "text": "I will report this fraudulent behavior to the consumer protection association!",
+        "label": 0
+    },
+    {
+        "text": "Does the landlord think they can just keep my deposit that easily?",
+        "label": 0
+    },
+    {
+        "text": "This is clearly an act of fraud and misappropriation of property!",
+        "label": 0
+    },
+    {
+        "text": "There's already a message confirming the deposit, and now you're still denying it?",
+        "label": 0
+    },
+    {
+        "text": "Losing money for nothing and not even having a place to stay, I'm going absolutely mad with anger!",
+        "label": 0
+    },
+    {
+        "text": "The landlord must take full responsibility for this!",
+        "label": 0
+    },
+    {
+        "text": "I won't let this slide; I need to get to the bottom of this!",
+        "label": 0
+    },
+    {
+        "text": "Scamming and misappropriating deposits is illegal!",
+        "label": 0
+    },
+    {
+        "text": "I demand the landlord return double the deposit because of this breach of trust!",
+        "label": 0
+    },
+    {
+        "text": "Don't even think about escaping; I'll fight until the end to get justice!",
+        "label": 0
+    },
+    {
+        "text": "The smell from the communal toilet is unbearable!",
+        "label": 1
+    },
+    {
+        "text": "Oh my God, I nearly threw up as soon as I opened the bathroom door.",
+        "label": 1
+    },
+    {
+        "text": "Who would let the toilet smell so horrible?",
+        "label": 1
+    },
+    {
+        "text": "That pungent, moldy smell in the bathroom is just awful.",
+        "label": 1
+    },
+    {
+        "text": "Don't even mention the bathroom, it's absolutely disgusting.",
+        "label": 1
+    },
+    {
+        "text": "The worst part is having to use this shared bathroom.",
+        "label": 1
+    },
+    {
+        "text": "Landlord, please deal with the bathroom smell, I'm suffocating!",
+        "label": 1
+    },
+    {
+        "text": "The stench hits you straight in the nose, makes me want to turn right back around.",
+        "label": 1
+    },
+    {
+        "text": "I swear this bathroom has never been clean.",
+        "label": 1
+    },
+    {
+        "text": "The strong smell of urine, you can't stand in there for long.",
+        "label": 1
+    },
+    {
+        "text": "Every time I step in, it's torture.",
+        "label": 1
+    },
+    {
+        "text": "I don't understand how people can live with this smell.",
+        "label": 1
+    },
+    {
+        "text": "It stinks so badly, it's nauseating.",
+        "label": 1
+    },
+    {
+        "text": "The bathroom is so filthy and smelly it's scary.",
+        "label": 1
+    },
+    {
+        "text": "Having to smell the bathroom first thing in the morning is so frustrating.",
+        "label": 1
+    },
+    {
+        "text": "Someone didn't flush properly, and the smell is unbearable.",
+        "label": 1
+    },
+    {
+        "text": "This toilet is truly the nightmare of renting a room.",
+        "label": 1
+    },
+    {
+        "text": "This bathroom smell is absolutely disgusting.",
+        "label": 1
+    },
+    {
+        "text": "I can't focus on anything with this foul smell around.",
+        "label": 1
+    },
+    {
+        "text": "We need a really big air freshener for this bathroom.",
+        "label": 1
+    },
+    {
+        "text": "What kind of hallway is this, full of trash everywhere? How disgusting!",
+        "label": 1
+    },
+    {
+        "text": "Just looking at the trash in the hallway makes me lose my appetite.",
+        "label": 1
+    },
+    {
+        "text": "Who is so inconsiderate as to throw food out into the hallway?",
+        "label": 1
+    },
+    {
+        "text": "The hallway is so filthy I don't even want to walk through it.",
+        "label": 1
+    },
+    {
+        "text": "I just swept, and now the hallway is full of trash again. Gross!",
+        "label": 1
+    },
+    {
+        "text": "The mix of moldy and trash smells is disgusting.",
+        "label": 1
+    },
+    {
+        "text": "With trash piled up like this, it'd be strange if mice and cockroaches didn't show up.",
+        "label": 1
+    },
+    {
+        "text": "The common area is as dirty as a pigsty, it's appalling.",
+        "label": 1
+    },
+    {
+        "text": "Don't even mention the hallway, I feel like I'm going to throw up.",
+        "label": 1
+    },
+    {
+        "text": "This mess is truly disgusting!",
+        "label": 1
+    },
+    {
+        "text": "Dirty footprints, wrappers thrown everywhere, it's so gross.",
+        "label": 1
+    },
+    {
+        "text": "As soon as I open my room door, I see a battlefield of trash.",
+        "label": 1
+    },
+    {
+        "text": "The landlord should heavily fine those who throw trash in the hallway!",
+        "label": 1
+    },
+    {
+        "text": "At this rate, the hallway will become a public dumping ground.",
+        "label": 1
+    },
+    {
+        "text": "Looking at this hallway, I just want to move out immediately.",
+        "label": 1
+    },
+    {
+        "text": "It's truly disgusting having to walk through here every day.",
+        "label": 1
+    },
+    {
+        "text": "Someone please clean up this hallway, it's gotten too dirty!",
+        "label": 1
+    },
+    {
+        "text": "This isn't a place to dump trash, is it?",
+        "label": 1
+    },
+    {
+        "text": "The foul smell rising from the trash is incredibly unpleasant.",
+        "label": 1
+    },
+    {
+        "text": "Leftover food scattered everywhere, it's utterly disgusting.",
+        "label": 1
+    },
+    {
+        "text": "Oh my goodness, the drain is overflowing again! The smell is horrible!",
+        "label": 1
+    },
+    {
+        "text": "Seeing the black, dirty water overflowing into my room makes me want to throw up.",
+        "label": 1
+    },
+    {
+        "text": "The strong smell of sewage rising up, I can't breathe.",
+        "label": 1
+    },
+    {
+        "text": "Again, the clogged drain and overflowing waste, how disgusting!",
+        "label": 1
+    },
+    {
+        "text": "There's nothing more disgusting than this sight.",
+        "label": 1
+    },
+    {
+        "text": "I've already told the landlord to fix the drain, but it's still the same. It's so frustrating.",
+        "label": 1
+    },
+    {
+        "text": "Last night, I was haunted in my sleep by the gurgling sound of the drain.",
+        "label": 1
+    },
+    {
+        "text": "Now I have to clean up this messy situation again, how gross!",
+        "label": 1
+    },
+    {
+        "text": "Wastewater overflowing, bringing all sorts of trash with it. It's utterly disgusting.",
+        "label": 1
+    },
+    {
+        "text": "I can't believe this is happening again.",
+        "label": 1
+    },
+    {
+        "text": "The sewage smell is stinking up the entire room, I can't stand it anymore.",
+        "label": 1
+    },
+    {
+        "text": "I opened my eyes and saw the drain overflowing, I'm going insane!",
+        "label": 1
+    },
+    {
+        "text": "This drain is clogged all the time, it's truly disgusting.",
+        "label": 1
+    },
+    {
+        "text": "Stepping in sewage water, the feeling of disgust is indescribable.",
+        "label": 1
+    },
+    {
+        "text": "The smell of waste just lingers in the air.",
+        "label": 1
+    },
+    {
+        "text": "I'm sick of the drain being clogged every week.",
+        "label": 1
+    },
+    {
+        "text": "Is this a boarding house or a garbage dump?",
+        "label": 1
+    },
+    {
+        "text": "I can't stand this stench anymore.",
+        "label": 1
+    },
+    {
+        "text": "Cleaning is already torture, and now I have to clear the drain too.",
+        "label": 1
+    },
+    {
+        "text": "It's truly a nightmare when the drain overflows in the middle of the night.",
+        "label": 1
+    },
+    {
+        "text": "What kind of room is this, with green and red mold all over the walls?",
+        "label": 1
+    },
+    {
+        "text": "The musty smell in the room is unbearable.",
+        "label": 1
+    },
+    {
+        "text": "Sleeping in this moldy room will surely make me sick.",
+        "label": 1
+    },
+    {
+        "text": "As soon as I open the room door, the musty smell hits me straight in the nose, it's awful.",
+        "label": 1
+    },
+    {
+        "text": "Looking at my room's walls makes me want to cry, they're all covered in black mold.",
+        "label": 1
+    },
+    {
+        "text": "The mold is even spreading to my clothes, it's utterly disgusting.",
+        "label": 1
+    },
+    {
+        "text": "This room is truly a breeding ground for disease, it's nothing but mold.",
+        "label": 1
+    },
+    {
+        "text": "The musty smell haunts me even in my sleep, it's so uncomfortable.",
+        "label": 1
+    },
+    {
+        "text": "I need to move rooms urgently, I can't stand this smell.",
+        "label": 1
+    },
+    {
+        "text": "Landlord, can you repaint the walls of this room? It's terribly moldy!",
+        "label": 1
+    },
+    {
+        "text": "The walls are covered in black mold, they look utterly disgusting.",
+        "label": 1
+    },
+    {
+        "text": "It feels like I'm living in a damp cave.",
+        "label": 1
+    },
+    {
+        "text": "The moldy smell is so unpleasant that I don't even want to be in the room.",
+        "label": 1
+    },
+    {
+        "text": "It's hard to breathe because of the heavy moldy smell, it's affecting my health.",
+        "label": 1
+    },
+    {
+        "text": "The bed is also moldy now, how disgusting!",
+        "label": 1
+    },
+    {
+        "text": "Everything in the room is getting moldy.",
+        "label": 1
+    },
+    {
+        "text": "I can't breathe in this air.",
+        "label": 1
+    },
+    {
+        "text": "Just looking at the mold spots makes me feel itchy.",
+        "label": 1
+    },
+    {
+        "text": "This room is truly a disgrace.",
+        "label": 1
+    },
+    {
+        "text": "Damp, dirty, moldy, it's truly a nightmare.",
+        "label": 1
+    },
+    {
+        "text": "Oh my God, there's a huge cockroach crawling in the kitchen! How disgusting!",
+        "label": 1
+    },
+    {
+        "text": "I saw a mouse run through the kitchen again, that's absolutely disgusting!",
+        "label": 1
+    },
+    {
+        "text": "A communal kitchen crawling with cockroaches and mice, I don't dare go in.",
+        "label": 1
+    },
+    {
+        "text": "Don't even talk about the kitchen anymore, I feel like I'm going to throw up.",
+        "label": 1
+    },
+    {
+        "text": "As soon as I opened the kitchen cabinet, a swarm of cockroaches crawled out, it was sickening.",
+        "label": 1
+    },
+    {
+        "text": "These cockroaches are as big as my thumb, how disgusting!",
+        "label": 1
+    },
+    {
+        "text": "Mice are scurrying loudly on the kitchen ceiling, it's so unnerving.",
+        "label": 1
+    },
+    {
+        "text": "Who would dare cook in a kitchen full of cockroaches?",
+        "label": 1
+    },
+    {
+        "text": "Every night I hear mice gnawing in the kitchen, it's driving me crazy!",
+        "label": 1
+    },
+    {
+        "text": "The communal kitchen feels like an insect zoo, it's disgusting.",
+        "label": 1
+    },
+    {
+        "text": "It's truly disgusting, isn't anyone going to get rid of the mice and cockroaches?",
+        "label": 1
+    },
+    {
+        "text": "I need to buy insect repellent urgently, I can't stand it anymore.",
+        "label": 1
+    },
+    {
+        "text": "Seeing cockroaches in the kitchen makes me lose my appetite.",
+        "label": 1
+    },
+    {
+        "text": "Look, that mouse is carrying food out, it's sickening.",
+        "label": 1
+    },
+    {
+        "text": "The kitchen is so filthy, that's why there are so many cockroaches and mice, it's terrifying.",
+        "label": 1
+    },
+    {
+        "text": "Every night I have to battle with these cockroaches.",
+        "label": 1
+    },
+    {
+        "text": "As soon as I turn on the light, I see an army of cockroaches.",
+        "label": 1
+    },
+    {
+        "text": "This kitchen is truly a rat's nest.",
+        "label": 1
+    },
+    {
+        "text": "I swear I'll never use this communal kitchen again.",
+        "label": 1
+    },
+    {
+        "text": "I always shudder when I go into the kitchen.",
+        "label": 1
+    },
+    {
+        "text": "This hallway is so dark, it's scary. What if I run into a ghost?",
+        "label": 2
+    },
+    {
+        "text": "It's too dark, without lights like this, I'm really scared.",
+        "label": 2
+    },
+    {
+        "text": "Having to walk through a dark hallway like this gives me the creeps.",
+        "label": 2
+    },
+    {
+        "text": "I'm so scared of thieves; with the hallway completely dark like this, they can easily break in.",
+        "label": 2
+    },
+    {
+        "text": "Hey landlord, the hallway light is broken, it's too dark and I'm scared.",
+        "label": 2
+    },
+    {
+        "text": "There's a strange noise in the pitch-black hallway, I'm panicking.",
+        "label": 2
+    },
+    {
+        "text": "It's so dark, there might be a stranger hiding somewhere.",
+        "label": 2
+    },
+    {
+        "text": "What I fear most is coming home late from work and the hallway having no lights.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, can you install more hallway lights? It's too dark, I'm scared.",
+        "label": 2
+    },
+    {
+        "text": "The hallway has been dark for days now, I'm really worried.",
+        "label": 2
+    },
+    {
+        "text": "Don't turn off the hallway lights like that, it's terrifying.",
+        "label": 2
+    },
+    {
+        "text": "It's so dark, there's a shadow of someone there; I'm scared I can't see clearly.",
+        "label": 2
+    },
+    {
+        "text": "I have to run really fast when passing through the dark hallway, I'm afraid something might happen.",
+        "label": 2
+    },
+    {
+        "text": "This hallway is pitch black, I don't dare go alone.",
+        "label": 2
+    },
+    {
+        "text": "Every time I come home late, I'm filled with dread walking through the hallway.",
+        "label": 2
+    },
+    {
+        "text": "Oh my God, my motorbike! I'm so afraid it'll get stolen.",
+        "label": 2
+    },
+    {
+        "text": "Every morning I hear reports of stolen motorbikes, I'm scared mine will disappear.",
+        "label": 2
+    },
+    {
+        "text": "My laundry got stolen again, I'm afraid to hang clothes outside anymore.",
+        "label": 2
+    },
+    {
+        "text": "This rental area is so unsafe, landlord, please do something!",
+        "label": 2
+    },
+    {
+        "text": "This morning someone had their motorbike stolen right at the gate, it scared me pale.",
+        "label": 2
+    },
+    {
+        "text": "Seeing those thieves loitering around in broad daylight is really scary.",
+        "label": 2
+    },
+    {
+        "text": "Are there any cameras? I'm so scared of things getting stolen all the time.",
+        "label": 2
+    },
+    {
+        "text": "Every night I have to bring my motorbike into my room, I'm so afraid of it getting stolen.",
+        "label": 2
+    },
+    {
+        "text": "Something got stolen again? I'm too scared to hang laundry outside anymore.",
+        "label": 2
+    },
+    {
+        "text": "Our area has a lot of theft now, everyone please be careful.",
+        "label": 2
+    },
+    {
+        "text": "Hearing that the house next door had their motorbike stolen startled me, it's really scary.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared I won't find my motorbike when I come home tonight.",
+        "label": 2
+    },
+    {
+        "text": "Even laundry gets stolen; this rental area is truly chaotic.",
+        "label": 2
+    },
+    {
+        "text": "Everyone, lock the gate carefully, we're so afraid of bikes being stolen.",
+        "label": 2
+    },
+    {
+        "text": "I've seen strangers bringing motorbikes in and out several times who aren't tenants, I'm very worried.",
+        "label": 2
+    },
+    {
+        "text": "Having to constantly fear my motorbike getting stolen like this is so exhausting.",
+        "label": 2
+    },
+    {
+        "text": "My biggest fear is thieves breaking in while I'm asleep, breaking the lock and taking my motorbike.",
+        "label": 2
+    },
+    {
+        "text": "There's some strange man lurking outside the gate for a while now, I'm so scared.",
+        "label": 2
+    },
+    {
+        "text": "Seeing strangers loitering around the rental complex makes me a little uneasy.",
+        "label": 2
+    },
+    {
+        "text": "A stranger is standing at the gate, constantly looking inside, it's really creepy.",
+        "label": 2
+    },
+    {
+        "text": "For the past few days, I've seen strangers often standing outside the gate, it's genuinely frightening.",
+        "label": 2
+    },
+    {
+        "text": "I don't know who that stranger is, but they keep standing there and staring inside, it's making me really scared.",
+        "label": 2
+    },
+    {
+        "text": "Hey landlord, there's a suspicious stranger lurking at the complex gate.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared that stranger might be a thief or have bad intentions.",
+        "label": 2
+    },
+    {
+        "text": "Standing there and staring like that is creepy, it's like they're casing the place.",
+        "label": 2
+    },
+    {
+        "text": "Every time I see a stranger loitering, I get extremely worried, not knowing what's going on.",
+        "label": 2
+    },
+    {
+        "text": "What if that person is a pervert? I'm absolutely terrified.",
+        "label": 2
+    },
+    {
+        "text": "Can someone please go check who that stranger at the gate is for me? I'm so incredibly scared.",
+        "label": 2
+    },
+    {
+        "text": "Coming home late at night and finding a stranger lurking at the gate like this, it's absolutely terrifying.",
+        "label": 2
+    },
+    {
+        "text": "I saw a stranger repeatedly walking back and forth in front of the rental complex gate, it's really scary.",
+        "label": 2
+    },
+    {
+        "text": "For the past few days, I keep seeing a stranger often looking into my room, it's very frightening.",
+        "label": 2
+    },
+    {
+        "text": "Oh my God, suddenly there's a stranger standing and staring into my rental room, it's terrifying.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared that stranger might have bad intentions towards the children.",
+        "label": 2
+    },
+    {
+        "text": "He keeps staring intensely at the rental complex, it makes me incredibly anxious.",
+        "label": 2
+    },
+    {
+        "text": "Don't stand at the gate and stare inside like that, it's really scary.",
+        "label": 2
+    },
+    {
+        "text": "Oh my gosh, the outlet is sparking and smoking, I'm so scared the house will burn down!",
+        "label": 2
+    },
+    {
+        "text": "The outlet smells like something's burning, I'm so scared!",
+        "label": 2
+    },
+    {
+        "text": "This outlet keeps flickering, I'm so scared there'll be an electrical fire.",
+        "label": 2
+    },
+    {
+        "text": "Smoke's coming from the outlet, oh god, the house is on fire!",
+        "label": 2
+    },
+    {
+        "text": "My biggest fear is an electrical fire while I'm asleep.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, the outlet is smoking, it's really dangerous!",
+        "label": 2
+    },
+    {
+        "text": "The electricity is so unstable, I don't dare plug anything in, I'm so afraid.",
+        "label": 2
+    },
+    {
+        "text": "Every time I hear that crackling sound, I get scared, I probably need to unplug everything.",
+        "label": 2
+    },
+    {
+        "text": "There's a baby here, I'm scared of an electrical short causing an accident.",
+        "label": 2
+    },
+    {
+        "text": "The outlet has been shorting out these past few days, I'm so worried it'll explode.",
+        "label": 2
+    },
+    {
+        "text": "If the power keeps flickering like this, I'm worried all my electronics will get damaged.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, the outlet in my room is smoking, I'm really scared.",
+        "label": 2
+    },
+    {
+        "text": "I plugged in my charger and the outlet smells burnt, it's really freaky, I don't dare use it anymore.",
+        "label": 2
+    },
+    {
+        "text": "The light keeps flickering, I'm so scared of a short circuit, I worry about it every night.",
+        "label": 2
+    },
+    {
+        "text": "I don't even dare turn on the lights tonight, I'm too scared.",
+        "label": 2
+    },
+    {
+        "text": "This outlet is so dangerous, I'm scared I'll get an electric shock.",
+        "label": 2
+    },
+    {
+        "text": "When I flipped the switch, it sparked, it scared the life out of me.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, you really need to fix that outlet, it could cause a fatal fire or explosion!",
+        "label": 2
+    },
+    {
+        "text": "What if the outlet explodes while I'm using it? I'm so scared.",
+        "label": 2
+    },
+    {
+        "text": "Every time I see an issue with an outlet, I feel uneasy.",
+        "label": 2
+    },
+    {
+        "text": "The main gate lock is so flimsy, I'm so scared of thieves getting in.",
+        "label": 2
+    },
+    {
+        "text": "My room door lock is too loose, I'm scared someone might pick it.",
+        "label": 2
+    },
+    {
+        "text": "The lock on my door looks really flimsy, it's terrifying.",
+        "label": 2
+    },
+    {
+        "text": "I've been worried these past few days that someone might break into my room.",
+        "label": 2
+    },
+    {
+        "text": "With a loose lock like this, I don't feel secure at all.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, the lock on my door is loose, I'm really scared.",
+        "label": 2
+    },
+    {
+        "text": "The main gate lock is so flimsy, I'm worried it's not safe.",
+        "label": 2
+    },
+    {
+        "text": "This lock definitely won't hold up, I'm so scared.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared of thieves breaking the lock while I'm asleep.",
+        "label": 2
+    },
+    {
+        "text": "My door keeps getting stuck and doesn't close securely, it's terrifying.",
+        "label": 2
+    },
+    {
+        "text": "I always have to check the lock several times before going to bed, I'm so scared.",
+        "label": 2
+    },
+    {
+        "text": "You can tell just by looking that this lock is easy to pry open, I'm so nervous.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared to leave valuables in my room with this lock.",
+        "label": 2
+    },
+    {
+        "text": "Landlord, you really need to replace the lock, this one is too flimsy.",
+        "label": 2
+    },
+    {
+        "text": "The gate lock is always left open and no one closes it, I'm really worried.",
+        "label": 2
+    },
+    {
+        "text": "My door latch is loose, I'm so scared, ma'am.",
+        "label": 2
+    },
+    {
+        "text": "Whenever I leave, I have to remind everyone to lock the door properly, I'm so worried for everyone's safety.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared strangers can easily get into the complex because of this loose gate lock.",
+        "label": 2
+    },
+    {
+        "text": "The main gate lock is broken, I'm so scared my motorbike will get stolen.",
+        "label": 2
+    },
+    {
+        "text": "Every night I have to wedge the door to make sure it's secure, I'm afraid this lock isn't enough.",
+        "label": 2
+    },
+    {
+        "text": "How can I sleep soundly when the door lock keeps wobbling like this?",
+        "label": 2
+    },
+    {
+        "text": "Every time there's a strong wind, the door rattles, I'm scared it'll unlatch.",
+        "label": 2
+    },
+    {
+        "text": "I'm scared criminals might be watching and use the loose lock to get in.",
+        "label": 2
+    },
+    {
+        "text": "This room lock looks really old, I'm so worried.",
+        "label": 2
+    },
+    {
+        "text": "My biggest fear is that this lock might have a master key.",
+        "label": 2
+    },
+    {
+        "text": "The door doesn't have a secondary bolt, just this one lock, I'm so scared.",
+        "label": 2
+    },
+    {
+        "text": "I don't dare stay out long because I'm afraid the door lock isn't safe.",
+        "label": 2
+    },
+    {
+        "text": "My door lock is jammed and doesn't close securely, I'm so scared it could be pried open.",
+        "label": 2
+    },
+    {
+        "text": "Every time I see the gate lock shaking, I feel uneasy.",
+        "label": 2
+    },
+    {
+        "text": "I don't dare sleep tonight because I'm worried the door lock isn't secure.",
+        "label": 2
+    },
+    {
+        "text": "This room is super clean, I'm very happy with it!",
+        "label": 3
+    },
+    {
+        "text": "This spaciousness is exactly what I was looking for!",
+        "label": 3
+    },
+    {
+        "text": "Wow, the room is so cool and the air is so fresh!",
+        "label": 3
+    },
+    {
+        "text": "I can't believe the room is so nice and clean.",
+        "label": 3
+    },
+    {
+        "text": "The room has a great view too, I really like it!",
+        "label": 3
+    },
+    {
+        "text": "This unit is so breezy, I really love it, landlord!",
+        "label": 3
+    },
+    {
+        "text": "The room is exactly like the pictures, even nicer, I'm so happy!",
+        "label": 3
+    },
+    {
+        "text": "With such a spacious balcony, I can dry all my clothes easily.",
+        "label": 3
+    },
+    {
+        "text": "Now that I have a place I like, I feel so relieved!",
+        "label": 3
+    },
+    {
+        "text": "I just moved in and I already feel incredibly comfortable.",
+        "label": 3
+    },
+    {
+        "text": "This really is an ideal living space, sir/ma'am.",
+        "label": 3
+    },
+    {
+        "text": "Just having a clean room like this makes me happy.",
+        "label": 3
+    },
+    {
+        "text": "Coming home from work to a cool room makes all the tiredness vanish.",
+        "label": 3
+    },
+    {
+        "text": "It's hot outside, but the room is still cool, I love it!",
+        "label": 3
+    },
+    {
+        "text": "Wow, this room is amazing for the price!",
+        "label": 3
+    },
+    {
+        "text": "I looked for ages to find a room I liked this much.",
+        "label": 3
+    },
+    {
+        "text": "This amount of space is perfectly comfortable for one person.",
+        "label": 3
+    },
+    {
+        "text": "Wow, the natural light in the room is gorgeous!",
+        "label": 3
+    },
+    {
+        "text": "The room has big windows, so it's really airy.",
+        "label": 3
+    },
+    {
+        "text": "I felt much happier just moving my stuff in.",
+        "label": 3
+    },
+    {
+        "text": "The landlord is so helpful, thank you so much!",
+        "label": 3
+    },
+    {
+        "text": "Having such a considerate landlord makes me feel completely at ease.",
+        "label": 3
+    },
+    {
+        "text": "Thank you so much for your dedicated help.",
+        "label": 3
+    },
+    {
+        "text": "Finding such a kind landlord like you is really my good fortune.",
+        "label": 3
+    },
+    {
+        "text": "You helped so quickly, I'm really glad.",
+        "label": 3
+    },
+    {
+        "text": "Any problem is resolved right away, I really appreciate that!",
+        "label": 3
+    },
+    {
+        "text": "You showed up right after I called, that's amazing!",
+        "label": 3
+    },
+    {
+        "text": "I'm very grateful for your enthusiastic help.",
+        "label": 3
+    },
+    {
+        "text": "What could be better than living here with such a nice landlord?",
+        "label": 3
+    },
+    {
+        "text": "I'm so lucky to have found such a kind landlord like you.",
+        "label": 3
+    },
+    {
+        "text": "The landlord is so kind, it really warms my heart.",
+        "label": 3
+    },
+    {
+        "text": "Thank you for your concern and support.",
+        "label": 3
+    },
+    {
+        "text": "I'm very happy and satisfied with the help you've given me.",
+        "label": 3
+    },
+    {
+        "text": "The landlord truly has a good heart, I'm so touched.",
+        "label": 3
+    },
+    {
+        "text": "You helped me with everything, I'm so happy I could cry!",
+        "label": 3
+    },
+    {
+        "text": "It's a good thing I had the landlord's help, otherwise I wouldn't know what I'd do.",
+        "label": 3
+    },
+    {
+        "text": "I'm really happy to be renting from you.",
+        "label": 3
+    },
+    {
+        "text": "Having such a friendly landlord, I feel so much less anxious.",
+        "label": 3
+    },
+    {
+        "text": "It's wonderful to have someone who patiently listens and helps me.",
+        "label": 3
+    },
+    {
+        "text": "It feels just like home here, thank you so much.",
+        "label": 3
+    },
+    {
+        "text": "The complex has really good security, I feel very safe.",
+        "label": 3
+    },
+    {
+        "text": "All the neighbors are so lovely, it makes me feel so much happier.",
+        "label": 3
+    },
+    {
+        "text": "It's so quiet here, I can really relax after work.",
+        "label": 3
+    },
+    {
+        "text": "I've been sleeping so much better since moving here.",
+        "label": 3
+    },
+    {
+        "text": "This area isn't noisy at all, I'm so happy about that.",
+        "label": 3
+    },
+    {
+        "text": "Everyone here is friendly, I feel like I'm settling in fast.",
+        "label": 3
+    },
+    {
+        "text": "The complex is clean and safe, I'm absolutely delighted!",
+        "label": 3
+    },
+    {
+        "text": "The air here is so fresh, I really like it.",
+        "label": 3
+    },
+    {
+        "text": "The evenings are so peaceful, I have no worries at all.",
+        "label": 3
+    },
+    {
+        "text": "The neighbor kids are cute too.",
+        "label": 3
+    },
+    {
+        "text": "I'm so happy to have found a place that's both secure and quiet.",
+        "label": 3
+    },
+    {
+        "text": "I've never seen a rental complex this great before.",
+        "label": 3
+    },
+    {
+        "text": "The security is good, so I don't have to worry much when I'm at work.",
+        "label": 3
+    },
+    {
+        "text": "The neighbors often share food, it's so lovely!",
+        "label": 3
+    },
+    {
+        "text": "The people in the complex often help each other out too.",
+        "label": 3
+    },
+    {
+        "text": "It's both close to the market and quiet here, so convenient!",
+        "label": 3
+    },
+    {
+        "text": "Sitting out in the cool hallway/balcony in the evening is so pleasant.",
+        "label": 3
+    },
+    {
+        "text": "Everyone in the complex is fond of each other, it's a really happy atmosphere.",
+        "label": 3
+    },
+    {
+        "text": "I'm really happy to be living in this friendly community.",
+        "label": 3
+    },
+    {
+        "text": "It's truly 'a good place to settle down,' I'm so lucky.",
+        "label": 3
+    },
+    {
+        "text": "Thank you for fixing the faucet so quickly!",
+        "label": 3
+    },
+    {
+        "text": "The electricity and water are stable again, I'm absolutely thrilled!",
+        "label": 3
+    },
+    {
+        "text": "You replaced the light bulb with a brand new one, it's so bright now!",
+        "label": 3
+    },
+    {
+        "text": "The gas stove is fixed, now I can cook all I want!",
+        "label": 3
+    },
+    {
+        "text": "Seeing the landlord help so promptly makes me feel immediately relieved.",
+        "label": 3
+    },
+    {
+        "text": "Oh, the fridge is working again, what a relief!",
+        "label": 3
+    },
+    {
+        "text": "Anything that breaks gets fixed right away, I'm very satisfied.",
+        "label": 3
+    },
+    {
+        "text": "Thank you, landlord, for not hesitating to help us out.",
+        "label": 3
+    },
+    {
+        "text": "I'm really happy you fixed it so quickly.",
+        "label": 3
+    },
+    {
+        "text": "Now all the appliances in my room are working perfectly.",
+        "label": 3
+    },
+    {
+        "text": "I can't believe you fixed it so fast, that's amazing!",
+        "label": 3
+    },
+    {
+        "text": "Thank you, landlord, for resolving the issue so quickly.",
+        "label": 3
+    },
+    {
+        "text": "Now that there's hot water, showering feels amazing!",
+        "label": 3
+    },
+    {
+        "text": "The air conditioner is working normally again, I'm so glad.",
+        "label": 3
+    },
+    {
+        "text": "Thank you for taking the trouble to come and fix it.",
+        "label": 3
+    },
+    {
+        "text": "Thanks to you, my appliances are working well again.",
+        "label": 3
+    },
+    {
+        "text": "It's great to have a landlord who's always willing to help.",
+        "label": 3
+    },
+    {
+        "text": "I feel very lucky to have such dedicated support from the landlord.",
+        "label": 3
+    },
+    {
+        "text": "I've never had such a considerate landlord while renting.",
+        "label": 3
+    },
+    {
+        "text": "The room is back to perfect, I'm so happy.",
+        "label": 3
+    },
+    {
+        "text": "Getting a rent reduction, I'm over the moon!",
+        "label": 3
+    },
+    {
+        "text": "Thank you for making it possible to extend the contract.",
+        "label": 3
+    },
+    {
+        "text": "The contract renewal went through, I feel so relieved.",
+        "label": 3
+    },
+    {
+        "text": "Staying here longer is the best, I'm so happy!",
+        "label": 3
+    },
+    {
+        "text": "You reduced my rent, I'm very appreciative.",
+        "label": 3
+    },
+    {
+        "text": "I'm so lucky to be able to stay in this room I love, I'm thrilled.",
+        "label": 3
+    },
+    {
+        "text": "It's such a pleasant surprise to get a rent reduction!",
+        "label": 3
+    },
+    {
+        "text": "I'll try to stay for a very long time to show my appreciation for your kindness.",
+        "label": 3
+    },
+    {
+        "text": "Thank you, landlord, for always being so good to me.",
+        "label": 3
+    },
+    {
+        "text": "My contract was renewed, I don't have to look for a new room, I'm so glad!",
+        "label": 3
+    },
+    {
+        "text": "You're truly the most amazing landlord ever!",
+        "label": 3
+    },
+    {
+        "text": "You reduced my rent for Tet, now I have money to go home!",
+        "label": 3
+    },
+    {
+        "text": "I didn't expect the renewal to go so smoothly.",
+        "label": 3
+    },
+    {
+        "text": "Seeing how understanding the landlord is, I'm so happy.",
+        "label": 3
+    },
+    {
+        "text": "My decision to stay longer was definitely the right one.",
+        "label": 3
+    },
+    {
+        "text": "Thank you, landlord, for understanding and being sympathetic.",
+        "label": 3
+    },
+    {
+        "text": "With such a kind landlord, I don't want to move out anymore.",
+        "label": 3
+    },
+    {
+        "text": "I'm so overjoyed to be able to keep this room.",
+        "label": 3
+    },
+    {
+        "text": "I got a discount and a renewal, I feel so incredibly lucky.",
+        "label": 3
+    },
+    {
+        "text": "Once again, I'd like to sincerely thank the landlord.",
+        "label": 3
+    },
+    {
+        "text": "Could I take a look at my rental agreement again, please?",
+        "label": 4
+    },
+    {
+        "text": "Do you still have a copy of my contract?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask about the terms in the contract.",
+        "label": 4
+    },
+    {
+        "text": "When would it be possible to see the contract?",
+        "label": 4
+    },
+    {
+        "text": "Is the electricity and water bill ready for this month?",
+        "label": 4
+    },
+    {
+        "text": "How much is this month's bill?",
+        "label": 4
+    },
+    {
+        "text": "Could you please send me this month's total bill?",
+        "label": 4
+    },
+    {
+        "text": "How many kWh of electricity did I use this month?",
+        "label": 4
+    },
+    {
+        "text": "Is there any change in the water bill this month?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to see the detailed bill for this month.",
+        "label": 4
+    },
+    {
+        "text": "Is this month's rent bill ready?",
+        "label": 4
+    },
+    {
+        "text": "Could I get this month's rent bill, please?",
+        "label": 4
+    },
+    {
+        "text": "What's the total amount due this month?",
+        "label": 4
+    },
+    {
+        "text": "Can I get the bill sent via Zalo?",
+        "label": 4
+    },
+    {
+        "text": "I already paid last month's bill, didn't I?",
+        "label": 4
+    },
+    {
+        "text": "Could I see last month's bill again?",
+        "label": 4
+    },
+    {
+        "text": "Is anything unusual about this month's bill?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask for more details about the fees on the bill.",
+        "label": 4
+    },
+    {
+        "text": "Is this bill for my unit?",
+        "label": 4
+    },
+    {
+        "text": "I haven't gotten this month's bill yet.",
+        "label": 4
+    },
+    {
+        "text": "Are you home?",
+        "label": 4
+    },
+    {
+        "text": "Are you home? I just wanted to ask you something.",
+        "label": 4
+    },
+    {
+        "text": "When will you be home so I can pick up the key?",
+        "label": 4
+    },
+    {
+        "text": "Can I come over to sign the paperwork?",
+        "label": 4
+    },
+    {
+        "text": "What time are you free?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to come get the spare key.",
+        "label": 4
+    },
+    {
+        "text": "Could we schedule a time to meet?",
+        "label": 4
+    },
+    {
+        "text": "I'm downstairs, would it be a good time for you to come down?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask about replacing the room lock.",
+        "label": 4
+    },
+    {
+        "text": "Are you home? I'd like to return the old key.",
+        "label": 4
+    },
+    {
+        "text": "I'd like to come hand you the contract.",
+        "label": 4
+    },
+    {
+        "text": "Could you come to my room for a bit?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to discuss some matters with you directly.",
+        "label": 4
+    },
+    {
+        "text": "When will I be able to get the new key?",
+        "label": 4
+    },
+    {
+        "text": "Are you home? I have something to leave with you.",
+        "label": 4
+    },
+    {
+        "text": "Could I come to your unit in the afternoon?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask you about room repairs.",
+        "label": 4
+    },
+    {
+        "text": "Could you sign the paperwork for me now?",
+        "label": 4
+    },
+    {
+        "text": "I need to get my stuff from my old room, are you home?",
+        "label": 4
+    },
+    {
+        "text": "I've come to collect my deposit.",
+        "label": 4
+    },
+    {
+        "text": "What's the Wi-Fi password?",
+        "label": 4
+    },
+    {
+        "text": "Could I get the Wi-Fi password, please?",
+        "label": 4
+    },
+    {
+        "text": "What's the Wi-Fi name for the complex?",
+        "label": 4
+    },
+    {
+        "text": "Did the Wi-Fi password change?",
+        "label": 4
+    },
+    {
+        "text": "I can't connect to the Wi-Fi.",
+        "label": 4
+    },
+    {
+        "text": "Could you repeat the Wi-Fi password for me, please?",
+        "label": 4
+    },
+    {
+        "text": "Where's the motorbike parking?",
+        "label": 4
+    },
+    {
+        "text": "Where can I put my bike?",
+        "label": 4
+    },
+    {
+        "text": "Does the parking area have a cover?",
+        "label": 4
+    },
+    {
+        "text": "Are there any rules regarding parking?",
+        "label": 4
+    },
+    {
+        "text": "Is it okay if I park my bike/car here?",
+        "label": 4
+    },
+    {
+        "text": "Could you show me where the parking area is?",
+        "label": 4
+    },
+    {
+        "text": "Is the Wi-Fi password case-sensitive?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask about the monthly parking fee.",
+        "label": 4
+    },
+    {
+        "text": "Is the parking area safe?",
+        "label": 4
+    },
+    {
+        "text": "Is the Wi-Fi password easy to remember?",
+        "label": 4
+    },
+    {
+        "text": "Is it alright to leave my bike/car here overnight?",
+        "label": 4
+    },
+    {
+        "text": "Are there surveillance cameras in the parking area?",
+        "label": 4
+    },
+    {
+        "text": "The Wi-Fi signal in my room is a bit weak.",
+        "label": 4
+    },
+    {
+        "text": "Where can I park my car?",
+        "label": 4
+    },
+    {
+        "text": "What day do we pay rent each month?",
+        "label": 4
+    },
+    {
+        "text": "What's the due date for rent?",
+        "label": 4
+    },
+    {
+        "text": "What day of the month is rent due?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to ask about the rent payment deadline.",
+        "label": 4
+    },
+    {
+        "text": "Is the rent due date always the same?",
+        "label": 4
+    },
+    {
+        "text": "What day do we usually pay rent?",
+        "label": 4
+    },
+    {
+        "text": "What's the due date for rent this month?",
+        "label": 4
+    },
+    {
+        "text": "When's the final day to pay rent?",
+        "label": 4
+    },
+    {
+        "text": "Is rent usually paid before or on that date?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to confirm this month's rent due date.",
+        "label": 4
+    },
+    {
+        "text": "Is rent paid at the beginning or end of the month?",
+        "label": 4
+    },
+    {
+        "text": "Can the rent due date be flexible?",
+        "label": 4
+    },
+    {
+        "text": "I'm asking so I can prepare the rent money by the due date.",
+        "label": 4
+    },
+    {
+        "text": "Is the rent due on the 5th?",
+        "label": 4
+    },
+    {
+        "text": "Could you remind me of the rent due date?",
+        "label": 4
+    },
+    {
+        "text": "Are there any late fees for rent?",
+        "label": 4
+    },
+    {
+        "text": "I'd like to know the exact rent due date.",
+        "label": 4
+    },
+    {
+        "text": "What was last month's rent due date?",
+        "label": 4
+    },
+    {
+        "text": "Is the rent due date announced beforehand?",
+        "label": 4
+    },
+    {
+        "text": "Can I pay rent earlier?",
+        "label": 4
+    },
+    {
+        "text": "I'll be away from my room for a few days.",
+        "label": 4
+    },
+    {
+        "text": "I'll be going back to my hometown for about 3 days.",
+        "label": 4
+    },
+    {
+        "text": "I won't be in my room this week.",
+        "label": 4
+    },
+    {
+        "text": "I'm just letting you know I'll be away on a business trip for a few days.",
+        "label": 4
+    },
+    {
+        "text": "I'll be going away for a few days.",
+        "label": 4
+    },
+    {
+        "text": "My room will be vacant for a while.",
+        "label": 4
+    },
+    {
+        "text": "I'm heading home this weekend and will be back on Monday.",
+        "label": 4
+    },
+    {
+        "text": "I'm just letting you know.",
+        "label": 4
+    },
+    {
+        "text": "I'll be paying the rent a little late.",
+        "label": 4
+    },
+    {
+        "text": "I'd like to pay rent a few days late this month.",
+        "label": 4
+    },
+    {
+        "text": "Would it be okay if I paid the rent a little later?",
+        "label": 4
+    },
+    {
+        "text": "I'll be paying this month's rent later than anticipated.",
+        "label": 4
+    },
+    {
+        "text": "Would it be okay if I paid the rent a day or two after the due date?",
+        "label": 4
+    },
+    {
+        "text": "I'll transfer the rent a day late, alright?",
+        "label": 4
+    },
+    {
+        "text": "I'll be paying this month's rent a bit late.",
+        "label": 4
+    },
+    {
+        "text": "Something unexpected came up, so I'll be paying rent late.",
+        "label": 4
+    },
+    {
+        "text": "I'll be away on a trip for about a week.",
+        "label": 4
+    },
+    {
+        "text": "My room will be empty from [date] to [date].",
+        "label": 4
+    },
+    {
+        "text": "Can I pay rent over the weekend?",
+        "label": 4
+    },
+    {
+        "text": "I'll let you know the exact rent due date later.",
+        "label": 4
+    },
+    {
+        "text": "Ma'am, my salary is really delayed this month. Could I please ask to postpone the rent until the end of the month?",
+        "label": 5
+    },
+    {
+        "text": "Sir, my company is going through a tough time and my salary got cut. I don't have enough to pay rent this month, I'm so bummed.",
+        "label": 5
+    },
+    {
+        "text": "Ma'am, my pay just got cut unexpectedly. I might have to ask if I can pay the rent a little late. I feel so bad about it.",
+        "label": 5
+    },
+    {
+        "text": "I'm really struggling right now, my paycheck hasn't come in yet. I wonder if the landlord would let me pay the rent a few days late?",
+        "label": 5
+    },
+    {
+        "text": "My company suddenly cut my allowances, and now rent has become such a burden. I feel so discouraged.",
+        "label": 5
+    },
+    {
+        "text": "Excuse me, I'm really strapped for cash right now. Could you possibly give me an extension to pay the rent until the 10th of next month?",
+        "label": 5
+    },
+    {
+        "text": "My pay has been so inconsistent for months now, and I don't even have enough for rent. Life feels so tough.",
+        "label": 5
+    },
+    {
+        "text": "I'm so upset, ma'am. My salary is over half a month late this month. Could you let me delay the rent a bit more?",
+        "label": 5
+    },
+    {
+        "text": "I had a minor accident so I had to take a few days off work, and my income dropped significantly. I'm afraid I can't make rent this month.",
+        "label": 5
+    },
+    {
+        "text": "I'm truly sorry, but I can't manage to get enough for rent this month by the due date. I hope you understand.",
+        "label": 5
+    },
+    {
+        "text": "Landlord, I just got news that my salary will be delayed. Now I don't know how I'm going to pay the rent.",
+        "label": 5
+    },
+    {
+        "text": "I'm so upset, my company announced they're partially closing down, and my income has been seriously affected. Could I possibly pay the rent in two installments?",
+        "label": 5
+    },
+    {
+        "text": "For the past few days, I've been constantly worrying about the rent. My salary hasn't come in yet, and I'm afraid to talk to the landlord about it.",
+        "label": 5
+    },
+    {
+        "text": "Ma'am, could I pay half the rent now and send the other half after I get my salary? I'm really in a tight spot.",
+        "label": 5
+    },
+    {
+        "text": "Ma'am, I'm temporarily unemployed so I don't have money for rent. Could you give me a few more days? I promise I'll make it happen.",
+        "label": 5
+    },
+    {
+        "text": "It's so frustrating, every end of the month I get a headache because of the rent, and my salary is always delayed.",
+        "label": 5
+    },
+    {
+        "text": "I know this is a bit sudden, but could I possibly pay the rent a week late? I'm having a bit of a financial issue.",
+        "label": 5
+    },
+    {
+        "text": "Landlords, I had an emergency this month, and my paycheck just vanished. I'd like to ask for an extension on the rent until the middle of next month.",
+        "label": 5
+    },
+    {
+        "text": "I guess I'll have to ask the landlord if I can pay the rent late this month, because my salary hasn't arrived yet and the due date is already here.",
+        "label": 5
+    },
+    {
+        "text": "Ma'am, I'm very worried. My salary was deducted too much this month, and I don't know if I'll have enough to pay the rent.",
+        "label": 5
+    },
+    {
+        "text": "Even though I found a better new place, I feel so sad having to move after so many years here.",
+        "label": 5
+    },
+    {
+        "text": "It's almost time to move out. Looking at this room, so many memories flood back. I'm going to miss it so much.",
+        "label": 5
+    },
+    {
+        "text": "I really don't want to move out at all. This room has been my home for so long.",
+        "label": 5
+    },
+    {
+        "text": "It's so sad, I have to leave this room now. I'll surely miss the atmosphere here.",
+        "label": 5
+    },
+    {
+        "text": "The landlord and neighbors here are so kind. Now that I'm moving, my heart feels heavy.",
+        "label": 5
+    },
+    {
+        "text": "I can't believe the day I have to move out came so fast. I always thought I'd stay here forever.",
+        "label": 5
+    },
+    {
+        "text": "Seeing my things packed up makes my eyes well up. I don't know why I'm so incredibly sad.",
+        "label": 5
+    },
+    {
+        "text": "Although there's a good reason to move, the feeling of leaving is still so hard to describe, a bittersweet sadness.",
+        "label": 5
+    },
+    {
+        "text": "I keep pacing around the room, wanting to remember every little corner before I have to leave.",
+        "label": 5
+    },
+    {
+        "text": "I'm so sad to leave, ma'am. This room has witnessed so many of my joys and sorrows.",
+        "label": 5
+    },
+    {
+        "text": "It was my first time living away from home, and this room was where I grew up. Now I have to leave, and I feel an unspeakable sadness.",
+        "label": 5
+    },
+    {
+        "text": "My contract is almost up, and I have to move out. I'll really miss waking up here.",
+        "label": 5
+    },
+    {
+        "text": "The landlord is nice, the neighbors are lovely. Now I have to move somewhere else, and I'm worried I won't get used to it.",
+        "label": 5
+    },
+    {
+        "text": "I feel strangely sad having to say goodbye to this room.",
+        "label": 5
+    },
+    {
+        "text": "The feeling of having to pack up and put everything away is truly very sad and heavy.",
+        "label": 5
+    },
+    {
+        "text": "I've been here for over 3 years, and now I have to find a new place. Just thinking about it makes me feel tired and sad.",
+        "label": 5
+    },
+    {
+        "text": "I wish I could stay here for a bit longer, but circumstances don't allow it, so I have to accept it with a heavy heart.",
+        "label": 5
+    },
+    {
+        "text": "Sometimes I want to cry when I think about having to leave; a part of my life has been spent here.",
+        "label": 5
+    },
+    {
+        "text": "This room isn't just a place to live, it's been my little home. Now I have to leave it, I'm so sad.",
+        "label": 5
+    },
+    {
+        "text": "Goodbye, old room, goodbye to all the memories. I'll miss you so much!",
+        "label": 5
+    },
+    {
+        "text": "Oh no, it's raining so heavily the ceiling is leaking, and the water has soaked all my blankets and sheets! This is just awful!",
+        "label": 5
+    },
+    {
+        "text": "What a nightmare, it rained heavily last night, and the water leaked right onto where I keep my laptop. Now I don't know if it's damaged.",
+        "label": 5
+    },
+    {
+        "text": "The ceiling is leaking again! This time, it completely soaked all my freshly washed clothes. So frustrating.",
+        "label": 5
+    },
+    {
+        "text": "After just one rain, the room turns into a river, and I'm constantly worried about my electronics getting damaged.",
+        "label": 5
+    },
+    {
+        "text": "My bed is all wet, and my blankets are soaked through. I don't know how I'm going to sleep tonight. I'm utterly miserable.",
+        "label": 5
+    },
+    {
+        "text": "Woke up this morning to find the room flooded, my belongings floating around. I suddenly felt utterly helpless.",
+        "label": 5
+    },
+    {
+        "text": "With all this rain, the ceiling keeps leaking constantly, and even my books and notebooks are all wet. It's such a shame.",
+        "label": 5
+    },
+    {
+        "text": "The leaking ceiling has been like this for a long time, but the landlord hasn't fixed it. Now with heavy rain, water is dripping continuously. It's so disheartening to see.",
+        "label": 5
+    },
+    {
+        "text": "My laptop must have gotten wet from the rain; now it won't turn on anymore. I'm absolutely devastated.",
+        "label": 5
+    },
+    {
+        "text": "My blankets are soaked and my belongings are damp and moldy. The feeling is truly very uncomfortable and depressing.",
+        "label": 5
+    },
+    {
+        "text": "I had to stay up all night to catch leaking rainwater. I was so tired and didn't know what to do.",
+        "label": 5
+    },
+    {
+        "text": "It's raining so much, water is leaking in the right place where the wardrobe is, now all the furniture is damp, it's terribly sad.",
+        "label": 5
+    },
+    {
+        "text": "It's fun when it rains, but when the house leaks, it's miserable. The ceiling leaks and the electrical sockets are wet. It's too dangerous to worry about.",
+        "label": 5
+    },
+    {
+        "text": "The furniture was soaked in rainwater, now I have to dry it and clean it all up again, it takes all day, I'm tired and upset.",
+        "label": 5
+    },
+    {
+        "text": "Every time it rains, it's like the ceiling leaks, every time everything gets wet, I'm so bored I don't want to talk anymore.",
+        "label": 5
+    },
+    {
+        "text": "I just bought a new phone but accidentally left it near the window, rainwater splashed on it and it got wet. Now I don't know if I can fix it, what a pity.",
+        "label": 5
+    },
+    {
+        "text": "It's really sad, my favorite bed sheet was soaked and stained by the leaking water.",
+        "label": 5
+    },
+    {
+        "text": "Yesterday there was a storm and the leaking ceiling damaged my Bluetooth speaker, so sad.",
+        "label": 5
+    },
+    {
+        "text": "Water is leaking from the ceiling right where the computer is, now it keeps flickering, I'm so worried about losing all the data.",
+        "label": 5
+    },
+    {
+        "text": "Waking up and seeing the cold wet mattress, I immediately knew it was leaking from the rain. There's really nothing more miserable than that.",
+        "label": 5
+    },
+    {
+        "text": "The water flooding from the street into the room was so terrible, all my belongings were damaged, it was so sad I couldn't describe it.",
+        "label": 5
+    },
+    {
+        "text": "Just in the morning, the water was up to my knees, my blankets and clothes were soaked, I didn't know what to do.",
+        "label": 5
+    },
+    {
+        "text": "Looking at the room filled with mud after the flood, I felt extremely discouraged, everything was gone.",
+        "label": 5
+    },
+    {
+        "text": "The refrigerator and washing machine were flooded with water, I don't know if they can be used anymore, the damage is too great, so sad.",
+        "label": 5
+    },
+    {
+        "text": "Water entered the house and damaged all important documents, I had to start over, and I felt like life was ungrateful.",
+        "label": 5
+    },
+    {
+        "text": "I was up all night splashing water, but the water kept pouring in. I was so tired and desperate.",
+        "label": 5
+    },
+    {
+        "text": "My desktop computer was soaked in water, it's definitely broken, I'm so sad I want to cry.",
+        "label": 5
+    },
+    {
+        "text": "Now I have nowhere to sleep, the room is filled with water and mud, it's really too much to bear.",
+        "label": 5
+    },
+    {
+        "text": "All my belongings were flooded, from clothes, books to electronics, I don't know where to start to clean up.",
+        "label": 5
+    },
+    {
+        "text": "Looking at the scene of the ruined apartment after the flood made me feel sad, I had spent so much effort saving to buy things.",
+        "label": 5
+    },
+    {
+        "text": "Dirty water poured in, it smelled bad, the air in the room was really bad, so sad.",
+        "label": 5
+    },
+    {
+        "text": "My bed was damaged by flood water. Now I don't know where to sleep. Seeing this scene makes me feel sorry for myself.",
+        "label": 5
+    },
+    {
+        "text": "The floods turned my room into a river, everything was submerged in water, I was so sad I was sick.",
+        "label": 5
+    },
+    {
+        "text": "This morning when I opened the door to my room, my heart sank. All the furniture was floating, the damage was so heavy.",
+        "label": 5
+    },
+    {
+        "text": "I tried to raise my things high, but the water still flooded in and swept it all away, it was really sad.",
+        "label": 5
+    },
+    {
+        "text": "After the flood, the walls of the house were peeling off and the furniture was damaged. I probably had to find another place, but I felt sad when I thought about it.",
+        "label": 5
+    },
+    {
+        "text": "Seeing my personal belongings soaked in muddy water makes me feel sad, wondering when I will be able to buy them back.",
+        "label": 5
+    },
+    {
+        "text": "The feeling of helplessness as I watched the water keep rising in the room, unable to do anything else, was really sad.",
+        "label": 5
+    },
+    {
+        "text": "Everything is gone, from school books to work clothes, everything is destroyed by the flood, I don't know what to do anymore.",
+        "label": 5
+    },
+    {
+        "text": "Crying without a sound when I saw the room I loved being destroyed by floodwaters was so heartbreaking.",
+        "label": 5
+    },
+    {
+        "text": "I just lost my job, I don't have money to rent anymore, I have to go back to my hometown, I'm so sad.",
+        "label": 5
+    },
+    {
+        "text": "It's very sad, but I have no other choice. I have to return to my hometown to live with my family. I hope the landlord will understand.",
+        "label": 5
+    },
+    {
+        "text": "The company closed, I'm unemployed, and now I don't know what to do in the city, so I have to go back to my hometown.",
+        "label": 5
+    },
+    {
+        "text": "I'm really sorry, but I can't continue renting a room anymore, my financial situation is very bad, so sad.",
+        "label": 5
+    },
+    {
+        "text": "I had to sadly check out and go back to my hometown. This city doesn't seem to suit me anymore.",
+        "label": 5
+    },
+    {
+        "text": "Having lost my job, no income, now I look at the rented room with tears in my eyes, I'm about to leave.",
+        "label": 5
+    },
+    {
+        "text": "I just received the news that I was fired, I have no money left to pay here, I have to go back to my hometown with my parents, it's very sad.",
+        "label": 5
+    },
+    {
+        "text": "I thought I would start a career here, but now I'm unemployed and have to return home, seeing how miserable life is.",
+        "label": 5
+    },
+    {
+        "text": "Landlord, I'm sorry but I have to check out early. I can't rent anymore because I'm unemployed.",
+        "label": 5
+    },
+    {
+        "text": "I really don't want to go back to my hometown at all, but staying here without money for food or lodging is even more miserable, so sad.",
+        "label": 5
+    },
+    {
+        "text": "This time when I return to my hometown, I will probably not return to the city again. It's sad to have to give up everything.",
+        "label": 5
+    },
+    {
+        "text": "Looking at the furniture in the room, thinking about the difficult but hopeful days here, now I have to leave it unfinished, with great regret.",
+        "label": 5
+    },
+    {
+        "text": "My parents called me home because I was unemployed and had no money. Being in the city would only add to my burden. I was too sad to listen.",
+        "label": 5
+    },
+    {
+        "text": "I tried to find a job but couldn't. Now I'm out of money. I have to accept going back to my hometown. I'm so sad that I cry.",
+        "label": 5
+    },
+    {
+        "text": "The feeling of having to leave everything behind to return home is really unpleasant, like I've failed, so sad.",
+        "label": 5
+    },
+    {
+        "text": "The landlord sympathized with me, I had to check out immediately to go back to my hometown, I was very confused and extremely sad.",
+        "label": 5
+    },
+    {
+        "text": "I have no job, no money, looking at the empty room makes my heart feel heavy, I have to go back to my hometown.",
+        "label": 5
+    },
+    {
+        "text": "This city is so big, but there's no place for me, I'm unemployed, I have to move back to my hometown, it's so sad.",
+        "label": 5
+    },
+    {
+        "text": "I spent my entire youth here, now I'm unemployed and have to return home, sad and depressed and don't know what to say.",
+        "label": 5
+    },
+    {
+        "text": "Boss, I'm sorry, but I have to check out, I don't have any money left to rent, I have to go back to my hometown.",
+        "label": 5
+    },
+    {
+        "text": "Oh! The new room is sparklingly beautiful!",
+        "label": 6
+    },
+    {
+        "text": "Oh my God! This room is truly a complete transformation!",
+        "label": 6
+    },
+    {
+        "text": "I'm so surprised, did the homeowner fix it this beautifully?",
+        "label": 6
+    },
+    {
+        "text": "I can't believe it, my room is now like a 5-star hotel!",
+        "label": 6
+    },
+    {
+        "text": "Woah! New paint, new floors, everything is brand new!",
+        "label": 6
+    },
+    {
+        "text": "Auntie, my room is completely different, it's absolutely beautiful!",
+        "label": 6
+    },
+    {
+        "text": "Surprisingly, the tiled wall looks completely luxurious!",
+        "label": 6
+    },
+    {
+        "text": "Who would have thought that the old room would become like this!",
+        "label": 6
+    },
+    {
+        "text": "Oh my god, the room even has recessed LED lights? So cool!",
+        "label": 6
+    },
+    {
+        "text": "Dear owner, has the balcony also been redecorated? Great!",
+        "label": 6
+    },
+    {
+        "text": "So beautiful, the space is spacious and airy!",
+        "label": 6
+    },
+    {
+        "text": "The cleanliness is shiny, the bathroom looks very modern!",
+        "label": 6
+    },
+    {
+        "text": "Does my room have a new air conditioner? What a surprise!",
+        "label": 6
+    },
+    {
+        "text": "I thought I was in the wrong room, the space is completely different!",
+        "label": 6
+    },
+    {
+        "text": "Oh, this big window looks out so nice!",
+        "label": 6
+    },
+    {
+        "text": "Can my room be replaced with new tables and chairs? So cool!",
+        "label": 6
+    },
+    {
+        "text": "It's so different, I don't recognize my room!",
+        "label": 6
+    },
+    {
+        "text": "The owner invested so much, the room is more beautiful than in his dreams!",
+        "label": 6
+    },
+    {
+        "text": "Surprisingly, it looks just like a luxury apartment!",
+        "label": 6
+    },
+    {
+        "text": "From now on, everyone will want to rent a room this beautiful!",
+        "label": 6
+    },
+    {
+        "text": "It was truly overwhelming, the room was beautiful beyond imagination!",
+        "label": 6
+    },
+    {
+        "text": "The living space has been upgraded so much, thank you!",
+        "label": 6
+    },
+    {
+        "text": "The lights are bright, the living room is spacious, wonderful!",
+        "label": 6
+    },
+    {
+        "text": "The owner is so skillful, every room is absolutely beautiful!",
+        "label": 6
+    },
+    {
+        "text": "Wow! From now on, I have more motivation to go to my room!",
+        "label": 6
+    },
+    {
+        "text": "Huh? Does the boarding house have a terrace this large?",
+        "label": 6
+    },
+    {
+        "text": "Oh my God! I didn't know there was such a wonderful space!",
+        "label": 6
+    },
+    {
+        "text": "Oh, the terrace is so airy and spacious!",
+        "label": 6
+    },
+    {
+        "text": "What a surprise, the originally small boarding house now has such a beautiful view!",
+        "label": 6
+    },
+    {
+        "text": "I didn't expect there to be such a spacious place to dry clothes!",
+        "label": 6
+    },
+    {
+        "text": "Wow! Does the rooftop terrace have tables and chairs to sit in the cool air?",
+        "label": 6
+    },
+    {
+        "text": "What an unexpected discovery, I thought there wasn't a big place!",
+        "label": 6
+    },
+    {
+        "text": "Aunt/Uncle, if the terrace is this big, you can do a BBQ!",
+        "label": 6
+    },
+    {
+        "text": "It's so great, there are trees too, the green space is so cool!",
+        "label": 6
+    },
+    {
+        "text": "Who would have thought that this boarding house would have such a large terrace!",
+        "label": 6
+    },
+    {
+        "text": "It's so spacious, you can exercise in the morning!",
+        "label": 6
+    },
+    {
+        "text": "Oh my god, standing from here the view of the city is so beautiful!",
+        "label": 6
+    },
+    {
+        "text": "I thought the terrace was tiny, but who knows, it's twice as big!",
+        "label": 6
+    },
+    {
+        "text": "An ideal space to relax, unbelievable!",
+        "label": 6
+    },
+    {
+        "text": "Surprisingly, this open space helps the apartment feel completely airy!",
+        "label": 6
+    },
+    {
+        "text": "Is the terrace covered? So convenient!",
+        "label": 6
+    },
+    {
+        "text": "It's spacious enough to hold a small party!",
+        "label": 6
+    },
+    {
+        "text": "The owner invested in a really good terrace!",
+        "label": 6
+    },
+    {
+        "text": "The view is so beautiful, I have to come up here to see the stars every night!",
+        "label": 6
+    },
+    {
+        "text": "This space really overwhelmed me!",
+        "label": 6
+    },
+    {
+        "text": "Bigger than my yard! Great!",
+        "label": 6
+    },
+    {
+        "text": "There's even a cafe area, I thought it was some other shop!",
+        "label": 6
+    },
+    {
+        "text": "Who would have thought that the boarding house would have such a beautiful private space!",
+        "label": 6
+    },
+    {
+        "text": "What a surprise, from now on I have a place to go to relieve stress!",
+        "label": 6
+    },
+    {
+        "text": "It is true that space is worth its weight in gold!",
+        "label": 6
+    },
+    {
+        "text": "Huh? 10% discount on accommodation this month? Really?",
+        "label": 6
+    },
+    {
+        "text": "Oh my God! Is the homeowner telling the truth? I can't believe it!",
+        "label": 6
+    },
+    {
+        "text": "What a surprise, you're so kind!",
+        "label": 6
+    },
+    {
+        "text": "Hearing this brought tears of joy, thank you very much!",
+        "label": 6
+    },
+    {
+        "text": "Thank you so much landlord, right when I was having a difficult time!",
+        "label": 6
+    },
+    {
+        "text": "Reduced rent to support? The landlord is so psychotic!",
+        "label": 6
+    },
+    {
+        "text": "Oh, what the most unexpected good news of the month!",
+        "label": 6
+    },
+    {
+        "text": "I can't believe it, I thought I heard it wrong!",
+        "label": 6
+    },
+    {
+        "text": "Luckily, the homeowner is so kind!",
+        "label": 6
+    },
+    {
+        "text": "Electricity and water bills are already high, now I get a discount on rent, great!",
+        "label": 6
+    },
+    {
+        "text": "Thank you very much to the landlord, I saved quite a bit of money!",
+        "label": 6
+    },
+    {
+        "text": "Who would have thought that the landlord would reduce the rent to support!",
+        "label": 6
+    },
+    {
+        "text": "The kindest landlord in the solar system is here!",
+        "label": 6
+    },
+    {
+        "text": "What a surprise, thank you to the homeowner for taking care of us!",
+        "label": 6
+    },
+    {
+        "text": "Really touching, you are truly a dream homeowner!",
+        "label": 6
+    },
+    {
+        "text": "So wonderful, I don't know what to say other than thank you!",
+        "label": 6
+    },
+    {
+        "text": "Is the homeowner telling the truth? I'm so happy!",
+        "label": 6
+    },
+    {
+        "text": "Congrats, just in time to worry about living expenses!",
+        "label": 6
+    },
+    {
+        "text": "Thank God, a 10% discount would help a lot!",
+        "label": 6
+    },
+    {
+        "text": "Didn't expect to receive such unexpected good news!",
+        "label": 6
+    },
+    {
+        "text": "The host is so generous!",
+        "label": 6
+    },
+    {
+        "text": "I thought it was a joke, but who knows it's true! So fun!",
+        "label": 6
+    },
+    {
+        "text": "This is the most surprising gift this month!",
+        "label": 6
+    },
+    {
+        "text": "I will stay at my house for a long time! Thank you very much!",
+        "label": 6
+    },
+    {
+        "text": "Thank you very much for this support!",
+        "label": 6
+    },
+    {
+        "text": "What? Does the hostel have free laundry service?",
+        "label": 6
+    },
+    {
+        "text": "Oh my God! Is room cleaning also free?",
+        "label": 6
+    },
+    {
+        "text": "What a surprise, I thought I had to pay more!",
+        "label": 6
+    },
+    {
+        "text": "It's so great, sir/ma'am, this service is so convenient!",
+        "label": 6
+    },
+    {
+        "text": "Unbelievable, it's free? So wonderful!",
+        "label": 6
+    },
+    {
+        "text": "Oh, from now on you don't have to worry about doing laundry anymore!",
+        "label": 6
+    },
+    {
+        "text": "Clean and tidy without spending money, the owner is so thoughtful!",
+        "label": 6
+    },
+    {
+        "text": "This service really shocked me with surprise!",
+        "label": 6
+    },
+    {
+        "text": "Is regular laundry always free? So good!",
+        "label": 6
+    },
+    {
+        "text": "Who would have thought that a motel room would have such classy service!",
+        "label": 6
+    },
+    {
+        "text": "Saves a lot of effort and time, thank you homeowner!",
+        "label": 6
+    },
+    {
+        "text": "The owner invested so much, there is even a weekly cleaning service!",
+        "label": 6
+    },
+    {
+        "text": "Really surprising, the hostel has separate washing machines for each room!",
+        "label": 6
+    },
+    {
+        "text": "Is the homeowner telling the truth? Is it all free?",
+        "label": 6
+    },
+    {
+        "text": "So convenient, I thought it was only available in luxury apartments!",
+        "label": 6
+    },
+    {
+        "text": "The living space is much cleaner thanks to this service!",
+        "label": 6
+    },
+    {
+        "text": "What a big surprise, saving a living expense!",
+        "label": 6
+    },
+    {
+        "text": "Is there even a laundry service? The owner is super thoughtful!",
+        "label": 6
+    },
+    {
+        "text": "I thought I had to wash it myself, what a surprise!",
+        "label": 6
+    },
+    {
+        "text": "From now on, I can freely wear clean clothes, thank you!",
+        "label": 6
+    },
+    {
+        "text": "This service really elevates the accommodation a lot!",
+        "label": 6
+    },
+    {
+        "text": "So convenient, I thought I had to go to a laundromat outside!",
+        "label": 6
+    },
+    {
+        "text": "Not only free but also quality? Great!",
+        "label": 6
+    },
+    {
+        "text": "It was really surprising, I thought I heard it wrong!",
+        "label": 6
+    },
+    {
+        "text": "This is truly the most ideal boarding house I have ever stayed in!",
+        "label": 6
+    },
+    {
+        "text": "This month he charged the electricity bill so much",
+        "label": 0
+    },
+    {
+        "text": "The room next door is too noisy to sleep",
+        "label": 0
+    },
+    {
+        "text": "No one came to the plumbing newspaper all week, what kind of business is that?",
+        "label": 0
+    },
+    {
+        "text": "Why suddenly increase room prices?",
+        "label": 0
+    },
+    {
+        "text": "I've paid a deposit but now I'm told there's no room left",
+        "label": 0
+    },
+    {
+        "text": "Service attitude is too poor",
+        "label": 0
+    },
+    {
+        "text": "What kind of business do you do to let your car get scratched like this?",
+        "label": 0
+    },
+    {
+        "text": "Text me and you won't even reply",
+        "label": 0
+    },
+    {
+        "text": "This month's salary is slow, I probably won't be able to pay enough rent",
+        "label": 5
+    },
+    {
+        "text": "Moving is so sad, I'm used to this place",
+        "label": 5
+    },
+    {
+        "text": "I just got fired from my job, please give me a few days to relax",
+        "label": 5
+    },
+    {
+        "text": "The room leaked and all the furniture was wet",
+        "label": 5
+    },
+    {
+        "text": "This month I paid for internet but didn't use much",
+        "label": 5
+    },
+    {
+        "text": "The roof is leaking rain",
+        "label": 5
+    },
+    {
+        "text": "The roof leaks water every time it rains heavily",
+        "label": 5
+    },
+    {
+        "text": "The heavy rain flooded the entire room",
+        "label": 5
+    },
+    {
+        "text": "The room leaked from the rain, soaking all the bed sheets and blankets",
+        "label": 5
+    },
+    {
+        "text": "Water flowed from the ceiling and soaked everything",
+        "label": 5
+    },
+    {
+        "text": "The roof is so dilapidated",
+        "label": 5
+    },
+    {
+        "text": "The ceiling is leaking with rainwater flowing from it",
+        "label": 5
+    },
+    {
+        "text": "Great clean cool room",
+        "label": 3
+    },
+    {
+        "text": "The owner is very enthusiastic",
+        "label": 3
+    },
+    {
+        "text": "I really like this room",
+        "label": 3
+    },
+    {
+        "text": "Reasonable price, very satisfied",
+        "label": 3
+    },
+    {
+        "text": "This area is good security and quiet",
+        "label": 3
+    },
+    {
+        "text": "Thank you for helping me fix the faucet",
+        "label": 3
+    },
+    {
+        "text": "The room is beautiful just like the picture",
+        "label": 3
+    },
+    {
+        "text": "The toilet smells so bad",
+        "label": 1
+    },
+    {
+        "text": "The room had a lot of trash and was terribly dirty",
+        "label": 1
+    },
+    {
+        "text": "The overflowing sewer is really dirty",
+        "label": 1
+    },
+    {
+        "text": "The common garbage disposal area is so disgusting",
+        "label": 1
+    },
+    {
+        "text": "The musty smell is unbearable",
+        "label": 1
+    },
+    {
+        "text": "Rats and bugs running everywhere are so disgusting",
+        "label": 1
+    },
+    {
+        "text": "The hallway is so dark and scary",
+        "label": 2
+    },
+    {
+        "text": "This area is so prone to theft",
+        "label": 2
+    },
+    {
+        "text": "There are strangers lurking at the gate",
+        "label": 2
+    },
+    {
+        "text": "In the middle of the night there was a chilling knock on the door",
+        "label": 2
+    },
+    {
+        "text": "Loose gate lock for fear of thieves entering",
+        "label": 2
+    },
+    {
+        "text": "The electrical outlet is flickering, afraid of a short circuit",
+        "label": 2
+    },
+    {
+        "text": "Oh, the newly built room is surprisingly beautiful",
+        "label": 6
+    },
+    {
+        "text": "I didn't expect this area to be so spacious",
+        "label": 6
+    },
+    {
+        "text": "Suddenly, the room price was surprisingly discounted",
+        "label": 6
+    },
+    {
+        "text": "I want to see the lease",
+        "label": 4
+    },
+    {
+        "text": "Are you home so I can come get the key?",
+        "label": 4
+    },
+    {
+        "text": "Please tell me how much is the room fee this month?",
+        "label": 4
+    },
+    {
+        "text": "Where do you park the car?",
+        "label": 4
+    },
+    {
+        "text": "What is wifi pass?",
+        "label": 4
+    }
+]

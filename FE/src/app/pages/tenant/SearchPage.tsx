@@ -10,7 +10,9 @@ const districts = ["Tất cả", "Bình Thạnh", "Quận 7", "Quận 10", "Gò 
 type SortOption = "price_asc" | "price_desc" | "newest";
 
 function isVisibleListing(item: PropertyListing) {
-  return !["rejected", "unavailable", "rented"].includes(item.status.toLowerCase());
+  const isApproved = item.moderationStatus?.toLowerCase() === "approved";
+  const isAvailable = item.status?.toLowerCase() === "available";
+  return isApproved && isAvailable;
 }
 
 function normalizeSearchText(value: string) {

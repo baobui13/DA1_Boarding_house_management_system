@@ -18,7 +18,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string AmenityId { get; set; } = null!;
 
         [Required]
-        public string Status { get; set; } = "Working";  // Working, Broken, Repairing
+        public AmenityStatus Status { get; set; } = AmenityStatus.Working;  // Working, Broken, Repairing
 
         [StringLength(255)]
         public string? Note { get; set; }

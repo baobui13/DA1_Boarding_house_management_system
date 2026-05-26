@@ -15,11 +15,14 @@ import InvoiceDetailPage from "./pages/tenant/InvoiceDetailPage";
 import LandlordDashboard from "./pages/landlord/LandlordDashboard";
 import PropertyManagement from "./pages/landlord/PropertyManagement";
 import RoomFormPage from "./pages/landlord/RoomFormPage";
+import PendingRejectedProperties from "./pages/landlord/PendingRejectedProperties";
 import BillingPage from "./pages/landlord/BillingPage";
 import ContractManagement from "./pages/landlord/ContractManagement";
+import AppointmentManagement from "./pages/landlord/AppointmentManagement";
 import UserManagement from "./pages/admin/UserManagement";
 import ContentModeration from "./pages/admin/ContentModeration";
 import SystemAnalytics from "./pages/admin/SystemAnalytics";
+import ApprovedPostsManagement from "./pages/admin/ApprovedPostsManagement";
 import NotificationsPage from "./pages/common/NotificationsPage";
 import ProfilePage from "./pages/common/ProfilePage";
 
@@ -99,10 +102,12 @@ export const router = createBrowserRouter([
             children: [
               { path: "landlord/dashboard", Component: LandlordDashboard },
               { path: "landlord/properties", Component: PropertyManagement },
+              { path: "landlord/properties/pending-rejected", Component: PendingRejectedProperties },
               { path: "landlord/rooms/new", Component: RoomFormPage },
               { path: "landlord/rooms/:id/edit", Component: RoomFormPage },
               { path: "landlord/billing", Component: BillingPage },
               { path: "landlord/contracts", Component: ContractManagement },
+              { path: "landlord/appointments", Component: AppointmentManagement },
             ],
           },
           {
@@ -111,6 +116,7 @@ export const router = createBrowserRouter([
               { path: "admin/users", Component: UserManagement },
               { path: "admin/moderation", Component: ContentModeration },
               { path: "admin/analytics", Component: SystemAnalytics },
+              { path: "admin/approved-posts", Component: ApprovedPostsManagement },
             ],
           },
         ],

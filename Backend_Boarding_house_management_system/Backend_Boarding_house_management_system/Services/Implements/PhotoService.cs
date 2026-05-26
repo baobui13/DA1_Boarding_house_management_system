@@ -12,6 +12,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     public class PhotoService : IPhotoService
     {
         private readonly Cloudinary _cloudinary;
+        private readonly string _folder;
 
         public PhotoService(IConfiguration config)
         {
@@ -21,6 +22,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 config["CloudinarySettings:ApiSecret"]
             );
             _cloudinary = new Cloudinary(acc);
+            _folder = config["CloudinarySettings:Folder"] ?? "boarding-house-images";
         }
 
         public async Task<ImageUploadResult> AddPhotoAsync(IFormFile file)
@@ -33,7 +35,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    Folder = "boarding-house-images", // Tên folder trên Cloudinary
+                    Folder = _folder,
                     Transformation = new Transformation().Height(500).Width(800).Crop("fill") // Tùy chọn resize ảnh
                 };
                 uploadResult = await _cloudinary.UploadAsync(uploadParams);

@@ -26,6 +26,25 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<Property?> GetByIdWithDetailsAsync(string id)
             => await GetDetailsQuery().FirstOrDefaultAsync(p => p.Id == id);
 
+        public override async Task<(IEnumerable<Property> Items, int TotalCount)> GetByFilterAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page)
+        {
+            page = EnsurePage(page);
+            var query = GetQueryWithIncludes().AsNoTracking();
+
+            // Enforce that only Approved and Available properties can be listed publicly
+            query = query.Where(p => p.ModerationStatus == ModerationStatusEnum.Approved && p.AvailabilityStatus == AvailabilityStatusEnum.Available);
+
+            query = query.Where(filter);
+            query = query.OrderBy(sort);
+
+            var totalCount = await query.CountAsync();
+            var items = await query.Page(page).ToListAsync();
+            return (items, totalCount);
+        }
+
         public async Task<(IEnumerable<Property> Items, int TotalCount)> GetByFilterWithDetailsAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,

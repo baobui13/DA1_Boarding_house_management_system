@@ -57,8 +57,18 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AppointmentResponse> CreateAppointmentAsync(CreateAppointmentRequest request)
         {
-            if (await _propertyRepository.GetByIdAsync(request.PropertyId) == null)
+            if (request.AppointmentDateTime <= DateTime.UtcNow)
+                throw new BadRequestException("Thời gian hẹn xem phòng phải ở thời điểm tương lai.");
+
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
                 throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
+
+            if (property.ModerationStatus != ModerationStatusEnum.Approved)
+                throw new BadRequestException("Không thể đặt lịch hẹn xem phòng trọ chưa được duyệt.");
+
+            if (property.AvailabilityStatus != AvailabilityStatusEnum.Available)
+                throw new BadRequestException("Phòng trọ này hiện tại đã được thuê hoặc đang bảo trì.");
 
             if (await _userRepository.GetByIdAsync(request.UserId) == null)
                 throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.UserId}'.");

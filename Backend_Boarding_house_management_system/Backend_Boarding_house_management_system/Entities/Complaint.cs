@@ -14,7 +14,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string CreatorId { get; set; } = null!;
 
         [Required]
-        public string RelatedType { get; set; } = null!; // Invoice, Contract, Property
+        public ComplaintRelatedType RelatedType { get; set; } // Invoice, Contract, Property
 
         [Required]
         [StringLength(50)]
@@ -27,7 +27,7 @@ namespace Backend_Boarding_house_management_system.Entities
         [Required]
         public string Content { get; set; } = null!;
 
-        public string Status { get; set; } = "Pending"; // Pending, Processing, Resolved
+        public ComplaintStatus Status { get; set; } = ComplaintStatus.Pending; // Pending, Processing, Resolved
 
         public string? AdminResponse { get; set; }
 

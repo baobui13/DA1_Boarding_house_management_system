@@ -33,7 +33,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string? ContractFileUrl { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Active";  // Active, Expired, Terminated
+        public ContractStatus Status { get; set; } = ContractStatus.Active;  // Active, Expired, Terminated
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -29,6 +29,7 @@ import { isOccupyingContractStatus } from "../../lib/contractStatus";
 import {
   getPropertyStatusMeta,
   isAvailablePropertyStatus,
+  isRentedPropertyStatus,
 } from "../../lib/propertyStatus";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../../components/ui/chart";
 
@@ -60,7 +61,10 @@ export default function LandlordDashboard() {
       await Promise.all([
         getPropertyListings(landlordId ? { landlordId, pageSize: 1000 } : {})
           .then((response) => {
-            if (!cancelled) setProperties(response.items);
+            if (!cancelled) {
+              const approvedProperties = response.items.filter((p) => p.moderationStatus === "Approved");
+              setProperties(approvedProperties);
+            }
           })
           .catch((err) => nextErrors.push({ section: "Tài sản", message: err instanceof Error ? err.message : "Không tải được tài sản." })),
         token
@@ -155,12 +159,12 @@ export default function LandlordDashboard() {
 
   const totalRooms = properties.length;
   const rentedRooms = useMemo(
-    () => occupiedPropertyIds.size,
-    [occupiedPropertyIds],
+    () => properties.filter((property) => isRentedPropertyStatus(property.status)).length,
+    [properties],
   );
   const availableRooms = useMemo(
-    () => properties.filter((property) => !occupiedPropertyIds.has(property.id) && isAvailablePropertyStatus(property.status)).length,
-    [occupiedPropertyIds, properties],
+    () => properties.filter((property) => isAvailablePropertyStatus(property.status)).length,
+    [properties],
   );
 
   const monthlyRevenue = useMemo(() => {

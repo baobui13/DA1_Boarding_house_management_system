@@ -89,10 +89,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 .SumAsync(p => p.Amount);
 
             invoice.Status = totalPaid >= invoice.Total
-                ? "Paid"
+                ? InvoiceStatus.Paid
                 : totalPaid > 0
-                    ? "Partial"
-                    : "Pending";
+                    ? InvoiceStatus.Partial
+                    : InvoiceStatus.Pending;
             invoice.UpdatedAt = DateTime.UtcNow;
 
             await _invoiceRepository.UpdateAsync(invoice);

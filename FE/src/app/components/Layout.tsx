@@ -16,6 +16,7 @@ import {
   Receipt,
   LayoutDashboard,
   TrendingUp,
+  CalendarDays,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import type { Role } from "../lib/types";
@@ -34,13 +35,16 @@ const tenantNav = [
 const landlordNav = [
   { path: "/landlord/dashboard", label: "Tổng Quan", icon: BarChart3 },
   { path: "/landlord/properties", label: "Quản Lý Phòng", icon: Building2 },
+  { path: "/landlord/properties/pending-rejected", label: "Duyệt Phòng", icon: ShieldCheck },
   { path: "/landlord/billing", label: "Hóa Đơn", icon: Receipt },
   { path: "/landlord/contracts", label: "Hợp Đồng", icon: FileText },
+  { path: "/landlord/appointments", label: "Lịch Hẹn", icon: CalendarDays },
 ];
 
 const adminNav = [
   { path: "/admin/users", label: "Người Dùng", icon: Users },
   { path: "/admin/moderation", label: "Kiểm Duyệt", icon: ShieldCheck },
+  { path: "/admin/approved-posts", label: "Bài Đăng", icon: Building2 },
   { path: "/admin/analytics", label: "Báo Cáo", icon: TrendingUp },
 ];
 

@@ -83,7 +83,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = _mapper.Map<Contract>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
-            entity.Status = "Active";
+            entity.Status = ContractStatus.Active;
 
             await _contractRepository.AddAsync(entity);
             await SyncPropertyAvailabilityAsync(request.PropertyId);
@@ -100,7 +100,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
 
-            var nextStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status : request.Status;
+            var nextStatus = existing.Status;
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                if (Enum.TryParse<ContractStatus>(request.Status, true, out var parsedStatus))
+                {
+                    nextStatus = parsedStatus;
+                }
+                else
+                {
+                    throw new BadRequestException($"Trạng thái hợp đồng '{request.Status}' không hợp lệ.");
+                }
+            }
+
             var isActivating = IsOccupyingContractStatus(nextStatus);
             if (isActivating)
             {
@@ -149,7 +161,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             var blockers = new List<string>();
 
-            if (string.Equals(contract.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            if (contract.Status == ContractStatus.Active)
                 blockers.Add("hop dong dang hoat dong");
 
             if (await _context.Invoices.AnyAsync(x => x.ContractId == contract.Id))
@@ -173,9 +185,25 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 return;
             }
 
+            // Nếu phòng không được duyệt (chưa duyệt/bị từ chối) hoặc đang sửa chữa (Maintenance),
+            // bắt buộc phải ở trạng thái Maintenance (không thể Rented hay Available).
+            if (property.ModerationStatus != ModerationStatusEnum.Approved || 
+                property.AvailabilityStatus == AvailabilityStatusEnum.Maintenance)
+            {
+                if (property.AvailabilityStatus != AvailabilityStatusEnum.Maintenance)
+                {
+                    property.AvailabilityStatus = AvailabilityStatusEnum.Maintenance;
+                    property.UpdatedAt = DateTime.UtcNow;
+                    await _propertyRepository.UpdateAsync(property);
+                }
+                return;
+            }
+
             var hasOccupyingContract = await _context.Contracts.AnyAsync(contract =>
                 contract.PropertyId == propertyId &&
                 IsOccupyingContractStatus(contract.Status));
+
+            var originalStatus = property.AvailabilityStatus;
 
             if (hasOccupyingContract)
             {
@@ -186,23 +214,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 property.AvailabilityStatus = AvailabilityStatusEnum.Available;
             }
 
-            property.UpdatedAt = DateTime.UtcNow;
-            await _propertyRepository.UpdateAsync(property);
+            if (property.AvailabilityStatus != originalStatus)
+            {
+                property.UpdatedAt = DateTime.UtcNow;
+                await _propertyRepository.UpdateAsync(property);
+            }
         }
 
-        private static bool IsOccupyingContractStatus(string? status)
+        private static bool IsOccupyingContractStatus(ContractStatus status)
         {
-            if (string.IsNullOrWhiteSpace(status))
+            return status switch
             {
-                return false;
-            }
-
-            return status.Trim().ToLowerInvariant() switch
-            {
-                "active" => true,
-                "nearexpiry" => true,
-                "signed" => true,
-                "approved" => true,
+                ContractStatus.Active => true,
+                ContractStatus.NearExpiry => true,
                 _ => false,
             };
         }

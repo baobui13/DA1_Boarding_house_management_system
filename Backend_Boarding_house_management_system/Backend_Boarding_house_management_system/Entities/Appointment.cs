@@ -21,7 +21,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public DateTime AppointmentDateTime { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Pending";  // Pending, Confirmed, Rejected, Cancelled
+        public AppointmentStatus Status { get; set; } = AppointmentStatus.Pending;  // Pending, Confirmed, Rejected, Cancelled
 
         [StringLength(255)]
         public string? Note { get; set; }

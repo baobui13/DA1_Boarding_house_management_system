@@ -24,7 +24,7 @@ namespace Backend_Boarding_house_management_system.Entities
         public string Content { get; set; } = null!;
 
         [Required]
-        public string AIAttitude { get; set; } = null!;  // Positive, Negative, Neutral
+        public RatingAttitude AIAttitude { get; set; }  // Positive, Negative, Neutral
 
         [Required]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

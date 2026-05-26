@@ -1,6 +1,6 @@
-const availableStatuses = new Set(["available", "approved", "active"]);
+const availableStatuses = new Set(["available"]);
 const rentedStatuses = new Set(["rented"]);
-const maintenanceStatuses = new Set(["unavailable", "maintenance", "rejected"]);
+const maintenanceStatuses = new Set(["maintenance"]);
 
 export function isAvailablePropertyStatus(status: string) {
   return availableStatuses.has(status.toLowerCase());
@@ -24,14 +24,14 @@ export function getPropertyStatusMeta(status: string) {
 
   if (isRentedPropertyStatus(status)) {
     return {
-      label: "Đã thuê",
+      label: "Đã cho thuê",
       tone: "blue" as const,
     };
   }
 
   if (isMaintenancePropertyStatus(status)) {
     return {
-      label: "Bảo trì",
+      label: "Đang sửa chữa",
       tone: "amber" as const,
     };
   }

@@ -75,7 +75,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var complaint = _mapper.Map<Complaint>(request);
             complaint.Id = Guid.NewGuid().ToString();
             complaint.CreatedAt = DateTime.UtcNow;
-            complaint.Status = "Pending";
+            complaint.Status = ComplaintStatus.Pending;
 
             await _complaintRepository.AddAsync(complaint);
             return _mapper.Map<ComplaintResponse>(complaint);
@@ -87,13 +87,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (complaint == null)
                 throw new NotFoundException($"Khong tim thay khieu nai voi Id '{request.Id}'.");
 
-            var relatedType = request.RelatedType ?? complaint.RelatedType;
+            var relatedType = request.RelatedType ?? complaint.RelatedType.ToString();
             var relatedId = request.RelatedId ?? complaint.RelatedId;
             await ValidateRelatedEntityAsync(relatedType, relatedId);
 
             _mapper.Map(request, complaint);
 
-            if (string.Equals(complaint.Status, "Resolved", StringComparison.OrdinalIgnoreCase) && complaint.ResolvedAt == null)
+            if (complaint.Status == ComplaintStatus.Resolved && complaint.ResolvedAt == null)
             {
                 complaint.ResolvedAt = DateTime.UtcNow;
             }
@@ -111,20 +111,23 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return true;
         }
 
-        private async Task ValidateRelatedEntityAsync(string relatedType, string relatedId)
+        private async Task ValidateRelatedEntityAsync(string relatedTypeStr, string relatedId)
         {
-            if (string.IsNullOrWhiteSpace(relatedType))
+            if (string.IsNullOrWhiteSpace(relatedTypeStr))
                 throw new BadRequestException("RelatedType khong duoc de trong.");
 
             if (string.IsNullOrWhiteSpace(relatedId))
                 throw new BadRequestException("RelatedId khong duoc de trong.");
 
-            var exists = relatedType.Trim().ToLowerInvariant() switch
+            if (!Enum.TryParse<ComplaintRelatedType>(relatedTypeStr, true, out var relatedType))
+                throw new BadRequestException("RelatedType phai la Invoice, Contract hoac Property.");
+
+            var exists = relatedType switch
             {
-                "invoice" => await _context.Invoices.AnyAsync(x => x.Id == relatedId),
-                "contract" => await _context.Contracts.AnyAsync(x => x.Id == relatedId),
-                "property" => await _context.Properties.AnyAsync(x => x.Id == relatedId),
-                _ => throw new BadRequestException("RelatedType phai la Invoice, Contract hoac Property.")
+                ComplaintRelatedType.Invoice => await _context.Invoices.AnyAsync(x => x.Id == relatedId),
+                ComplaintRelatedType.Contract => await _context.Contracts.AnyAsync(x => x.Id == relatedId),
+                ComplaintRelatedType.Property => await _context.Properties.AnyAsync(x => x.Id == relatedId),
+                _ => false
             };
 
             if (!exists)

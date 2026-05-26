@@ -135,10 +135,8 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
     var occupiedPropertyIds = await db.Contracts
         .AsNoTracking()
         .Where(contract =>
-            contract.Status == "Active" ||
-            contract.Status == "NearExpiry" ||
-            contract.Status == "Signed" ||
-            contract.Status == "Approved")
+            contract.Status == ContractStatus.Active ||
+            contract.Status == ContractStatus.NearExpiry)
         .Select(contract => contract.PropertyId)
         .Distinct()
         .ToListAsync();
@@ -149,6 +147,20 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
 
     foreach (var property in properties)
     {
+        // Nếu phòng không được duyệt (chưa duyệt/bị từ chối) hoặc đang sửa chữa (Maintenance),
+        // bắt buộc phải ở trạng thái Maintenance (không thể Rented hay Available).
+        if (property.ModerationStatus != ModerationStatusEnum.Approved || 
+            property.AvailabilityStatus == AvailabilityStatusEnum.Maintenance)
+        {
+            if (property.AvailabilityStatus != AvailabilityStatusEnum.Maintenance)
+            {
+                property.AvailabilityStatus = AvailabilityStatusEnum.Maintenance;
+                property.UpdatedAt = DateTime.UtcNow;
+                hasChanges = true;
+            }
+            continue;
+        }
+
         if (occupiedSet.Contains(property.Id))
         {
             if (property.AvailabilityStatus != AvailabilityStatusEnum.Rented)
@@ -157,14 +169,15 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
                 property.UpdatedAt = DateTime.UtcNow;
                 hasChanges = true;
             }
-            continue;
         }
-
-        if (property.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+        else
         {
-            property.AvailabilityStatus = AvailabilityStatusEnum.Available;
-            property.UpdatedAt = DateTime.UtcNow;
-            hasChanges = true;
+            if (property.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+            {
+                property.AvailabilityStatus = AvailabilityStatusEnum.Available;
+                property.UpdatedAt = DateTime.UtcNow;
+                hasChanges = true;
+            }
         }
     }
 

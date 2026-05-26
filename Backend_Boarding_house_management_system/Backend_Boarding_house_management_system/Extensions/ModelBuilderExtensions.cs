@@ -128,14 +128,14 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasOne(i => i.Contract)
                 .WithMany(c => c.Invoices)
                 .HasForeignKey(i => i.ContractId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Invoice → Payment
             modelBuilder.Entity<Payment>()
                 .HasOne(p => p.Invoice)
                 .WithMany(i => i.Payments)
                 .HasForeignKey(p => p.InvoiceId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Property → RoomAmenity (junction)
             modelBuilder.Entity<RoomAmenity>()

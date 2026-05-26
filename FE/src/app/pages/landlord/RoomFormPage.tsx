@@ -254,14 +254,11 @@ export default function RoomFormPage() {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Trạng thái</label>
+                <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Trạng thái khả dụng</label>
                 <select name="status" value={formData.status} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none">
-                  <option value="Available">Available</option>
-                  <option value="PendingApproval">PendingApproval</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rented">Rented</option>
-                  <option value="Unavailable">Unavailable</option>
-                  <option value="Rejected">Rejected</option>
+                  <option value="Available">Trống (Sẵn sàng cho thuê)</option>
+                  <option value="Rented">Đã cho thuê</option>
+                  <option value="Maintenance">Đang sửa chữa</option>
                 </select>
               </div>
               <div className="md:col-span-2">

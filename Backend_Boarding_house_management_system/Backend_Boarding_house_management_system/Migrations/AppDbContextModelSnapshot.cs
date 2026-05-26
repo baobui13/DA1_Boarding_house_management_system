@@ -1066,7 +1066,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Contract", "Contract")
                         .WithMany("Invoices")
                         .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Contract");
@@ -1121,7 +1121,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Invoice", "Invoice")
                         .WithMany("Payments")
                         .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Invoice");

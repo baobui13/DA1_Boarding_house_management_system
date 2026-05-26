@@ -18,6 +18,7 @@ interface RequestOptions {
   headers?: Record<string, string>;
   query?: Record<string, QueryValue>;
   authToken?: string | null;
+  _isRetry?: boolean;
 }
 
 function buildUrl(path: string, query?: Record<string, QueryValue>) {
@@ -66,6 +67,55 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
         ? error.message
         : "Khong the ket noi backend.";
     throw new ApiError(message, 0);
+  }
+
+  // Handle automatic token refresh on 401 Unauthorized
+  if (response.status === 401 && authToken && !options._isRetry) {
+    try {
+      const rawSession = localStorage.getItem("qlt.session");
+      if (rawSession) {
+        const session = JSON.parse(rawSession);
+        if (session.token && session.refreshToken) {
+          const refreshRes = await fetch(`${API_BASE_URL}/Auth/refresh-token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: session.token,
+              refreshToken: session.refreshToken,
+            }),
+          });
+
+          if (refreshRes.ok) {
+            const authData = await refreshRes.json();
+            // Update session
+            session.token = authData.token;
+            if (authData.refreshToken) {
+              session.refreshToken = authData.refreshToken;
+            }
+            localStorage.setItem("qlt.session", JSON.stringify(session));
+
+            // Dispatch event to update AppContext state
+            window.dispatchEvent(new CustomEvent("qlt-session-refreshed", { detail: session }));
+
+            // Retry original request with new token
+            return apiRequest<T>(path, {
+              ...options,
+              authToken: authData.token,
+              _isRetry: true,
+            });
+          } else {
+            // Refresh failed, clean up session
+            localStorage.removeItem("qlt.session");
+            window.dispatchEvent(new CustomEvent("qlt-session-refreshed", { detail: null }));
+            window.location.href = "/login";
+          }
+        }
+      }
+    } catch (refreshErr) {
+      console.error("Failed to auto-refresh token", refreshErr);
+    }
   }
 
   const contentType = response.headers.get("content-type") || "";
