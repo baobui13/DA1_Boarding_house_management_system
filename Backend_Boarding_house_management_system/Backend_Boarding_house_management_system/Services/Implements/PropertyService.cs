@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -20,19 +22,22 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IUserRepository _userRepository;
         private readonly IAreaRepository _areaRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public PropertyService(
             AppDbContext context,
             IPropertyRepository propertyRepository,
             IUserRepository userRepository,
             IAreaRepository areaRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
             _areaRepository = areaRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
@@ -96,6 +101,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request)
         {
+            // Ownership: caller must be creating for themselves (or Admin)
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(request.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban chi duoc tao bat dong san cho chinh minh.");
+
             var landlord = await _userRepository.GetByIdAsync(request.LandlordId);
             if (landlord == null)
                 throw new NotFoundException($"Khong tim thay landlord voi Id '{request.LandlordId}'.");
@@ -130,6 +141,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
+            // Ownership check
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat bat dong san nay.");
+
             var requestedStatus = request.Status;
             var requestedModerationStatus = request.ModerationStatus;
             _mapper.Map(request, property);
@@ -145,6 +162,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            // Ownership (Admin only typically, but enforce)
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen duyet bat dong san nay.");
 
             if (property.ModerationStatus != ModerationStatusEnum.Pending)
                 throw new BadRequestException("Chi co the duyet bat dong san dang trong trang Thai cho duyet.");
@@ -162,6 +185,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen tu choi bat dong san nay.");
 
             if (property.ModerationStatus != ModerationStatusEnum.Pending)
                 throw new BadRequestException("Chi co the tu choi bat dong san dang trong trang Thai cho duyet.");
@@ -181,6 +209,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat trang thai kha dung cho bat dong san nay.");
+
             if (property.ModerationStatus != ModerationStatusEnum.Approved)
                 throw new BadRequestException("Chi co the cap nhat trang thai kha dung cho bat dong san da duoc duyet.");
 
@@ -195,6 +228,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             if (!await _propertyRepository.ExistsAsync(request.Id))
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
+
+            var property = await _propertyRepository.GetByIdAsync(request.Id);
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (property != null && !isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa bat dong san nay.");
 
             var blockers = await GetPropertyDeleteBlockersAsync(request.Id);
             if (blockers.Count > 0)
@@ -256,9 +295,21 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             {
                 "unavailable" => AvailabilityStatusEnum.Maintenance,
                 "repairing" => AvailabilityStatusEnum.Maintenance,
-                "nearexpiry" => AvailabilityStatusEnum.Maintenance,
                 _ => fallback,
             };
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

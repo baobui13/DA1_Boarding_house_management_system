@@ -88,6 +88,9 @@ builder.Services.AddAuthenticationServices(builder.Configuration);
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// Cho phép services lấy thông tin user hiện tại từ HttpContext (để kiểm tra ownership)
+builder.Services.AddHttpContextAccessor();
+
 
 // ===========================================================================================
 
@@ -144,8 +147,8 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
     var occupiedPropertyIds = await db.Contracts
         .AsNoTracking()
         .Where(contract =>
-            contract.Status == "Active" ||
-            contract.Status == "NearExpiry" ||
+            contract.Status == ContractStatus.Active.ToString() ||
+            contract.Status == ContractStatus.NearExpiry.ToString() ||
             contract.Status == "Signed" ||
             contract.Status == "Approved")
         .Select(contract => contract.PropertyId)
