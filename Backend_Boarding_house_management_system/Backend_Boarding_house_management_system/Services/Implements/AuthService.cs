@@ -248,8 +248,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         private async Task<string> GenerateJwtTokenAsync(User user)
         {
-            await _userManager.GetRolesAsync(user);
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -262,11 +260,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // Sử dụng ExpireHours từ config (thay vì DurationInMinutes bị ignore trước đây)
+            var expireHours = double.TryParse(_configuration["Jwt:ExpireHours"], out var h) ? h : 2;
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:DurationInMinutes"] ?? "30")),
+                expires: DateTime.UtcNow.AddHours(expireHours),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
