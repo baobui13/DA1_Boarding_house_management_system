@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -18,12 +20,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly AppDbContext _context;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserService(AppDbContext context, IUserRepository userRepository, IMapper mapper)
+        public UserService(AppDbContext context, IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _userRepository = userRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<UserResponse?> GetUserByIdOrEmailAsync(GetUserByIdOrEmailRequest request)
@@ -39,6 +43,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             if (user == null)
                 throw new NotFoundException("Khong tim thay nguoi dung.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xem thong tin nguoi dung nay.");
 
             return _mapper.Map<UserResponse>(user);
         }
@@ -78,6 +87,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (user == null)
                 throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat thong tin nguoi dung nay.");
+
             _mapper.Map(request, user);
             await _userRepository.UpdateAsync(user);
             return true;
@@ -88,6 +102,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
                 throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat anh dai dien nguoi dung nay.");
 
             var isSuccess = await _userRepository.UpdateAvatarAsync(request.Id, request.AvatarUrl);
             if (!isSuccess)
@@ -102,6 +121,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (user == null)
                 throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen khoa nguoi dung.");
+
             var isSuccess = await _userRepository.BlockUserAsync(request.Id, request.IsBlocked);
             if (!isSuccess)
                 throw new BadRequestException("Khoa/mo khoa nguoi dung that bai.");
@@ -114,6 +138,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null)
                 throw new NotFoundException($"Khong tim thay nguoi dung voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa nguoi dung.");
 
             var blockers = await GetUserDeleteBlockersAsync(request.Id);
             if (blockers.Count > 0)
@@ -161,6 +190,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 blockers.Add("khieu nai");
 
             return blockers;
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

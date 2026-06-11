@@ -6,11 +6,13 @@ using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -27,6 +29,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(user);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetUsersByFilter")]
         public async Task<ActionResult<UserListResponse>> GetUsersByFilter(
             [FromQuery] EntityFilter<User> filter,
@@ -37,6 +40,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(users);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetUserSummary")]
         public async Task<ActionResult<UserSummaryResponse>> GetUserSummary()
         {
@@ -58,6 +62,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("BlockUser")]
         public async Task<IActionResult> BlockUser([FromBody] BlockUserRequest request)
         {
@@ -65,6 +70,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("DeleteUser")]
         public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequest request)
         {

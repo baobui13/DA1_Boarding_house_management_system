@@ -83,6 +83,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             rating.CreatedAt = DateTime.UtcNow;
 
             await _ratingRepository.AddAsync(rating);
+
+            // Update landlord reputation (+1 on new rating)
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property != null)
+            {
+                var landlord = await _userRepository.GetByIdAsync(property.LandlordId);
+                if (landlord != null)
+                {
+                    landlord.ReputationScore += 1;
+                    await _userRepository.UpdateAsync(landlord);
+                }
+            }
+
             return _mapper.Map<RatingResponse>(rating);
         }
 
@@ -99,10 +112,24 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<bool> DeleteRatingAsync(DeleteRatingRequest request)
         {
-            if (!await _ratingRepository.ExistsAsync(request.Id))
+            var rating = await _ratingRepository.GetByIdAsync(request.Id);
+            if (rating == null)
                 throw new NotFoundException($"Khong tim thay danh gia voi Id '{request.Id}'.");
 
             await _ratingRepository.DeleteAsync(request.Id);
+
+            // Adjust landlord reputation (-1 on delete)
+            var property = await _propertyRepository.GetByIdAsync(rating.PropertyId);
+            if (property != null)
+            {
+                var landlord = await _userRepository.GetByIdAsync(property.LandlordId);
+                if (landlord != null)
+                {
+                    landlord.ReputationScore = Math.Max(0, landlord.ReputationScore - 1);
+                    await _userRepository.UpdateAsync(landlord);
+                }
+            }
+
             return true;
         }
     }

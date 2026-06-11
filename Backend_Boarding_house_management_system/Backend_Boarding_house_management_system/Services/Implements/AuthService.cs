@@ -46,6 +46,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new ConflictException($"Email '{dto.Email}' da ton tai.");
             }
 
+            var allowedRoles = new[] { "Admin", "Landlord", "Tenant" };
+            if (!allowedRoles.Contains(dto.Role))
+            {
+                throw new ValidationException("Role khong hop le. Chi chap nhan Admin, Landlord hoac Tenant.");
+            }
+
             var user = _mapper.Map<User>(dto);
             user.UserName = dto.Email;
             user.CreatedAt = DateTime.UtcNow;
@@ -84,6 +90,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             var token = await GenerateJwtTokenAsync(user);
             var refreshToken = GenerateRefreshToken();
+
+            // Revoke previous active refresh tokens for this user (hygiene)
+            var previousTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == user.Id && !rt.IsRevoked)
+                .ToListAsync();
+            foreach (var t in previousTokens)
+            {
+                t.IsRevoked = true;
+            }
 
             _context.RefreshTokens.Add(new RefreshToken
             {
@@ -125,13 +140,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             if (user == null)
             {
+                const string defaultRole = "Tenant";
                 user = new User
                 {
                     UserName = payload.Email,
                     Email = payload.Email,
                     FullName = payload.Name,
                     AvatarUrl = payload.Picture,
-                    Role = "Tenant",
+                    Role = defaultRole,
                     EmailConfirmed = true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -144,7 +160,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     throw new ValidationException($"Khong the tao tai khoan qua Google: {errors}");
                 }
 
-                var roleResult = await _userManager.AddToRoleAsync(user, "Tenant");
+                var roleResult = await _userManager.AddToRoleAsync(user, defaultRole);
                 if (!roleResult.Succeeded)
                 {
                     var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
@@ -154,6 +170,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             var token = await GenerateJwtTokenAsync(user);
             var refreshToken = GenerateRefreshToken();
+
+            // Revoke previous active refresh tokens for this user (hygiene)
+            var previousTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == user.Id && !rt.IsRevoked)
+                .ToListAsync();
+            foreach (var t in previousTokens)
+            {
+                t.IsRevoked = true;
+            }
 
             _context.RefreshTokens.Add(new RefreshToken
             {
