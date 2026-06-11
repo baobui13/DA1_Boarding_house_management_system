@@ -1,27 +1,35 @@
 using Backend_Boarding_house_management_system.DTOs.Area.Requests;
 using Backend_Boarding_house_management_system.DTOs.Area.Responses;
+using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
     public class AreaService : IAreaService
     {
+        private readonly AppDbContext _context;
         private readonly IAreaRepository _areaRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AreaService(IAreaRepository areaRepository, IUserRepository userRepository, IMapper mapper)
+        public AreaService(AppDbContext context, IAreaRepository areaRepository, IUserRepository userRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
+            _context = context;
             _areaRepository = areaRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<AreaResponse> GetAreaByIdAsync(GetAreaByIdRequest request)
@@ -65,6 +73,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<AreaResponse> CreateAreaAsync(CreateAreaRequest request)
         {
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(request.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban chi duoc tao khu vuc cho chinh minh.");
+
             var landlord = await _userRepository.GetByIdAsync(request.LandlordId);
             if (landlord == null)
                 throw new NotFoundException($"Khong tim thay landlord voi Id '{request.LandlordId}'.");
@@ -86,6 +99,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (area == null)
                 throw new NotFoundException($"Khong tim thay khu vuc voi Id '{request.Id}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(area.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat khu vuc nay.");
+
             _mapper.Map(request, area);
             await _areaRepository.UpdateAsync(area);
             return true;
@@ -97,6 +115,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (area == null)
                 throw new NotFoundException($"Khong tim thay khu vuc voi Id '{request.Id}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(area.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat khu vuc nay.");
+
             area.Description = request.Description;
             await _areaRepository.UpdateAsync(area);
             return true;
@@ -104,11 +127,33 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<bool> DeleteAreaAsync(DeleteAreaRequest request)
         {
-            if (!await _areaRepository.ExistsAsync(request.Id))
+            var area = await _areaRepository.GetByIdAsync(request.Id);
+            if (area == null)
                 throw new NotFoundException($"Khong tim thay khu vuc voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(area.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa khu vuc nay.");
+
+            if (await _context.Properties.AnyAsync(p => p.AreaId == request.Id))
+                throw new ConflictException("Khong the xoa khu vuc vi con bat dong san.");
 
             await _areaRepository.DeleteAsync(request.Id);
             return true;
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

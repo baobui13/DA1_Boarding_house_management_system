@@ -271,6 +271,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (await _context.Ratings.AnyAsync(x => x.PropertyId == propertyId))
                 blockers.Add("danh gia");
 
+            if (await _context.RoomAmenities.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("tien ich phong");
+
             return blockers;
         }
 
@@ -291,12 +294,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 return parsed;
             }
 
-            return value.Trim().ToLowerInvariant() switch
-            {
-                "unavailable" => AvailabilityStatusEnum.Maintenance,
-                "repairing" => AvailabilityStatusEnum.Maintenance,
-                _ => fallback,
-            };
+            return fallback;
         }
 
         private string? GetCurrentUserId()
