@@ -49,7 +49,7 @@ export default function SystemAnalytics() {
       };
 
       await Promise.all([
-        getUsers({ page: 1, pageSize: 1000 })
+        getUsers({ page: 1, pageSize: 1000 }, token)
           .then((response) => {
             if (!cancelled) setUsers(response.items);
           })

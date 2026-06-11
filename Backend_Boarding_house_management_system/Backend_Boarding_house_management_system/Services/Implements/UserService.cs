@@ -57,7 +57,17 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<User> sort,
             EntityPage page)
         {
+            var isAdmin = IsCurrentUserAdmin();
             var (users, totalCount) = await _userRepository.GetByFilterAsync(filter, sort, page);
+
+            if (!isAdmin)
+            {
+                // Landlords (and other non-admins) may only list Tenant users.
+                // This prevents leaking other user roles while allowing contract/invoice workflows.
+                var tenantOnly = users.Where(u => string.Equals(u.Role, "Tenant", StringComparison.OrdinalIgnoreCase)).ToList();
+                users = tenantOnly;
+                totalCount = tenantOnly.Count;
+            }
 
             return new UserListResponse
             {

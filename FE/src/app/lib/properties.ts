@@ -222,12 +222,17 @@ export async function createProperty(
     waterPrice?: number | null;
   },
 ) {
+  const electricPrice = Number(input.electricPrice ?? 0);
+  const waterPrice = Number(input.waterPrice ?? 0);
+
   return apiRequest<PropertyResponse>("Property/CreateProperty", {
     method: "POST",
     authToken: token,
     body: {
       ...input,
-      description: encodePropertyDescription(input),
+      electricPrice,
+      waterPrice,
+      description: encodePropertyDescription({ ...input, electricPrice, waterPrice }),
     },
   });
 }
@@ -249,12 +254,21 @@ export async function updateProperty(
     waterPrice?: number | null;
   },
 ) {
+  const electricPrice = input.electricPrice != null ? Number(input.electricPrice) : undefined;
+  const waterPrice = input.waterPrice != null ? Number(input.waterPrice) : undefined;
+
   return apiRequest<void>("Property/UpdateProperty", {
     method: "PUT",
     authToken: token,
     body: {
       ...input,
-      description: encodePropertyDescription(input),
+      ...(electricPrice !== undefined ? { electricPrice } : {}),
+      ...(waterPrice !== undefined ? { waterPrice } : {}),
+      description: encodePropertyDescription({
+        ...input,
+        electricPrice: electricPrice ?? null,
+        waterPrice: waterPrice ?? null,
+      }),
     },
   });
 }
@@ -264,5 +278,21 @@ export async function deleteProperty(token: string, id: string) {
     method: "DELETE",
     authToken: token,
     body: { id },
+  });
+}
+
+export async function approveProperty(token: string, id: string) {
+  return apiRequest<void>("Property/ApproveProperty", {
+    method: "POST",
+    authToken: token,
+    body: { propertyId: id },
+  });
+}
+
+export async function rejectProperty(token: string, id: string, rejectionReason: string) {
+  return apiRequest<void>("Property/RejectProperty", {
+    method: "POST",
+    authToken: token,
+    body: { propertyId: id, rejectionReason },
   });
 }

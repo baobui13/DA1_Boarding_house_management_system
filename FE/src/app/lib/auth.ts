@@ -1,5 +1,6 @@
 import { apiRequest } from "./api";
 import type { AppUser, AuthResponse, Role, StoredSession, UserResponse } from "./types";
+import { getUserByEmail as _getUserByEmail } from "./users";
 
 const SESSION_KEY = "qlt.session";
 const NAME_IDENTIFIER_CLAIM = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
@@ -60,10 +61,8 @@ export async function logoutRequest(token: string) {
   });
 }
 
-export async function getUserByEmail(email: string) {
-  return apiRequest<UserResponse>("User/GetUserByIdOrEmail", {
-    query: { email },
-  });
+export async function getUserByEmail(email: string, token?: string) {
+  return _getUserByEmail(email, token);
 }
 
 function readClaimFromToken(token: string | undefined, claimName: string) {

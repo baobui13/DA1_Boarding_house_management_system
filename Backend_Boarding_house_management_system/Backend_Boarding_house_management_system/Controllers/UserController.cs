@@ -29,7 +29,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(user);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Landlord")]
         [HttpGet("GetUsersByFilter")]
         public async Task<ActionResult<UserListResponse>> GetUsersByFilter(
             [FromQuery] EntityFilter<User> filter,

@@ -86,13 +86,13 @@ export default function ContractManagement() {
     setError("");
 
     try {
-      const landlord = currentUser.email ? await getUserByEmail(currentUser.email) : null;
+      const landlord = currentUser.email ? await getUserByEmail(currentUser.email, token) : null;
       const landlordId = landlord?.id || currentUser.id;
 
       const [contractResponse, propertyResponse, userResponse, areaResponse] = await Promise.all([
         getContracts(token, { pageSize: 1000 }),
         getPropertyListings({ landlordId, pageSize: 1000 }),
-        getUsers({ role: "Tenant", pageSize: 1000 }),
+        getUsers({ role: "Tenant", pageSize: 1000 }, token),
         getAreas({ landlordId, pageSize: 1000 }),
       ]);
 
@@ -269,7 +269,7 @@ export default function ContractManagement() {
     setFindingTenant(true);
     setCreateError("");
     try {
-      const tenant = await getUserByEmail(form.tenantEmail.trim());
+      const tenant = await getUserByEmail(form.tenantEmail.trim(), token);
       if (tenant.role.toLowerCase() !== "tenant") {
         throw new Error("Email này không thuộc tài khoản tenant.");
       }

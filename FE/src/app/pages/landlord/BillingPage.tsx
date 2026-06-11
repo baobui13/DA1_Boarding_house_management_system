@@ -78,12 +78,12 @@ export default function BillingPage() {
     setError("");
 
     try {
-      const landlord = currentUser.email ? await getUserByEmail(currentUser.email) : null;
+      const landlord = currentUser.email ? await getUserByEmail(currentUser.email, token) : null;
       const landlordId = landlord?.id || currentUser.id;
 
       const [contractResponse, userResponse, propertyResponse, invoiceResponse] = await Promise.all([
         getContracts(token, { pageSize: 1000 }),
-        getUsers({ role: "Tenant", pageSize: 1000 }),
+        getUsers({ role: "Tenant", pageSize: 1000 }, token),
         getPropertyListings({ landlordId, pageSize: 1000 }),
         getInvoices(token, { page: 1, pageSize: 1000 }),
       ]);

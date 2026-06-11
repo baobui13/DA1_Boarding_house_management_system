@@ -54,7 +54,7 @@ export default function LandlordDashboard() {
     (async () => {
       setLoading(true);
       const nextErrors: DashboardError[] = [];
-      const landlord = currentUser?.email ? await getUserByEmail(currentUser.email).catch(() => null) : null;
+      const landlord = currentUser?.email ? await getUserByEmail(currentUser.email, token).catch(() => null) : null;
       const landlordId = landlord?.id || currentUser?.id;
 
       await Promise.all([
@@ -84,7 +84,7 @@ export default function LandlordDashboard() {
               })
               .catch((err) => nextErrors.push({ section: "Lịch hẹn", message: err instanceof Error ? err.message : "Không tải được lịch hẹn." }))
           : Promise.resolve(),
-        getUsers({ page: 1, pageSize: 1000 })
+        getUsers({ page: 1, pageSize: 1000 }, token)
           .then((response) => {
             if (!cancelled) setUsers(response.items);
           })

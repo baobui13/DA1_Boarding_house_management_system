@@ -55,7 +55,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     (async () => {
       try {
-        const userResponse = await getUserByEmail(session.user.email);
+        const userResponse = await getUserByEmail(session.user.email, session.token);
         if (cancelled) return;
 
         const refreshedSession = buildSession(
@@ -91,7 +91,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let nextSession = buildSessionFromAuth(authResponse);
 
     try {
-      const userResponse = await getUserByEmail(authResponse.email);
+      const userResponse = await getUserByEmail(authResponse.email, authResponse.token);
       nextSession = buildSession(authResponse, userResponse);
     } catch {
       // Backend DTO currently requires Id even when endpoint name suggests email lookup.
