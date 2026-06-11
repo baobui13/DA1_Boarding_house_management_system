@@ -103,7 +103,7 @@ await app.CheckDatabaseConnectionAsync();
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
 await app.CheckCloudinaryConnectionAsync();
 
-// Kiểm tra kết nối tới các dịch vụ authentication (JWT & Google) khi ứng dụng khởi động
+// Kiểm tra kết nối tới các dịch vụ authentication (JWT, Google, Facebook) khi ứng dụng khởi động
 app.CheckAuthenticationConnections();
 
 await SyncPropertyAvailabilityStatusesAsync(app.Services);

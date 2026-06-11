@@ -13,6 +13,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -130,6 +131,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     Audience = new List<string> { _configuration["Authentication:Google:ClientId"]! }
                 };
                 payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+
+                // Bắt buộc email phải được Google xác minh (rất quan trọng cho bảo mật)
+                if (!payload.EmailVerified)
+                {
+                    throw new UnauthorizedException("Email tu Google chua duoc xac minh.");
+                }
+            }
+            catch (UnauthorizedException)
+            {
+                throw;
             }
             catch
             {
@@ -165,6 +176,141 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 {
                     var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                     throw new ValidationException($"Gan vai tro cho tai khoan Google that bai: {errors}");
+                }
+            }
+
+            var token = await GenerateJwtTokenAsync(user);
+            var refreshToken = GenerateRefreshToken();
+
+            // Revoke previous active refresh tokens for this user (hygiene)
+            var previousTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == user.Id && !rt.IsRevoked)
+                .ToListAsync();
+            foreach (var t in previousTokens)
+            {
+                t.IsRevoked = true;
+            }
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                ExpiryTime = DateTime.UtcNow.AddDays(30),
+                UserId = user.Id
+            });
+            await _context.SaveChangesAsync();
+
+            return new AuthResponse
+            {
+                Token = token,
+                RefreshToken = refreshToken,
+                RefreshTokenExpiration = DateTime.UtcNow.AddDays(30),
+                Email = user.Email!,
+                FullName = user.FullName,
+                Role = user.Role,
+                AvatarUrl = user.AvatarUrl
+            };
+        }
+
+        public async Task<AuthResponse> FacebookLoginAsync(FacebookLoginRequest dto)
+        {
+            var appId = _configuration["Authentication:Facebook:AppId"];
+            var appSecret = _configuration["Authentication:Facebook:AppSecret"];
+
+            if (string.IsNullOrEmpty(appId) || string.IsNullOrEmpty(appSecret))
+            {
+                throw new UnauthorizedException("Cau hinh Facebook chua duoc thiet lap tren server.");
+            }
+
+            string? email = null;
+            string? name = null;
+            string? picture = null;
+
+            try
+            {
+                using var httpClient = new HttpClient();
+
+                // 1. Validate token with debug_token endpoint (ensures token belongs to our app)
+                var debugUrl = $"https://graph.facebook.com/debug_token?input_token={dto.AccessToken}&access_token={appId}|{appSecret}";
+                var debugResp = await httpClient.GetAsync(debugUrl);
+                if (!debugResp.IsSuccessStatusCode)
+                {
+                    throw new UnauthorizedException("Token Facebook khong hop le.");
+                }
+
+                var debugContent = await debugResp.Content.ReadAsStringAsync();
+                using var debugDoc = JsonDocument.Parse(debugContent);
+                var data = debugDoc.RootElement.GetProperty("data");
+                var isValid = data.GetProperty("is_valid").GetBoolean();
+                var appIdInToken = data.GetProperty("app_id").GetString();
+
+                if (!isValid || appIdInToken != appId)
+                {
+                    throw new UnauthorizedException("Token Facebook khong hop le hoac khong thuoc ung dung.");
+                }
+
+                // 2. Fetch profile: id, name, email, picture
+                var meUrl = $"https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token={dto.AccessToken}";
+                var meResp = await httpClient.GetAsync(meUrl);
+                if (!meResp.IsSuccessStatusCode)
+                {
+                    throw new UnauthorizedException("Khong the lay thong tin nguoi dung tu Facebook.");
+                }
+
+                var meContent = await meResp.Content.ReadAsStringAsync();
+                using var meDoc = JsonDocument.Parse(meContent);
+
+                if (meDoc.RootElement.TryGetProperty("email", out var emailProp))
+                {
+                    email = emailProp.GetString();
+                }
+                name = meDoc.RootElement.GetProperty("name").GetString();
+
+                if (meDoc.RootElement.TryGetProperty("picture", out var picProp) &&
+                    picProp.TryGetProperty("data", out var dataProp) &&
+                    dataProp.TryGetProperty("url", out var urlProp))
+                {
+                    picture = urlProp.GetString();
+                }
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    throw new UnauthorizedException("Tai khoan Facebook khong cung cap email. Hay cap quyen email hoac su dung phuong thuc dang nhap khac.");
+                }
+            }
+            catch (Exception ex) when (!(ex is UnauthorizedException || ex is ValidationException))
+            {
+                throw new UnauthorizedException("Xac thuc Facebook that bai.");
+            }
+
+            var user = await _userManager.FindByEmailAsync(email!);
+
+            if (user == null)
+            {
+                const string defaultRole = "Tenant";
+                user = new User
+                {
+                    UserName = email,
+                    Email = email,
+                    FullName = name ?? "Facebook User",
+                    AvatarUrl = picture,
+                    Role = defaultRole,
+                    EmailConfirmed = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                {
+                    var errors = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                    throw new ValidationException($"Khong the tao tai khoan qua Facebook: {errors}");
+                }
+
+                var roleResult = await _userManager.AddToRoleAsync(user, defaultRole);
+                if (!roleResult.Succeeded)
+                {
+                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                    throw new ValidationException($"Gan vai tro cho tai khoan Facebook that bai: {errors}");
                 }
             }
 
