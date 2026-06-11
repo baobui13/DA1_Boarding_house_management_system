@@ -180,24 +180,58 @@ export async function deletePropertyAmenity(token: string, id: string) {
   });
 }
 
+// Uses the richer backend endpoint (includes images + amenities in one roundtrip)
+async function getPropertyDetail(id: string) {
+  return apiRequest<any>("Property/GetPropertyDetailById", {
+    query: { id },
+  });
+}
+
 export async function getPropertyListing(id: string): Promise<PropertyListing> {
-  const [property, images, amenities] = await Promise.all([
-    getPropertyById(id),
-    getPropertyImages(id),
-    getPropertyAmenities(id),
-  ]);
+  const detail = await getPropertyDetail(id);
+
+  // Support both camelCase (from JSON) and Pascal (defensive)
+  const rawImages: any[] = detail.propertyImages || detail.PropertyImages || [];
+  const rawAmenities: any[] = detail.roomAmenities || detail.RoomAmenities || [];
+
+  const images = rawImages
+    .sort((a, b) => Number(b.isPrimary ?? b.IsPrimary) - Number(a.isPrimary ?? a.IsPrimary))
+    .map((item) => item.imageUrl ?? item.ImageUrl);
+
+  const amenities = rawAmenities.map((item) => item.amenityName ?? item.AmenityName);
 
   return {
-    ...attachUtilityMeta(property),
-    images: images
-      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-      .map((item) => item.imageUrl),
-    amenities: amenities.map((item) => item.amenityName),
+    ...attachUtilityMeta(detail as PropertyResponse),
+    images,
+    amenities,
   };
 }
 
 export async function getPropertyListings(query: Record<string, string | number | boolean | undefined> = {}) {
   const response = await getProperties(query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getRecommendedProperties(
+  token: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetRecommendedProperties", {
+    authToken: token,
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getRecommendedPropertyListings(
+  token: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getRecommendedProperties(token, query);
   const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
 
   return {

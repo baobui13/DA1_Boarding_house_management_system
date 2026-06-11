@@ -61,6 +61,14 @@ export async function logoutRequest(token: string) {
   });
 }
 
+export async function refreshTokenRequest(refreshToken: string) {
+  return apiRequest<AuthResponse>("Auth/refresh-token", {
+    method: "POST",
+    body: { refreshToken },
+  });
+}
+
+
 export async function getUserByEmail(email: string, token?: string) {
   return _getUserByEmail(email, token);
 }

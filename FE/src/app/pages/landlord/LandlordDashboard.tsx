@@ -58,7 +58,7 @@ export default function LandlordDashboard() {
       const landlordId = landlord?.id || currentUser?.id;
 
       await Promise.all([
-        getPropertyListings(landlordId ? { landlordId, pageSize: 1000 } : {})
+        getPropertyListings(landlordId ? { landlordId, pageSize: 200 } : {})
           .then((response) => {
             if (!cancelled) setProperties(response.items);
           })
@@ -71,7 +71,7 @@ export default function LandlordDashboard() {
               .catch((err) => nextErrors.push({ section: "Hóa đơn", message: err instanceof Error ? err.message : "Không tải được hóa đơn." }))
           : Promise.resolve(),
         token
-          ? getContracts(token, { pageSize: 1000 })
+          ? getContracts(token, { pageSize: 200 })
               .then((response) => {
                 if (!cancelled) setContracts(response.items);
               })
@@ -84,7 +84,7 @@ export default function LandlordDashboard() {
               })
               .catch((err) => nextErrors.push({ section: "Lịch hẹn", message: err instanceof Error ? err.message : "Không tải được lịch hẹn." }))
           : Promise.resolve(),
-        getUsers({ page: 1, pageSize: 1000 }, token)
+        getUsers({ page: 1, pageSize: 200 }, token)
           .then((response) => {
             if (!cancelled) setUsers(response.items);
           })

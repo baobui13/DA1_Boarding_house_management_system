@@ -90,10 +90,11 @@ export default function ContractManagement() {
       const landlordId = landlord?.id || currentUser.id;
 
       const [contractResponse, propertyResponse, userResponse, areaResponse] = await Promise.all([
-        getContracts(token, { pageSize: 1000 }),
-        getPropertyListings({ landlordId, pageSize: 1000 }),
-        getUsers({ role: "Tenant", pageSize: 1000 }, token),
-        getAreas({ landlordId, pageSize: 1000 }),
+        // Load a generous page; server-side landlord role + client filter by owned properties
+        getContracts(token, { pageSize: 300 }),
+        getPropertyListings({ landlordId, pageSize: 300 }),
+        getUsers({ role: "Tenant", pageSize: 300 }, token),
+        getAreas({ landlordId, pageSize: 300 }),
       ]);
 
       const ownedPropertyIds = new Set(propertyResponse.items.map((item) => item.id));

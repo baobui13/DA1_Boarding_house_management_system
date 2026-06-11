@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { createAppointment } from "../../lib/appointments";
 import { getPropertyListing, deleteProperty } from "../../lib/properties";
+import { createViewHistory } from "../../lib/viewHistory";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 import { useApp } from "../../context/AppContext";
@@ -46,6 +47,16 @@ export default function RoomDetailPage() {
         const listing = await getPropertyListing(id);
         if (!cancelled) {
           setRoom(listing);
+
+          // Record view history for recommendation system (only for logged-in users)
+          if (currentUser && token) {
+            createViewHistory(token, {
+              userId: currentUser.id,
+              propertyId: id,
+            }).catch(() => {
+              // Silent fail - view history is non-critical
+            });
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -61,7 +72,7 @@ export default function RoomDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, currentUser, token]);
 
   if (loading) {
     return <div className="max-w-6xl mx-auto px-4 py-10 text-gray-500">Đang tải chi tiết...</div>;

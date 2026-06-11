@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { SlidersHorizontal, MapPin, Search, X, ChevronDown, ArrowUpDown, Grid3X3 } from "lucide-react";
 import { getPropertyListings } from "../../lib/properties";
+import { createSearchHistory } from "../../lib/searchHistory";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
+import { useApp } from "../../context/AppContext";
 
 const districts = ["Tất cả", "Bình Thạnh", "Quận 7", "Quận 10", "Gò Vấp", "Thủ Đức", "Quận 3", "Quận 12"];
 
@@ -47,6 +49,7 @@ function getStatusSearchTerms(status: string) {
 
 export default function SearchPage() {
   const navigate = useNavigate();
+  const { token, currentUser } = useApp();
   const [searchParams] = useSearchParams();
   const PAGE_SIZE = 12;
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -126,6 +129,36 @@ export default function SearchPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
   }, [listings, priceMax, priceMin, query, selectedAmenities, selectedDistrict, sortBy]);
+
+  // Record search history to power personalized recommendations (only for logged-in tenants)
+  useEffect(() => {
+    if (!currentUser || !token) return;
+
+    const hasActiveCriteria =
+      query.trim() ||
+      selectedDistrict !== "Tất cả" ||
+      priceMin > 0 ||
+      priceMax < 10000000 ||
+      selectedAmenities.length > 0;
+
+    if (!hasActiveCriteria) return;
+
+    const filtersPayload = JSON.stringify({
+      q: query.trim() || undefined,
+      district: selectedDistrict !== "Tất cả" ? selectedDistrict : undefined,
+      priceMin: priceMin > 0 ? priceMin : undefined,
+      priceMax: priceMax < 10000000 ? priceMax : undefined,
+      amenities: selectedAmenities.length > 0 ? selectedAmenities : undefined,
+      sort: sortBy,
+    });
+
+    createSearchHistory(token, {
+      userId: currentUser.id,
+      filters: filtersPayload,
+    }).catch(() => {
+      // Non-critical background call
+    });
+  }, [query, selectedDistrict, priceMin, priceMax, selectedAmenities, sortBy, currentUser, token]);
 
   const totalCount = filteredRooms.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
