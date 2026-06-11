@@ -45,6 +45,11 @@ namespace Backend_Boarding_house_management_system.Extensions
             {
                 options.ClientId = configuration["Authentication:Google:ClientId"]!;
                 options.ClientSecret = configuration["Authentication:Google:ClientSecret"]!;
+            })
+            .AddFacebook(options =>
+            {
+                options.AppId = configuration["Authentication:Facebook:AppId"]!;
+                options.AppSecret = configuration["Authentication:Facebook:AppSecret"]!;
             });
 
             // 3. Setup Authorization Policies
@@ -126,6 +131,19 @@ namespace Backend_Boarding_house_management_system.Extensions
             else
             {
                 logger.LogInformation("O [SUCCESS] Google Auth ClientId configuration detected.");
+            }
+
+            // 3. KIỂM TRA FACEBOOK (AppId + AppSecret cho quick login)
+            var facebookAppId = configuration["Authentication:Facebook:AppId"];
+            var facebookAppSecret = configuration["Authentication:Facebook:AppSecret"];
+
+            if (string.IsNullOrEmpty(facebookAppId) || string.IsNullOrEmpty(facebookAppSecret))
+            {
+                logger.LogWarning("I [WARNING] Missing Facebook Auth configuration in appsettings.json.");
+            }
+            else
+            {
+                logger.LogInformation("O [SUCCESS] Facebook Auth AppId configuration detected.");
             }
         }
     }

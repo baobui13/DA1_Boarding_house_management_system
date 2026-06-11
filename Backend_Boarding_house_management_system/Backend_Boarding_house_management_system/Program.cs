@@ -1,6 +1,7 @@
 using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Extensions;
+using Backend_Boarding_house_management_system.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,16 @@ using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// In Development we force HTTP only by default.
+// This avoids the very common Windows dev-certificate binding failures
+// when Kestrel tries to listen on https://localhost:7134 (LocalhostListenOptions).
+// Use the "http" launch profile, or set ASPNETCORE_URLS / launch profile "https"
+// only when your dev cert is healthy.
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseUrls("http://localhost:5046");
+}
+
 // Đăng ký cấu hình Database
 builder.Services.AddDatabaseServices(builder.Configuration);
 
@@ -28,30 +39,21 @@ builder.Services.AddApplicationRepositoriesAndServices();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-var frontendOrigins = new[]
-{
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:5175",
-    "http://127.0.0.1:5175"
-};
-
-// Cấu hình CORS cho frontend local/dev
+// Cấu hình CORS (một lần duy nhất, với AllowCredentials cho auth)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy
-            .WithOrigins(frontendOrigins)
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:3000",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:5174")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -82,6 +84,13 @@ builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(
 // Đăng ký cấu hình authentication bằng extension
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
+// Đăng ký Global Exception Handler (IExceptionHandler)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Cho phép services lấy thông tin user hiện tại từ HttpContext (để kiểm tra ownership)
+builder.Services.AddHttpContextAccessor();
+
 
 // ===========================================================================================
 
@@ -94,10 +103,13 @@ await app.CheckDatabaseConnectionAsync();
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
 await app.CheckCloudinaryConnectionAsync();
 
-// Kiểm tra kết nối tới các dịch vụ authentication (JWT & Google) khi ứng dụng khởi động
+// Kiểm tra kết nối tới các dịch vụ authentication (JWT, Google, Facebook) khi ứng dụng khởi động
 app.CheckAuthenticationConnections();
 
 await SyncPropertyAvailabilityStatusesAsync(app.Services);
+
+// Kích hoạt Global Exception Handler (phải đặt sớm trong pipeline)
+app.UseExceptionHandler();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -135,8 +147,8 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
     var occupiedPropertyIds = await db.Contracts
         .AsNoTracking()
         .Where(contract =>
-            contract.Status == "Active" ||
-            contract.Status == "NearExpiry" ||
+            contract.Status == ContractStatus.Active.ToString() ||
+            contract.Status == ContractStatus.NearExpiry.ToString() ||
             contract.Status == "Signed" ||
             contract.Status == "Approved")
         .Select(contract => contract.PropertyId)
@@ -144,26 +156,33 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
         .ToListAsync();
 
     var occupiedSet = occupiedPropertyIds.ToHashSet(StringComparer.Ordinal);
-    var properties = await db.Properties.ToListAsync();
     var hasChanges = false;
 
-    foreach (var property in properties)
+    // Targeted updates: chỉ query những bản ghi cần thay đổi (tránh load toàn bộ bảng Properties)
+    // 1. Các property đang được occupy (có contract active) mà chưa phải Rented
+    if (occupiedPropertyIds.Count > 0)
     {
-        if (occupiedSet.Contains(property.Id))
+        var toRent = await db.Properties
+            .Where(p => occupiedPropertyIds.Contains(p.Id) && p.AvailabilityStatus != AvailabilityStatusEnum.Rented)
+            .ToListAsync();
+        foreach (var p in toRent)
         {
-            if (property.AvailabilityStatus != AvailabilityStatusEnum.Rented)
-            {
-                property.AvailabilityStatus = AvailabilityStatusEnum.Rented;
-                property.UpdatedAt = DateTime.UtcNow;
-                hasChanges = true;
-            }
-            continue;
+            p.AvailabilityStatus = AvailabilityStatusEnum.Rented;
+            p.UpdatedAt = DateTime.UtcNow;
+            hasChanges = true;
         }
+    }
 
-        if (property.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+    // 2. Các property đang Rented nhưng không còn contract active nào
+    var currentlyRented = await db.Properties
+        .Where(p => p.AvailabilityStatus == AvailabilityStatusEnum.Rented)
+        .ToListAsync();
+    foreach (var p in currentlyRented)
+    {
+        if (!occupiedSet.Contains(p.Id))
         {
-            property.AvailabilityStatus = AvailabilityStatusEnum.Available;
-            property.UpdatedAt = DateTime.UtcNow;
+            p.AvailabilityStatus = AvailabilityStatusEnum.Available;
+            p.UpdatedAt = DateTime.UtcNow;
             hasChanges = true;
         }
     }

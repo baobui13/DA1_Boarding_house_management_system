@@ -2,11 +2,13 @@ using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.DTOs.Notification.Requests;
 using Backend_Boarding_house_management_system.DTOs.Notification.Responses;
+using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
-using Backend_Boarding_house_management_system.Data;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -19,17 +21,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IUserRepository _userRepository;
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public NotificationService(
             INotificationRepository notificationRepository,
             IUserRepository userRepository,
             AppDbContext context,
-            IMapper mapper)
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor)
         {
             _notificationRepository = notificationRepository;
             _userRepository = userRepository;
             _context = context;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<NotificationResponse> GetByIdAsync(GetNotificationByIdRequest request)
@@ -39,6 +44,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             {
                 throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(entity.UserId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xem thong bao nay.");
+
             return _mapper.Map<NotificationResponse>(entity);
         }
 
@@ -48,10 +59,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntityPage page)
         {
             var (items, totalCount) = await _notificationRepository.GetByFilterAsync(filter, sort, page);
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+
+            var filtered = items.Where(n => isAdmin || string.Equals(n.UserId, currentUserId, StringComparison.Ordinal)).ToList();
+
             var response = new NotificationListResponse
             {
-                Items = _mapper.Map<List<NotificationResponse>>(items),
-                TotalCount = totalCount,
+                Items = _mapper.Map<List<NotificationResponse>>(filtered),
+                TotalCount = filtered.Count,
                 PageNumber = (int)(page.PageNumber ?? 1),
                 PageSize = (int)(page.PageSize ?? 10)
             };
@@ -99,6 +115,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(existing.UserId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat thong bao nay.");
+
             existing.IsRead = request.IsRead;
 
             await _notificationRepository.UpdateAsync(existing);
@@ -106,11 +127,17 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task DeleteAsync(DeleteNotificationRequest request)
         {
-            var exists = await _notificationRepository.ExistsAsync(request.Id);
-            if (!exists)
+            var existing = await _notificationRepository.GetByIdAsync(request.Id);
+            if (existing == null)
             {
                 throw new NotFoundException($"Khong tim thay thong bao voi Id '{request.Id}'.");
             }
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(existing.UserId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa thong bao nay.");
+
             await _notificationRepository.DeleteAsync(request.Id);
         }
 
@@ -126,6 +153,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 "system" => true,
                 _ => throw new BadRequestException("Loai thong bao khong ho tro.")
             };
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

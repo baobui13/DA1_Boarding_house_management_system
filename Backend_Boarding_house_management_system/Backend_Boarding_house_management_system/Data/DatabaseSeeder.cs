@@ -97,7 +97,6 @@ namespace Backend_Boarding_house_management_system.Data
                     NormalizedEmail = "ADMIN@TEST.COM",
                     NormalizedUserName = "ADMIN@TEST.COM",
                     FullName = "System Admin",
-                    CCCD = "000000000000",
                     Address = "Văn phòng quản trị hệ thống, Quận 1, TP. Hồ Chí Minh",
                     PhoneNumber = "0901000001",
                     Role = "Admin",
@@ -111,7 +110,6 @@ namespace Backend_Boarding_house_management_system.Data
                     NormalizedEmail = "LANDLORD@TEST.COM",
                     NormalizedUserName = "LANDLORD@TEST.COM",
                     FullName = "Demo Landlord",
-                    CCCD = "111111111111",
                     Address = "123 Đinh Tiên Hoàng, Phường 1, Quận Bình Thạnh, TP. Hồ Chí Minh",
                     PhoneNumber = "0901000002",
                     Role = "Landlord",
@@ -125,7 +123,6 @@ namespace Backend_Boarding_house_management_system.Data
                     NormalizedEmail = "TENANT@TEST.COM",
                     NormalizedUserName = "TENANT@TEST.COM",
                     FullName = "Demo Tenant",
-                    CCCD = "222222222222",
                     Address = "Phòng đang thuê tại Bình Thạnh, TP. Hồ Chí Minh",
                     PhoneNumber = "0901000003",
                     Role = "Tenant",
@@ -152,7 +149,6 @@ namespace Backend_Boarding_house_management_system.Data
                 existingUser.NormalizedEmail = demoUser.NormalizedEmail;
                 existingUser.NormalizedUserName = demoUser.NormalizedUserName;
                 existingUser.FullName = demoUser.FullName;
-                existingUser.CCCD = string.IsNullOrWhiteSpace(existingUser.CCCD) ? demoUser.CCCD : existingUser.CCCD;
                 existingUser.Address = demoUser.Address;
                 existingUser.PhoneNumber = demoUser.PhoneNumber;
                 existingUser.Role = demoUser.Role;
@@ -230,7 +226,6 @@ namespace Backend_Boarding_house_management_system.Data
                 NormalizedEmail = "ADMIN@TEST.COM",
                 NormalizedUserName = "ADMIN@TEST.COM",
                 FullName = "System Admin",
-                CCCD = "000000000000",
                 Role = "Admin",
                 EmailConfirmed = true
             };
@@ -244,7 +239,6 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
-                .RuleFor(u => u.CCCD, f => f.Random.Replace("0791########"))
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
                 .RuleFor(u => u.Role, "Landlord")
                 .RuleFor(u => u.EmailConfirmed, true)
@@ -260,7 +254,6 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
-                .RuleFor(u => u.CCCD, f => f.Random.Replace("0791########"))
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
                 .RuleFor(u => u.Role, "Tenant")
                 .RuleFor(u => u.EmailConfirmed, true)

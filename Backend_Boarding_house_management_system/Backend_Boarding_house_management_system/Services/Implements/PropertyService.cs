@@ -10,6 +10,9 @@ using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -20,19 +23,30 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IUserRepository _userRepository;
         private readonly IAreaRepository _areaRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        // For personalized recommendation from history (injected; already registered in DI)
+        private readonly IViewHistoryRepository _viewHistoryRepository;
+        private readonly ISearchHistoryRepository _searchHistoryRepository;
 
         public PropertyService(
             AppDbContext context,
             IPropertyRepository propertyRepository,
             IUserRepository userRepository,
             IAreaRepository areaRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor,
+            IViewHistoryRepository viewHistoryRepository,
+            ISearchHistoryRepository searchHistoryRepository)
         {
             _context = context;
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
             _areaRepository = areaRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
+            _viewHistoryRepository = viewHistoryRepository;
+            _searchHistoryRepository = searchHistoryRepository;
         }
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
@@ -49,6 +63,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetByIdWithDetailsAsync(request.Id);
             if (property == null)
                 throw new NotFoundException("Khong tim thay bat dong san.");
+
+            // Auto ghi nhận ViewHistory cho user đã đăng nhập (tín hiệu mạnh cho recommendation)
+            await LogViewHistoryIfAuthenticatedAsync(request.Id);
 
             return _mapper.Map<PropertyDetailResponse>(property);
         }
@@ -84,10 +101,74 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<Property> sort,
             EntityPage page)
         {
-            var (properties, totalCount) = await _propertyRepository.GetByFilterAsync(filter, sort, page);
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
+        }
+
+        public async Task<PropertyListResponse> GetRecommendedPropertiesAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page)
+        {
+            // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
+        }
+
+        /// <summary>
+        /// Internal dùng chung cho list thông thường và recommended.
+        /// Khi có user đăng nhập + personalizeIfPossible=true: lấy candidate, tính score từ View/SearchHistory, re-rank trước khi page.
+        /// </summary>
+        private async Task<PropertyListResponse> GetPropertiesInternalAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page,
+            bool personalizeIfPossible)
+        {
+            var userId = GetCurrentUserId();
+
+            // Tính total theo filter (không bị ảnh hưởng bởi re-rank)
+            // Dùng count trực tiếp trên filter (tận dụng IQueryable của Plainquire)
+            var countQuery = _context.Properties.AsNoTracking().Where(filter);
+            var totalCount = await countQuery.CountAsync();
+
+            List<Property> finalItems;
+
+            if (!personalizeIfPossible || string.IsNullOrEmpty(userId))
+            {
+                // Giữ nguyên hành vi cũ hoàn toàn cho anonymous hoặc khi không personalize
+                var (items, _) = await _propertyRepository.GetByFilterAsync(filter, sort, page);
+                finalItems = items.ToList();
+            }
+            else
+            {
+                // Xây preference từ history (View + Search)
+                var pref = await BuildUserPreferenceAsync(userId);
+
+                // Lấy bounded candidates (kèm RoomAmenities để scoring) – reuse pattern GetDetailsQuery
+                var candidates = (await _propertyRepository.GetFilteredCandidatesForRecAsync(filter, maxCandidates: 200)).ToList();
+
+                // Tính điểm + re-rank
+                var scored = candidates
+                    .Select(p => new { Property = p, Score = ComputeRelevanceScore(p, pref) })
+                    .OrderByDescending(x => x.Score)
+                    // Secondary: ưu tiên mới tạo nếu score ngang nhau (có thể mở rộng dùng sort nếu cần)
+                    .ThenByDescending(x => x.Property.CreatedAt)
+                    .ToList();
+
+                // Áp dụng phân trang trên tập đã re-rank
+                var pageNumber = (int)(page.PageNumber ?? 1);
+                var pageSize = (int)(page.PageSize ?? 10);
+                var skip = Math.Max(0, (pageNumber - 1) * pageSize);
+
+                finalItems = scored
+                    .Skip(skip)
+                    .Take(pageSize)
+                    .Select(x => x.Property)
+                    .ToList();
+            }
+
             return new PropertyListResponse
             {
-                Items = _mapper.Map<List<PropertyResponse>>(properties),
+                Items = _mapper.Map<List<PropertyResponse>>(finalItems),
                 TotalCount = totalCount,
                 PageNumber = (int)(page.PageNumber ?? 1),
                 PageSize = (int)(page.PageSize ?? 10)
@@ -96,6 +177,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request)
         {
+            // Ownership: caller must be creating for themselves (or Admin)
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(request.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban chi duoc tao bat dong san cho chinh minh.");
+
             var landlord = await _userRepository.GetByIdAsync(request.LandlordId);
             if (landlord == null)
                 throw new NotFoundException($"Khong tim thay landlord voi Id '{request.LandlordId}'.");
@@ -130,6 +217,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
 
+            // Ownership check
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat bat dong san nay.");
+
             var requestedStatus = request.Status;
             var requestedModerationStatus = request.ModerationStatus;
             _mapper.Map(request, property);
@@ -145,6 +238,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            // Ownership (Admin only typically, but enforce)
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen duyet bat dong san nay.");
 
             if (property.ModerationStatus != ModerationStatusEnum.Pending)
                 throw new BadRequestException("Chi co the duyet bat dong san dang trong trang Thai cho duyet.");
@@ -162,6 +261,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen tu choi bat dong san nay.");
 
             if (property.ModerationStatus != ModerationStatusEnum.Pending)
                 throw new BadRequestException("Chi co the tu choi bat dong san dang trong trang Thai cho duyet.");
@@ -181,6 +285,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat trang thai kha dung cho bat dong san nay.");
+
             if (property.ModerationStatus != ModerationStatusEnum.Approved)
                 throw new BadRequestException("Chi co the cap nhat trang thai kha dung cho bat dong san da duoc duyet.");
 
@@ -195,6 +304,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             if (!await _propertyRepository.ExistsAsync(request.Id))
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.Id}'.");
+
+            var property = await _propertyRepository.GetByIdAsync(request.Id);
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (property != null && !isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa bat dong san nay.");
 
             var blockers = await GetPropertyDeleteBlockersAsync(request.Id);
             if (blockers.Count > 0)
@@ -232,6 +347,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (await _context.Ratings.AnyAsync(x => x.PropertyId == propertyId))
                 blockers.Add("danh gia");
 
+            if (await _context.RoomAmenities.AnyAsync(x => x.PropertyId == propertyId))
+                blockers.Add("tien ich phong");
+
             return blockers;
         }
 
@@ -252,13 +370,177 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 return parsed;
             }
 
-            return value.Trim().ToLowerInvariant() switch
+            return fallback;
+        }
+
+        // ==================== RECOMMENDATION HELPERS (ViewHistory + SearchHistory) ====================
+
+        private async Task LogViewHistoryIfAuthenticatedAsync(string propertyId)
+        {
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            // Tránh spam: chỉ log nếu chưa xem property này trong 10 phút gần nhất
+            var recentThreshold = DateTime.UtcNow.AddMinutes(-10);
+            var hasRecent = await _context.ViewHistories
+                .AsNoTracking()
+                .AnyAsync(v => v.UserId == userId && v.PropertyId == propertyId && v.Timestamp >= recentThreshold);
+
+            if (hasRecent)
+                return;
+
+            var view = new ViewHistory
             {
-                "unavailable" => AvailabilityStatusEnum.Maintenance,
-                "repairing" => AvailabilityStatusEnum.Maintenance,
-                "nearexpiry" => AvailabilityStatusEnum.Maintenance,
-                _ => fallback,
+                Id = Guid.NewGuid().ToString(),
+                UserId = userId,
+                PropertyId = propertyId,
+                Timestamp = DateTime.UtcNow
             };
+
+            await _context.ViewHistories.AddAsync(view);
+            await _context.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Preference được xây từ lịch sử xem + tìm kiếm gần đây của user.
+        /// </summary>
+        private record UserPreference(
+            HashSet<string> AreaIds,
+            decimal? PriceMean,
+            decimal? PriceMin,
+            decimal? PriceMax,
+            HashSet<string> AmenityIds);
+
+        private async Task<UserPreference> BuildUserPreferenceAsync(string userId)
+        {
+            var areaIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var amenityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var prices = new List<decimal>();
+            decimal? priceMin = null, priceMax = null;
+
+            // 1. Từ ViewHistory (tín hiệu mạnh: user đã thực sự xem chi tiết)
+            var recentViews = await _viewHistoryRepository.GetRecentForUserAsync(userId, limit: 30);
+            foreach (var vh in recentViews)
+            {
+                var p = vh.Property;
+                if (p == null) continue;
+
+                if (!string.IsNullOrEmpty(p.AreaId))
+                    areaIds.Add(p.AreaId);
+
+                prices.Add(p.Price);
+
+                foreach (var ra in p.RoomAmenities)
+                {
+                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase))
+                        amenityIds.Add(ra.AmenityId);
+                }
+            }
+
+            // 2. Từ SearchHistory (Filters là JSON do frontend gửi khi user search)
+            var recentSearches = await _searchHistoryRepository.GetRecentForUserAsync(userId, limit: 10);
+            foreach (var sh in recentSearches)
+            {
+                if (string.IsNullOrWhiteSpace(sh.Filters)) continue;
+
+                try
+                {
+                    using var doc = JsonDocument.Parse(sh.Filters);
+                    var root = doc.RootElement;
+
+                    // Best-effort parse các key phổ biến (frontend tự quyết định format)
+                    if (root.TryGetProperty("areaId", out var areaEl) && areaEl.ValueKind == JsonValueKind.String)
+                    {
+                        var a = areaEl.GetString();
+                        if (!string.IsNullOrEmpty(a)) areaIds.Add(a);
+                    }
+
+                    if (root.TryGetProperty("priceMin", out var pmin) && pmin.TryGetDecimal(out var pminVal))
+                        priceMin = priceMin.HasValue ? Math.Min(priceMin.Value, pminVal) : pminVal;
+
+                    if (root.TryGetProperty("priceMax", out var pmax) && pmax.TryGetDecimal(out var pmaxVal))
+                        priceMax = priceMax.HasValue ? Math.Max(priceMax.Value, pmaxVal) : pmaxVal;
+
+                    if (root.TryGetProperty("amenityIds", out var amArr) && amArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var el in amArr.EnumerateArray())
+                        {
+                            if (el.ValueKind == JsonValueKind.String)
+                            {
+                                var aid = el.GetString();
+                                if (!string.IsNullOrEmpty(aid)) amenityIds.Add(aid);
+                            }
+                        }
+                    }
+
+                    // sizeMin/sizeMax cũng có thể parse tương tự nếu cần mở rộng
+                }
+                catch
+                {
+                    // ignore malformed JSON – preference vẫn dùng được từ view history
+                }
+            }
+
+            // Tính mean price từ views (nếu có)
+            decimal? priceMean = prices.Count > 0 ? prices.Average() : null;
+
+            // Nếu search có range thì ưu tiên range đó
+            decimal? effectiveMin = priceMin ?? (prices.Count > 0 ? prices.Min() : null);
+            decimal? effectiveMax = priceMax ?? (prices.Count > 0 ? prices.Max() : null);
+
+            return new UserPreference(areaIds, priceMean, effectiveMin, effectiveMax, amenityIds);
+        }
+
+        private double ComputeRelevanceScore(Property property, UserPreference pref)
+        {
+            if (pref == null)
+                return 0;
+
+            double score = 5; // base
+
+            // Area match (tín hiệu mạnh nhất từ lịch sử xem/tìm)
+            if (!string.IsNullOrEmpty(property.AreaId) && pref.AreaIds.Contains(property.AreaId))
+                score += 40;
+
+            // Price fit
+            if (pref.PriceMean.HasValue || (pref.PriceMin.HasValue && pref.PriceMax.HasValue))
+            {
+                decimal target = pref.PriceMean ?? ((pref.PriceMin!.Value + pref.PriceMax!.Value) / 2);
+                decimal distance = Math.Abs(property.Price - target);
+                decimal tolerance = Math.Max(300_000, target * 0.25m); // 25% hoặc 300k
+                double priceFit = Math.Max(0, 1 - (double)(distance / tolerance));
+                score += priceFit * 30;
+            }
+
+            // Amenity overlap (aspects)
+            int matchCount = 0;
+            foreach (var ra in property.RoomAmenities)
+            {
+                if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                    pref.AmenityIds.Contains(ra.AmenityId))
+                {
+                    matchCount++;
+                }
+            }
+            if (matchCount > 0)
+                score += Math.Min(matchCount * 7, 25);
+
+            // Clamp
+            return Math.Clamp(score, 0, 100);
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -40,5 +40,15 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             var items = await query.Page(page).ToListAsync();
             return (items, totalCount);
         }
+
+        public async Task<IEnumerable<Property>> GetFilteredCandidatesForRecAsync(EntityFilter<Property> filter, int maxCandidates = 200)
+        {
+            var query = GetDetailsQuery().AsNoTracking();
+            query = query.Where(filter);
+            // Dùng order ổn định để có tập candidate deterministic trước khi re-rank ở service
+            query = query.OrderByDescending(p => p.CreatedAt);
+
+            return await query.Take(maxCandidates).ToListAsync();
+        }
     }
 }

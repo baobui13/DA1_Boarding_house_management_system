@@ -3,7 +3,6 @@ using Backend_Boarding_house_management_system.Services.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
@@ -13,12 +12,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
     {
         private readonly Cloudinary _cloudinary;
 
-        public PhotoService(IConfiguration config)
+        public PhotoService(IOptions<CloudinarySettings> options)
         {
+            var settings = options.Value;
             var acc = new Account(
-                config["CloudinarySettings:CloudName"],
-                config["CloudinarySettings:ApiKey"],
-                config["CloudinarySettings:ApiSecret"]
+                settings.CloudName,
+                settings.ApiKey,
+                settings.ApiSecret
             );
             _cloudinary = new Cloudinary(acc);
         }

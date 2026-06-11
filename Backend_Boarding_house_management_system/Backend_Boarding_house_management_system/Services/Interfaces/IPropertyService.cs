@@ -16,6 +16,15 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page);
+
+        /// <summary>
+        /// Danh sách được ưu tiên đề cử theo lịch sử xem/tìm kiếm của user hiện tại (nếu đã đăng nhập).
+        /// </summary>
+        Task<PropertyListResponse> GetRecommendedPropertiesAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page);
+
         Task<PropertyResponse> CreatePropertyAsync(CreatePropertyRequest request);
         Task<bool> UpdatePropertyAsync(UpdatePropertyRequest request);
         Task<bool> ApprovePropertyAsync(ApprovePropertyRequest request);

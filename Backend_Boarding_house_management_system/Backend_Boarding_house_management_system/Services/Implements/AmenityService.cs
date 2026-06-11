@@ -55,11 +55,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task AddAsync(CreateAmenityRequest request)
         {
-            if (await _amenityRepository.ExistsAsync(request.Id))
-            {
-                throw new ConflictException($"Tiện ích với Id '{request.Id}' đã tồn tại.");
-            }
             var amenity = _mapper.Map<Amenity>(request);
+            amenity.Id = Guid.NewGuid().ToString();
+            if (await _amenityRepository.ExistsAsync(amenity.Id))
+            {
+                throw new ConflictException("Khong the tao tien ich.");
+            }
             await _amenityRepository.AddAsync(amenity);
         }
 

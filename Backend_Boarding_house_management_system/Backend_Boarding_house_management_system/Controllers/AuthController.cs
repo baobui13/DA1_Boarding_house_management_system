@@ -39,6 +39,13 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(result);
         }
 
+        [HttpPost("facebook-login")]
+        public async Task<ActionResult<AuthResponse>> FacebookLogin([FromBody] FacebookLoginRequest request)
+        {
+            var result = await _authService.FacebookLoginAsync(request);
+            return Ok(result);
+        }
+
         [HttpPost("refresh-token")]
         public async Task<ActionResult<AuthResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
         {

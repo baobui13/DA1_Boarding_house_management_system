@@ -6,7 +6,9 @@ using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Plainquire.Filter;
 using Plainquire.Page;
 using Plainquire.Sort;
@@ -19,17 +21,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IUserRepository _userRepository;
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ComplaintService(
             IComplaintRepository complaintRepository,
             IUserRepository userRepository,
             AppDbContext context,
-            IMapper mapper)
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor)
         {
             _complaintRepository = complaintRepository;
             _userRepository = userRepository;
             _context = context;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ComplaintResponse> GetComplaintByIdAsync(GetComplaintByIdRequest request)
@@ -37,6 +42,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var complaint = await _complaintRepository.GetByIdAsync(request.Id);
             if (complaint == null)
                 throw new NotFoundException($"Khong tim thay khieu nai voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(complaint.CreatorId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xem khieu nai nay.");
 
             return _mapper.Map<ComplaintResponse>(complaint);
         }
@@ -47,6 +57,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (complaint == null)
                 throw new NotFoundException($"Khong tim thay khieu nai voi Id '{request.Id}'.");
 
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(complaint.CreatorId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xem khieu nai nay.");
+
             return _mapper.Map<ComplaintDetailResponse>(complaint);
         }
 
@@ -56,10 +71,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntityPage page)
         {
             var (complaints, totalCount) = await _complaintRepository.GetByFilterAsync(filter, sort, page);
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+
+            var filtered = complaints.Where(c => isAdmin || string.Equals(c.CreatorId, currentUserId, StringComparison.Ordinal)).ToList();
+
             return new ComplaintListResponse
             {
-                Items = _mapper.Map<List<ComplaintResponse>>(complaints),
-                TotalCount = totalCount,
+                Items = _mapper.Map<List<ComplaintResponse>>(filtered),
+                TotalCount = filtered.Count,
                 PageNumber = (int)(page.PageNumber ?? 1),
                 PageSize = (int)(page.PageSize ?? 10)
             };
@@ -67,10 +87,27 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<ComplaintResponse> CreateComplaintAsync(CreateComplaintRequest request)
         {
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(request.CreatorId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban chi duoc tao khieu nai voi tai khoan cua minh.");
+
             if (await _userRepository.GetByIdAsync(request.CreatorId) == null)
                 throw new NotFoundException($"Khong tim thay user voi Id '{request.CreatorId}'.");
 
             await ValidateRelatedEntityAsync(request.RelatedType, request.RelatedId);
+
+            // Basic relation check for property
+            if (string.Equals(request.RelatedType, "property", StringComparison.OrdinalIgnoreCase))
+            {
+                var prop = await _context.Properties.FindAsync(request.RelatedId);
+                if (prop != null && !isAdmin && !string.Equals(prop.LandlordId, currentUserId, StringComparison.Ordinal))
+                {
+                    var hasContract = await _context.Contracts.AnyAsync(c => c.PropertyId == request.RelatedId && c.TenantId == currentUserId);
+                    if (!hasContract)
+                        throw new ForbiddenException("Ban khong co quyen khieu nai ve bat dong san nay.");
+                }
+            }
 
             var complaint = _mapper.Map<Complaint>(request);
             complaint.Id = Guid.NewGuid().ToString();
@@ -78,6 +115,28 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             complaint.Status = "Pending";
 
             await _complaintRepository.AddAsync(complaint);
+
+            // Auto notify (simple: for admin or related landlord)
+            if (!string.IsNullOrWhiteSpace(request.RelatedId) && string.Equals(request.RelatedType, "property", StringComparison.OrdinalIgnoreCase))
+            {
+                var prop = await _context.Properties.FindAsync(request.RelatedId);
+                if (prop != null)
+                {
+                    var notif = new Notification
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = prop.LandlordId,
+                        Type = "Complaint",
+                        Content = "Co khieu nai moi ve bat dong san cua ban.",
+                        IsRead = false,
+                        Timestamp = DateTime.UtcNow,
+                        RelatedId = complaint.Id
+                    };
+                    _context.Notifications.Add(notif);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             return _mapper.Map<ComplaintResponse>(complaint);
         }
 
@@ -86,6 +145,11 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var complaint = await _complaintRepository.GetByIdAsync(request.Id);
             if (complaint == null)
                 throw new NotFoundException($"Khong tim thay khieu nai voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(complaint.CreatorId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen cap nhat khieu nai nay.");
 
             var relatedType = request.RelatedType ?? complaint.RelatedType;
             var relatedId = request.RelatedId ?? complaint.RelatedId;
@@ -104,8 +168,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task<bool> DeleteComplaintAsync(DeleteComplaintRequest request)
         {
-            if (!await _complaintRepository.ExistsAsync(request.Id))
+            var complaint = await _complaintRepository.GetByIdAsync(request.Id);
+            if (complaint == null)
                 throw new NotFoundException($"Khong tim thay khieu nai voi Id '{request.Id}'.");
+
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(complaint.CreatorId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong co quyen xoa khieu nai nay.");
 
             await _complaintRepository.DeleteAsync(request.Id);
             return true;
@@ -129,6 +199,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             if (!exists)
                 throw new NotFoundException($"Khong tim thay doi tuong lien quan voi RelatedType '{relatedType}' va RelatedId '{relatedId}'.");
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Services.Implements
 {
@@ -20,19 +22,22 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IPropertyRepository _propertyRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ContractService(
             AppDbContext context,
             IContractRepository contractRepository,
             IPropertyRepository propertyRepository,
             IUserRepository userRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _contractRepository = contractRepository;
             _propertyRepository = propertyRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ContractResponse> GetByIdAsync(GetContractByIdRequest request)
@@ -67,6 +72,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (property == null)
                 throw new NotFoundException($"Khong tim thay phong voi Id '{request.PropertyId}'.");
 
+            // Ownership check: Landlord caller must own the property (or Admin)
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin && !string.Equals(property.LandlordId, currentUserId, StringComparison.Ordinal))
+                throw new ForbiddenException("Ban khong phai chu so huu cua phong nay.");
+
             var tenant = await _userRepository.GetByIdAsync(request.TenantId);
             if (tenant == null)
                 throw new NotFoundException($"Khong tim thay tenant voi Id '{request.TenantId}'.");
@@ -83,10 +94,21 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var entity = _mapper.Map<Contract>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
-            entity.Status = "Active";
+            entity.Status = ContractStatus.Active.ToString();
 
-            await _contractRepository.AddAsync(entity);
-            await SyncPropertyAvailabilityAsync(request.PropertyId);
+            // Transaction: ensure contract + property availability are atomic
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _contractRepository.AddAsync(entity);
+                await SyncPropertyAvailabilityAsync(request.PropertyId);
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
 
             var savedEntity = await _contractRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<ContractResponse>(savedEntity);
@@ -100,7 +122,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
             }
 
+            // Ownership check
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin)
+            {
+                var prop = await _propertyRepository.GetByIdAsync(existing.PropertyId);
+                if (prop == null || !string.Equals(prop.LandlordId, currentUserId, StringComparison.Ordinal))
+                    throw new ForbiddenException("Ban khong co quyen cap nhat hop dong nay.");
+            }
+
             var nextStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status : request.Status;
+            ValidateStatusTransition(existing.Status, nextStatus);
+
             var isActivating = IsOccupyingContractStatus(nextStatus);
             if (isActivating)
             {
@@ -115,8 +149,19 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             _mapper.Map(request, existing);
             existing.UpdatedAt = DateTime.UtcNow;
 
-            await _contractRepository.UpdateAsync(existing);
-            await SyncPropertyAvailabilityAsync(existing.PropertyId);
+            // Transaction for contract update + property sync
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _contractRepository.UpdateAsync(existing);
+                await SyncPropertyAvailabilityAsync(existing.PropertyId);
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task DeleteAsync(DeleteContractRequest request)
@@ -125,6 +170,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (existing == null)
             {
                 throw new NotFoundException($"Khong tim thay hop dong voi Id '{request.Id}'.");
+            }
+
+            // Ownership check
+            var currentUserId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            if (!isAdmin)
+            {
+                var prop = await _propertyRepository.GetByIdAsync(existing.PropertyId);
+                if (prop == null || !string.Equals(prop.LandlordId, currentUserId, StringComparison.Ordinal))
+                    throw new ForbiddenException("Ban khong co quyen xoa hop dong nay.");
             }
 
             var blockers = await GetContractDeleteBlockersAsync(existing);
@@ -149,7 +204,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             var blockers = new List<string>();
 
-            if (string.Equals(contract.Status, "Active", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(contract.Status, ContractStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase))
                 blockers.Add("hop dong dang hoat dong");
 
             if (await _context.Invoices.AnyAsync(x => x.ContractId == contract.Id))
@@ -196,15 +251,54 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             {
                 return false;
             }
+            var s = status.Trim();
+            // Support both enum names and legacy strings for backward compat
+            return s.Equals(ContractStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                   s.Equals(ContractStatus.NearExpiry.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                   s.Equals("Signed", StringComparison.OrdinalIgnoreCase) ||
+                   s.Equals("Approved", StringComparison.OrdinalIgnoreCase);
+        }
 
-            return status.Trim().ToLowerInvariant() switch
+        private static void ValidateStatusTransition(string current, string next)
+        {
+            if (string.IsNullOrWhiteSpace(next) || string.Equals(current, next, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // Basic allowed transitions (reasonable flow)
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "active" => true,
-                "nearexpiry" => true,
-                "signed" => true,
-                "approved" => true,
-                _ => false,
+                ContractStatus.Draft.ToString(),
+                ContractStatus.Active.ToString(),
+                ContractStatus.NearExpiry.ToString(),
+                ContractStatus.Expired.ToString(),
+                ContractStatus.Terminated.ToString(),
+                ContractStatus.Cancelled.ToString(),
+                "Signed", "Approved" // legacy support
             };
+
+            if (!allowed.Contains(next))
+                throw new BadRequestException($"Trang thai hop dong '{next}' khong hop le.");
+
+            // Simple transition rules
+            if (string.Equals(current, ContractStatus.Expired.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(current, ContractStatus.Terminated.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(current, ContractStatus.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BadRequestException("Khong the thay doi trang thai tu hop dong da ket thuc.");
+            }
+        }
+
+        private string? GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        private bool IsCurrentUserAdmin()
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            if (user == null) return false;
+            return user.IsInRole("Admin") ||
+                   string.Equals(user.FindFirstValue(ClaimTypes.Role), "Admin", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

@@ -12,10 +12,6 @@ namespace Backend_Boarding_house_management_system.Entities
         [StringLength(100)]
         public string FullName { get; set; } = null!;
 
-        [Required]
-        [StringLength(20)]
-        public string CCCD { get; set; } = null!;
-
         [StringLength(255)]
         public string? Address { get; set; }
 

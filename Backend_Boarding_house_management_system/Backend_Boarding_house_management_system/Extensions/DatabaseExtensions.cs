@@ -36,8 +36,13 @@ namespace Backend_Boarding_house_management_system.Extensions
                 {
                     logger.LogInformation("I [INFO] Attempting to connect to the database and check migrations...");
 
-                    await EnsureCriticalSchemaAsync(dbContext);
-                    await EnsureMigrationHistoryConsistencyAsync(dbContext);
+                    // Chỉ chạy các Ensure schema hack (ALTER TABLE, fake migration history) ở Development
+                    // để giảm rủi ro DDL không mong muốn và lock bảng khi chạy production.
+                    if (app.Environment.IsDevelopment())
+                    {
+                        await EnsureCriticalSchemaAsync(dbContext);
+                        await EnsureMigrationHistoryConsistencyAsync(dbContext);
+                    }
 
                     // MigrateAsync sẽ TỰ ĐỘNG kết nối. Nếu sai Pass/Port, nó sẽ ném ra lỗi chi tiết rớt xuống catch.
                     // Nếu kết nối thành công, nó sẽ tự động tạo bảng luôn. Gộp 2 việc làm 1!
@@ -59,17 +64,20 @@ namespace Backend_Boarding_house_management_system.Extensions
                         await Backend_Boarding_house_management_system.Data.DatabaseSeeder.SeedDataAsync(dbContext);
                     }
 
-                    logger.LogInformation("O [SUCCESS] Successfully connected to PostgreSQL Database (Supabase) and migrations applied.");
+                    logger.LogInformation("O [SUCCESS] Successfully connected to PostgreSQL Database and migrations applied.");
                 }
                 catch (Exception ex)
                 {
                     // In ra chính xác lỗi kết nối hoặc lỗi migration
-                    logger.LogError("X [ERROR] Database connection or migration FAILED! Exact error: {Message}", ex.Message);
+                    logger.LogCritical(ex, "X [FATAL] Database connection or migration FAILED! The application cannot start. Exact error: {Message}", ex.Message);
 
                     if (ex.InnerException != null)
                     {
-                        logger.LogError("--> Inner Error Details: {InnerMessage}", ex.InnerException.Message);
+                        logger.LogCritical("--> Inner Error Details: {InnerMessage}", ex.InnerException.Message);
                     }
+
+                    // Fail fast: không cho server chạy khi DB không sẵn sàng (tránh trạng thái "chạy nhưng hỏng")
+                    throw new InvalidOperationException("Database connection or migration failed. See logs for details.", ex);
                 }
             }
 

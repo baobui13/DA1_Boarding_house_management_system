@@ -82,20 +82,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             entity.PaymentDate = DateTime.UtcNow;
             entity.CreatedAt = DateTime.UtcNow;
 
-            await _paymentRepository.AddAsync(entity);
+            // Transaction: payment + invoice status update must be atomic
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _paymentRepository.AddAsync(entity);
 
-            var totalPaid = await _context.Payments
-                .Where(p => p.InvoiceId == request.InvoiceId)
-                .SumAsync(p => p.Amount);
+                var totalPaid = await _context.Payments
+                    .Where(p => p.InvoiceId == request.InvoiceId)
+                    .SumAsync(p => p.Amount);
 
-            invoice.Status = totalPaid >= invoice.Total
-                ? "Paid"
-                : totalPaid > 0
-                    ? "Partial"
-                    : "Pending";
-            invoice.UpdatedAt = DateTime.UtcNow;
+                invoice.Status = totalPaid >= invoice.Total
+                    ? "Paid"
+                    : totalPaid > 0
+                        ? "Partial"
+                        : "Pending";
+                invoice.UpdatedAt = DateTime.UtcNow;
 
-            await _invoiceRepository.UpdateAsync(invoice);
+                await _invoiceRepository.UpdateAsync(invoice);
+
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
 
             var savedEntity = await _paymentRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<PaymentResponse>(savedEntity);
@@ -103,12 +115,43 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         public async Task DeleteAsync(DeletePaymentRequest request)
         {
-            var exists = await _paymentRepository.ExistsAsync(request.Id);
-            if (!exists)
+            var payment = await _paymentRepository.GetByIdAsync(request.Id);
+            if (payment == null)
             {
                 throw new NotFoundException($"Khong tim thay thanh toan voi Id '{request.Id}'.");
             }
-            await _paymentRepository.DeleteAsync(request.Id);
+
+            var invoiceId = payment.InvoiceId;
+
+            await using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _paymentRepository.DeleteAsync(request.Id);
+
+                var invoice = await _invoiceRepository.GetByIdAsync(invoiceId);
+                if (invoice != null)
+                {
+                    var totalPaid = await _context.Payments
+                        .Where(p => p.InvoiceId == invoiceId)
+                        .SumAsync(p => p.Amount);
+
+                    invoice.Status = totalPaid >= invoice.Total
+                        ? "Paid"
+                        : totalPaid > 0
+                            ? "Partial"
+                            : "Pending";
+                    invoice.UpdatedAt = DateTime.UtcNow;
+
+                    await _invoiceRepository.UpdateAsync(invoice);
+                }
+
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
         }
     }
 }
