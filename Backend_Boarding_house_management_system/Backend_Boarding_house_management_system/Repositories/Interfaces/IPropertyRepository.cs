@@ -13,5 +13,11 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page);
+
+        /// <summary>
+        /// Lấy danh sách property match filter (kèm RoomAmenities) giới hạn số lượng để scoring recommendation.
+        /// Không áp dụng page/sort của client (sẽ re-rank ở service).
+        /// </summary>
+        Task<IEnumerable<Property>> GetFilteredCandidatesForRecAsync(EntityFilter<Property> filter, int maxCandidates = 200);
     }
 }

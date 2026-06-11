@@ -48,6 +48,16 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(properties);
         }
 
+        [HttpGet("GetRecommendedProperties")]
+        public async Task<ActionResult<PropertyListResponse>> GetRecommendedProperties(
+            [FromQuery] EntityFilter<Property> filter,
+            [FromQuery] EntitySort<Property> sort,
+            [FromQuery] EntityPage page)
+        {
+            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page);
+            return Ok(properties);
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpGet("GetModerationProperties")]
         public async Task<ActionResult<PropertyListResponse>> GetModerationProperties([FromQuery] GetModerationPropertiesRequest request)

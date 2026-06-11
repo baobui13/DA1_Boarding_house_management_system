@@ -16,5 +16,15 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public override async Task<SearchHistory?> GetByIdAsync(string id)
             => await GetQueryWithIncludes()
                 .FirstOrDefaultAsync(sh => sh.Id == id);
+
+        public async Task<List<SearchHistory>> GetRecentForUserAsync(string userId, int limit = 10)
+        {
+            return await _dbSet
+                .AsNoTracking()
+                .Where(sh => sh.UserId == userId)
+                .OrderByDescending(sh => sh.Timestamp)
+                .Take(limit)
+                .ToListAsync();
+        }
     }
 }
