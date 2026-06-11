@@ -115,8 +115,22 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                         landlord.ReputationScore += 1;
                         await _userRepository.UpdateAsync(landlord);
                     }
+
+                    // Auto notify landlord
+                    var notif = new Notification
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = property.LandlordId,
+                        Type = "Rating",
+                        Content = "Ban co danh gia moi.",
+                        IsRead = false,
+                        Timestamp = DateTime.UtcNow,
+                        RelatedId = rating.Id
+                    };
+                    _context.Notifications.Add(notif);
                 }
 
+                await _context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch
