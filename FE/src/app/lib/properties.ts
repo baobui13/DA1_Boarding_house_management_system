@@ -240,6 +240,58 @@ export async function getRecommendedPropertyListings(
   };
 }
 
+export async function getMostViewedProperties(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetMostViewedProperties", {
+    ...(token ? { authToken: token } : {}),
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getMostViewedPropertyListings(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getMostViewedProperties(token, query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getTrendingProperties(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetTrendingProperties", {
+    ...(token ? { authToken: token } : {}),
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getTrendingPropertyListings(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getTrendingProperties(token, query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getPopularPriceRanges(token?: string) {
+  return apiRequest<any>("Property/GetPopularPriceRanges", {
+    ...(token ? { authToken: token } : {}),
+  });
+}
+
 export async function createProperty(
   token: string,
   input: {

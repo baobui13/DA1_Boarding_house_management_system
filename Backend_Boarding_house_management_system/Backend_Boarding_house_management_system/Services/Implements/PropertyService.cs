@@ -101,6 +101,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<Property> sort,
             EntityPage page)
         {
+            // Giữ nguyên hành vi cũ (có thể personalize nếu có user)
             return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
         }
 
@@ -111,6 +112,214 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize
             return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
+        }
+
+        public async Task<PropertyListResponse> GetMostViewedPropertiesAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page)
+        {
+            // Lấy view counts toàn cục (giới hạn candidates)
+            var viewCounts = await _propertyRepository.GetPropertyViewCountsAsync(filter, maxCandidates: 300);
+
+            if (viewCounts.Count == 0)
+            {
+                // Fallback: trả về list thường nếu chưa có view history
+                return await GetPropertiesByFilterAsync(filter, sort, page);
+            }
+
+            // Lấy candidates (giới hạn) rồi sort theo view count desc + secondary CreatedAt
+            var candidates = await _propertyRepository.GetFilteredCandidatesForRecAsync(filter, maxCandidates: 300);
+
+            var scored = candidates
+                .Select(p => new
+                {
+                    Property = p,
+                    ViewCount = viewCounts.TryGetValue(p.Id, out var c) ? c : 0
+                })
+                .OrderByDescending(x => x.ViewCount)
+                .ThenByDescending(x => x.Property.CreatedAt)
+                .ToList();
+
+            var pageNumber = (int)(page.PageNumber ?? 1);
+            var pageSize = (int)(page.PageSize ?? 10);
+            var skip = Math.Max(0, (pageNumber - 1) * pageSize);
+
+            var finalItems = scored.Skip(skip).Take(pageSize).Select(x => x.Property).ToList();
+
+            // TotalCount giữ nguyên theo filter (như personalized)
+            var countQuery = _context.Properties.AsNoTracking().Where(filter);
+            var totalCount = await countQuery.CountAsync();
+
+            return new PropertyListResponse
+            {
+                Items = _mapper.Map<List<PropertyResponse>>(finalItems),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<PropertyListResponse> GetTrendingPropertiesAsync(
+            EntityFilter<Property> filter,
+            EntitySort<Property> sort,
+            EntityPage page)
+        {
+            // 1. Lấy global recent searches (không per-user) để trích xuất trending terms.
+            // (Sử dụng direct context vì repo hiện tại tập trung vào per-user recent.)
+            var globalSearches = await _context.SearchHistories
+                .AsNoTracking()
+                .OrderByDescending(sh => sh.Timestamp)
+                .Take(500)
+                .ToListAsync();
+
+            // Parse để thu thập popular signals (district, price band, amenity)
+            var popularDistricts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var popularAmenityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            decimal? popPriceMin = null, popPriceMax = null;
+
+            foreach (var sh in globalSearches)
+            {
+                if (string.IsNullOrWhiteSpace(sh.Filters)) continue;
+                try
+                {
+                    using var doc = JsonDocument.Parse(sh.Filters);
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("district", out var d) && d.ValueKind == JsonValueKind.String)
+                    {
+                        var val = d.GetString();
+                        if (!string.IsNullOrEmpty(val)) popularDistricts.Add(val);
+                    }
+                    // areaId cũng được chấp nhận
+                    if (root.TryGetProperty("areaId", out var a) && a.ValueKind == JsonValueKind.String)
+                    {
+                        var val = a.GetString();
+                        if (!string.IsNullOrEmpty(val)) popularDistricts.Add(val); // treat as area proxy
+                    }
+
+                    if (root.TryGetProperty("priceMin", out var pmin) && pmin.TryGetDecimal(out var pminVal))
+                        popPriceMin = popPriceMin.HasValue ? Math.Min(popPriceMin.Value, pminVal) : pminVal;
+                    if (root.TryGetProperty("priceMax", out var pmax) && pmax.TryGetDecimal(out var pmaxVal))
+                        popPriceMax = popPriceMax.HasValue ? Math.Max(popPriceMax.Value, pmaxVal) : pmaxVal;
+
+                    if (root.TryGetProperty("amenities", out var amArr) && amArr.ValueKind == JsonValueKind.Array ||
+                        root.TryGetProperty("amenityIds", out amArr) && amArr.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var el in amArr.EnumerateArray())
+                        {
+                            if (el.ValueKind == JsonValueKind.String)
+                            {
+                                var aid = el.GetString();
+                                if (!string.IsNullOrEmpty(aid)) popularAmenityIds.Add(aid);
+                            }
+                        }
+                    }
+                }
+                catch { /* ignore bad json */ }
+            }
+
+            // 2. Lấy view counts (global popularity boost)
+            var viewCounts = await _propertyRepository.GetPropertyViewCountsAsync(filter, maxCandidates: 300);
+
+            // 3. Lấy candidates và score theo trending signals (global)
+            var candidates = await _propertyRepository.GetFilteredCandidatesForRecAsync(filter, maxCandidates: 300);
+
+            var scored = candidates.Select(p =>
+            {
+                double score = 5;
+
+                // Trending district / area match (từ searches)
+                if (!string.IsNullOrEmpty(p.AreaId) && popularDistricts.Contains(p.AreaId))
+                    score += 35;
+
+                // Price fit theo popular search ranges
+                if ((popPriceMin.HasValue && popPriceMax.HasValue) || (popPriceMin.HasValue || popPriceMax.HasValue))
+                {
+                    decimal target = (popPriceMin ?? 0) + ((popPriceMax ?? (popPriceMin ?? 0) + 5_000_000) - (popPriceMin ?? 0)) / 2;
+                    if (popPriceMin.HasValue && popPriceMax.HasValue)
+                        target = (popPriceMin.Value + popPriceMax.Value) / 2;
+                    decimal distance = Math.Abs(p.Price - target);
+                    decimal tolerance = Math.Max(500_000, target * 0.3m);
+                    double fit = Math.Max(0, 1 - (double)(distance / tolerance));
+                    score += fit * 25;
+                }
+
+                // Amenity trending
+                int amenityHits = 0;
+                foreach (var ra in p.RoomAmenities)
+                {
+                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                        popularAmenityIds.Contains(ra.AmenityId))
+                        amenityHits++;
+                }
+                if (amenityHits > 0) score += Math.Min(amenityHits * 6, 20);
+
+                // View count boost (most viewed cũng là tín hiệu trending)
+                if (viewCounts.TryGetValue(p.Id, out var vc))
+                    score += Math.Min(vc * 1.5, 30);
+
+                return new { Property = p, Score = score };
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Property.CreatedAt)
+            .ToList();
+
+            var pageNumber = (int)(page.PageNumber ?? 1);
+            var pageSize = (int)(page.PageSize ?? 10);
+            var skip = Math.Max(0, (pageNumber - 1) * pageSize);
+
+            var finalItems = scored.Skip(skip).Take(pageSize).Select(x => x.Property).ToList();
+
+            var countQuery = _context.Properties.AsNoTracking().Where(filter);
+            var totalCount = await countQuery.CountAsync();
+
+            return new PropertyListResponse
+            {
+                Items = _mapper.Map<List<PropertyResponse>>(finalItems),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<PopularPriceRangesResponse> GetPopularPriceRangesAsync()
+        {
+            // Định nghĩa các bucket phổ biến (có thể sau này đưa ra config)
+            var buckets = new List<(string Label, decimal Min, decimal Max)>
+            {
+                ("Dưới 3 triệu", 0, 3_000_000),
+                ("3 - 5 triệu", 3_000_000, 5_000_000),
+                ("5 - 7 triệu", 5_000_000, 7_000_000),
+                ("7 - 10 triệu", 7_000_000, 10_000_000),
+                ("Trên 10 triệu", 10_000_000, decimal.MaxValue)
+            };
+
+            // Filter chỉ các phòng đang sẵn sàng
+            var filter = new EntityFilter<Property>(); // Plainquire filter rỗng, ta apply status trong repo
+            // Để đơn giản, truyền filter trống và để repo xử lý status
+            var bucketCounts = await _propertyRepository.GetPriceBucketCountsAsync(filter, buckets);
+
+            var ranges = new List<PopularPriceRange>();
+            int total = 0;
+            foreach (var (label, min, max) in buckets)
+            {
+                var count = bucketCounts.TryGetValue(label, out var c) ? c : 0;
+                ranges.Add(new PopularPriceRange
+                {
+                    Label = label,
+                    Min = min,
+                    Max = max == decimal.MaxValue ? 0 : max, // 0 nghĩa là "trở lên"
+                    Count = count
+                });
+                total += count;
+            }
+
+            return new PopularPriceRangesResponse
+            {
+                Ranges = ranges,
+                TotalPropertiesConsidered = total
+            };
         }
 
         /// <summary>

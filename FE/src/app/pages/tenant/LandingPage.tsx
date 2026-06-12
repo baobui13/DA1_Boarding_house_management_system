@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Search, MapPin, Star, ChevronRight, ArrowRight } from "lucide-react";
-import { getPropertyListings } from "../../lib/properties";
+import { 
+  getPropertyListings, 
+  getMostViewedPropertyListings, 
+  getTrendingPropertyListings,
+  getPopularPriceRanges 
+} from "../../lib/properties";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 
@@ -11,6 +16,83 @@ function isVisibleListing(item: PropertyListing) {
   return !["rejected", "unavailable", "rented"].includes(item.status.toLowerCase());
 }
 
+const PropertyCardSkeleton = () => (
+  <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+    <div className="relative overflow-hidden aspect-[4/3] bg-gray-200" />
+    <div className="p-4 space-y-2">
+      <div className="h-4 bg-gray-200 rounded w-4/5" />
+      <div className="h-3 bg-gray-200 rounded w-3/5" />
+      <div className="flex items-center justify-between pt-1">
+        <div className="h-4 bg-gray-200 rounded w-1/3" />
+        <div className="h-3 bg-gray-200 rounded w-1/4" />
+      </div>
+    </div>
+  </div>
+);
+
+const PriceChipSkeleton = () => (
+  <div className="px-3 py-1.5 text-xs rounded-full border border-gray-200 bg-gray-100 animate-pulse w-24 h-7" />
+);
+
+const RoomCard = ({ room, onClick }: { room: PropertyListing; onClick?: () => void }) => (
+  <div
+    onClick={onClick}
+    className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-gray-100 transition-all cursor-pointer group"
+  >
+    <div className="relative overflow-hidden aspect-[4/3]">
+      <img
+        src={room.images[0] || "https://placehold.co/800x600?text=No+Image"}
+        alt={room.propertyName}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+      <div className="absolute top-3 left-3">
+        <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg" style={{ fontSize: "11px", fontWeight: 600 }}>
+          {room.status}
+        </span>
+      </div>
+      <div className="absolute top-3 right-3">
+        <span className="bg-white/90 backdrop-blur-sm text-gray-700 px-2 py-0.5 rounded-lg" style={{ fontSize: "11px" }}>
+          {room.size}m²
+        </span>
+      </div>
+    </div>
+    <div className="p-4">
+      <h3 className="text-gray-900 mb-1 line-clamp-2" style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>
+        {room.propertyName}
+      </h3>
+      <div className="flex items-center gap-1 text-gray-400 mb-2">
+        <MapPin className="w-3.5 h-3.5 shrink-0" />
+        <span className="truncate" style={{ fontSize: "12px" }}>
+          {room.address || "Chưa có địa chỉ"}
+        </span>
+      </div>
+      <div className="flex items-center gap-1 mb-3">
+        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+        <span className="text-gray-600" style={{ fontSize: "12px" }}>
+          Dữ liệu thật
+        </span>
+      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="text-orange-600" style={{ fontSize: "16px", fontWeight: 700 }}>
+            {formatCurrency(room.price)}
+          </span>
+          <span className="text-gray-400" style={{ fontSize: "12px" }}>
+            /tháng
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {room.amenities.slice(0, 2).map((amenity) => (
+            <span key={amenity} className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg" style={{ fontSize: "10px" }}>
+              {amenity}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +100,15 @@ export default function LandingPage() {
   const [listings, setListings] = useState<PropertyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [mostViewed, setMostViewed] = useState<PropertyListing[]>([]);
+  const [loadingMostViewed, setLoadingMostViewed] = useState(false);
+
+  const [trending, setTrending] = useState<PropertyListing[]>([]);
+  const [loadingTrending, setLoadingTrending] = useState(false);
+
+  const [popularPrices, setPopularPrices] = useState<any[]>([]);
+  const [loadingPrices, setLoadingPrices] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +141,76 @@ export default function LandingPage() {
     };
   }, []);
 
+  // Most viewed for public landing
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingMostViewed(true);
+
+    (async () => {
+      try {
+        const res = await getMostViewedPropertyListings(undefined, { pageSize: 4 });
+        if (!cancelled) {
+          const visible = res.items.filter(
+            (p) => !["rejected", "unavailable", "rented"].includes(p.status.toLowerCase()),
+          );
+          setMostViewed(visible.slice(0, 4));
+        }
+      } catch {
+        if (!cancelled) setMostViewed([]);
+      } finally {
+        if (!cancelled) setLoadingMostViewed(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Trending for public
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingTrending(true);
+
+    (async () => {
+      try {
+        const res = await getTrendingPropertyListings(undefined, { pageSize: 4 });
+        if (!cancelled) {
+          const visible = res.items.filter(
+            (p) => !["rejected", "unavailable", "rented"].includes(p.status.toLowerCase()),
+          );
+          setTrending(visible.slice(0, 4));
+        }
+      } catch {
+        if (!cancelled) setTrending([]);
+      } finally {
+        if (!cancelled) setLoadingTrending(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // Popular price ranges
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingPrices(true);
+
+    (async () => {
+      try {
+        const res = await getPopularPriceRanges();
+        if (!cancelled) {
+          const ranges = res.ranges || res.Ranges || [];
+          setPopularPrices(ranges);
+        }
+      } catch {
+        if (!cancelled) setPopularPrices([]);
+      } finally {
+        if (!cancelled) setLoadingPrices(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
   const suggestedRooms = useMemo(() => listings.slice(0, 5), [listings]);
 
   const handleSearch = () => {
@@ -75,7 +236,7 @@ export default function LandingPage() {
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 text-center">
           <div className="inline-block bg-white/20 backdrop-blur-sm text-white px-4 py-1.5 rounded-full mb-4 border border-white/30">
-            <span style={{ fontSize: "13px" }}>Nguồn dữ liệu đang lấy trực tiếp từ backend</span>
+            <span style={{ fontSize: "13px" }}>Nơi tụ hợp những chuỗi phòng trọ tốt nhất</span>
           </div>
           <h1 className="text-white mb-4" style={{ fontSize: "42px", fontWeight: 700, lineHeight: 1.2 }}>
             Tìm Phòng Trọ
@@ -83,7 +244,7 @@ export default function LandingPage() {
             <span className="text-orange-300">Nhanh - Dễ - Uy Tín</span>
           </h1>
           <p className="text-white/80 mb-8 max-w-lg mx-auto" style={{ fontSize: "16px" }}>
-            Khám phá các tin đang hiển thị từ API quản lý phòng trọ.
+            Khám phá phòng trọ tốt nhất hiện nay.
           </p>
 
           <div className="bg-white rounded-2xl shadow-2xl p-3 flex flex-col sm:flex-row gap-3">
@@ -143,7 +304,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
-              Tin Đang Hiển Thị
+              Đề xuất cho bạn
             </h2>
             <p className="text-gray-500 mt-0.5" style={{ fontSize: "14px" }}>
               {loading ? "Đang tải từ API..." : `${listings.length} tin lấy từ backend`}
@@ -161,74 +322,138 @@ export default function LandingPage() {
         {error ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-600">{error}</div>
         ) : loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="bg-gray-100 rounded-2xl animate-pulse aspect-[4/5]" />
-              ))}
-            </div>
-          ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <PropertyCardSkeleton key={index} />
+            ))}
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {suggestedRooms.map((room) => (
-              <div
+              <RoomCard
                 key={room.id}
+                room={room}
                 onClick={() => navigate(`/rooms/${room.id}`)}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-gray-100 transition-all cursor-pointer group"
-              >
-                <div className="relative overflow-hidden aspect-[4/3]">
-                  <img
-                    src={room.images[0] || "https://placehold.co/800x600?text=No+Image"}
-                    alt={room.propertyName}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-green-500 text-white px-2 py-0.5 rounded-lg" style={{ fontSize: "11px", fontWeight: 600 }}>
-                      {room.status}
-                    </span>
-                  </div>
-                  <div className="absolute top-3 right-3">
-                    <span className="bg-white/90 backdrop-blur-sm text-gray-700 px-2 py-0.5 rounded-lg" style={{ fontSize: "11px" }}>
-                      {room.size}m²
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="text-gray-900 mb-1 line-clamp-2" style={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.4 }}>
-                    {room.propertyName}
-                  </h3>
-                  <div className="flex items-center gap-1 text-gray-400 mb-2">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate" style={{ fontSize: "12px" }}>
-                      {room.address || "Chưa có địa chỉ"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 mb-3">
-                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-gray-600" style={{ fontSize: "12px" }}>
-                      Dữ liệu thật
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-orange-600" style={{ fontSize: "16px", fontWeight: 700 }}>
-                        {formatCurrency(room.price)}
-                      </span>
-                      <span className="text-gray-400" style={{ fontSize: "12px" }}>
-                        /tháng
-                      </span>
-                    </div>
-                    <div className="flex gap-1">
-                      {room.amenities.slice(0, 2).map((amenity) => (
-                        <span key={amenity} className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg" style={{ fontSize: "10px" }}>
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              />
             ))}
           </div>
         )}
+
+        {/* Public recommendations for unauthenticated users */}
+        <div className="mt-12 space-y-8">
+
+          {/* Popular price ranges chips */}
+          {(popularPrices.length > 0 || loadingPrices) && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gray-700" style={{ fontSize: "14px", fontWeight: 700 }}>
+                  Khoảng giá phổ biến
+                </p>
+              </div>
+              {loadingPrices ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 5 }).map((_, i) => <PriceChipSkeleton key={i} />)}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {popularPrices.map((range: any, idx: number) => {
+                    const min = range.min ?? range.Min ?? 0;
+                    const max = range.max ?? range.Max ?? 0;
+                    const label = range.label ?? range.Label ?? `${Math.round(min / 1e6)}-${Math.round(max / 1e6)}tr`;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          const params = new URLSearchParams();
+                          params.set("priceMin", String(min));
+                          if (max) params.set("priceMax", String(max));
+                          // Support district param if needed in future
+                          navigate(`/search?${params.toString()}`);
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-full border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition"
+                      >
+                        {label} {range.count || range.Count ? `(${range.count || range.Count})` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Most viewed */}
+          {(mostViewed.length > 0 || loadingMostViewed) && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-blue-600" style={{ fontSize: "16px", fontWeight: 800 }}>
+                    PHÒNG ĐƯỢC XEM NHIỀU NHẤT
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/search?type=most_viewed")}
+                  className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 transition-colors text-sm"
+                >
+                  Xem thêm <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              {loadingMostViewed ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <PropertyCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {mostViewed.map((room) => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onClick={() => navigate(`/rooms/${room.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Trending */}
+          {(trending.length > 0 || loadingTrending) && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-emerald-600" style={{ fontSize: "16px", fontWeight: 800 }}>
+                    ĐANG XU HƯỚNG TÌM KIẾM
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/search?type=trending")}
+                  className="flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 transition-colors text-sm"
+                >
+                  Xem thêm <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              {loadingTrending ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <PropertyCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {trending.map((room) => (
+                    <RoomCard
+                      key={room.id}
+                      room={room}
+                      onClick={() => navigate(`/rooms/${room.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
 
         <div className="mt-12 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>

@@ -50,5 +50,53 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
 
             return await query.Take(maxCandidates).ToListAsync();
         }
+
+        public async Task<Dictionary<string, int>> GetPropertyViewCountsAsync(EntityFilter<Property> filter, int maxCandidates = 300)
+        {
+            // Lấy candidate properties trước (giới hạn) để join/group an toàn
+            var candidateQuery = _dbSet.AsNoTracking().Where(filter);
+            var candidateIds = await candidateQuery
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(maxCandidates)
+                .Select(p => p.Id)
+                .ToListAsync();
+
+            if (candidateIds.Count == 0)
+                return new Dictionary<string, int>();
+
+            var counts = await _context.ViewHistories
+                .AsNoTracking()
+                .Where(vh => candidateIds.Contains(vh.PropertyId))
+                .GroupBy(vh => vh.PropertyId)
+                .Select(g => new { PropertyId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            return counts.ToDictionary(x => x.PropertyId, x => x.Count);
+        }
+
+        public async Task<Dictionary<string, int>> GetPriceBucketCountsAsync(
+            EntityFilter<Property> filter,
+            List<(string Label, decimal Min, decimal Max)> buckets)
+        {
+            var query = _dbSet.AsNoTracking().Where(filter);
+
+            // Chỉ xét các property đang active/approved để "phổ biến hiện nay"
+            // (có thể mở rộng filter từ caller)
+            var prices = await query
+                .Where(p => p.ModerationStatus == ModerationStatusEnum.Approved &&
+                            p.AvailabilityStatus == AvailabilityStatusEnum.Available)
+                .Select(p => p.Price)
+                .ToListAsync();
+
+            var result = new Dictionary<string, int>();
+            foreach (var (label, min, max) in buckets)
+            {
+                int count = prices.Count(p => p >= min && p < max);
+                result[label] = count;
+            }
+
+            // Thêm bucket "Khác" nếu cần
+            return result;
+        }
     }
 }

@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { SlidersHorizontal, MapPin, Search, X, ChevronDown, ArrowUpDown, Grid3X3 } from "lucide-react";
-import { getPropertyListings } from "../../lib/properties";
+import { 
+  getPropertyListings, 
+  getMostViewedPropertyListings, 
+  getTrendingPropertyListings,
+  getRecommendedPropertyListings 
+} from "../../lib/properties";
 import { createSearchHistory } from "../../lib/searchHistory";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
@@ -53,9 +58,15 @@ export default function SearchPage() {
   const [searchParams] = useSearchParams();
   const PAGE_SIZE = 12;
   const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [selectedDistrict, setSelectedDistrict] = useState("Tất cả");
-  const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(10000000);
+  const [selectedDistrict, setSelectedDistrict] = useState(searchParams.get("district") || "Tất cả");
+  const [priceMin, setPriceMin] = useState(() => {
+    const p = searchParams.get("priceMin");
+    return p ? Number(p) : 0;
+  });
+  const [priceMax, setPriceMax] = useState(() => {
+    const p = searchParams.get("priceMax");
+    return p ? Number(p) : 10000000;
+  });
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -64,21 +75,33 @@ export default function SearchPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [recType, setRecType] = useState<string | null>(null); // most_viewed | trending | recommended
 
   useEffect(() => {
     let cancelled = false;
+
+    const typeFromUrl = searchParams.get("type") || searchParams.get("rec");
+    setRecType(typeFromUrl);
 
     (async () => {
       setLoading(true);
       setError("");
 
       try {
-        const response = await getPropertyListings({
-          page: 1,
-          pageSize: 100,
-        });
+        let response;
+
+        if (typeFromUrl === "most_viewed") {
+          response = await getMostViewedPropertyListings(token, { page: 1, pageSize: 100 });
+        } else if (typeFromUrl === "trending") {
+          response = await getTrendingPropertyListings(token, { page: 1, pageSize: 100 });
+        } else if (typeFromUrl === "recommended" && token && currentUser) {
+          response = await getRecommendedPropertyListings(token, { page: 1, pageSize: 100 });
+        } else {
+          response = await getPropertyListings({ page: 1, pageSize: 100 });
+        }
+
         if (!cancelled) {
-          setListings(response.items.filter(isVisibleListing));
+          setListings((response.items || []).filter(isVisibleListing));
         }
       } catch (err) {
         if (!cancelled) {
@@ -94,7 +117,7 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchParams, token, currentUser]);
 
   useEffect(() => {
     setPageNumber(1);
@@ -168,6 +191,17 @@ export default function SearchPage() {
   );
   const pageStart = totalCount === 0 ? 0 : (pageNumber - 1) * PAGE_SIZE + 1;
   const pageEnd = totalCount === 0 ? 0 : Math.min(pageNumber * PAGE_SIZE, totalCount);
+
+  // Banner for recommended type
+  const recBanner = recType === "most_viewed" 
+    ? "Hiển thị phòng được xem nhiều nhất theo đề cử" 
+    : recType === "trending" 
+    ? "Hiển thị phòng đang xu hướng tìm kiếm" 
+    : recType === "recommended" 
+    ? "Hiển thị phòng đề cử dành riêng cho bạn" 
+    : null;
+
+  const currentType = searchParams.get('type') || searchParams.get('rec');
 
   const changePage = (nextPage: number) => {
     if (nextPage === pageNumber) {
@@ -245,6 +279,42 @@ export default function SearchPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Recommendation type filters - "xu hướng tìm kiếm" and "xem nhiều nhất" as selectable filters on the search UI */}
+      <div className="px-4 py-2 border-b border-gray-100 bg-white flex items-center gap-2 text-sm">
+        <span className="text-gray-500 mr-1">Đề cử:</span>
+        <button
+          onClick={() => {
+            const p = new URLSearchParams(searchParams);
+            p.delete('type');
+            p.delete('rec');
+            navigate(`/search?${p.toString()}`);
+          }}
+          className={`px-3 py-1 rounded-full border text-xs transition ${!currentType ? 'bg-orange-500 text-white border-orange-500' : 'border-gray-200 hover:bg-gray-50'}`}
+        >
+          Tất cả
+        </button>
+        <button
+          onClick={() => {
+            const p = new URLSearchParams(searchParams);
+            p.set('type', 'most_viewed');
+            navigate(`/search?${p.toString()}`);
+          }}
+          className={`px-3 py-1 rounded-full border text-xs transition ${currentType === 'most_viewed' ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 hover:bg-gray-50'}`}
+        >
+          Xem nhiều nhất
+        </button>
+        <button
+          onClick={() => {
+            const p = new URLSearchParams(searchParams);
+            p.set('type', 'trending');
+            navigate(`/search?${p.toString()}`);
+          }}
+          className={`px-3 py-1 rounded-full border text-xs transition ${currentType === 'trending' ? 'bg-emerald-500 text-white border-emerald-500' : 'border-gray-200 hover:bg-gray-50'}`}
+        >
+          Xu hướng tìm kiếm
+        </button>
       </div>
 
       {showFilters && (
@@ -344,6 +414,11 @@ export default function SearchPage() {
               </div>
             ) : (
               <>
+                {recBanner && (
+                  <div className="mb-4 px-4 py-2 rounded-xl bg-orange-50 text-orange-700 text-sm font-medium">
+                    {recBanner}
+                  </div>
+                )}
                 {pagedRooms.map((room) => (
                   <div
                     key={room.id}

@@ -54,8 +54,39 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page)
         {
+            // Personalized recommendations (dựa trên lịch sử cá nhân của user hiện tại)
             var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page);
             return Ok(properties);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetMostViewedProperties")]
+        public async Task<ActionResult<PropertyListResponse>> GetMostViewedProperties(
+            [FromQuery] EntityFilter<Property> filter,
+            [FromQuery] EntitySort<Property> sort,
+            [FromQuery] EntityPage page)
+        {
+            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page);
+            return Ok(properties);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetTrendingProperties")]
+        public async Task<ActionResult<PropertyListResponse>> GetTrendingProperties(
+            [FromQuery] EntityFilter<Property> filter,
+            [FromQuery] EntitySort<Property> sort,
+            [FromQuery] EntityPage page)
+        {
+            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page);
+            return Ok(properties);
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetPopularPriceRanges")]
+        public async Task<ActionResult<PopularPriceRangesResponse>> GetPopularPriceRanges()
+        {
+            var result = await _propertyService.GetPopularPriceRangesAsync();
+            return Ok(result);
         }
 
         [Authorize(Roles = "Admin")]
