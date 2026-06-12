@@ -101,10 +101,11 @@ export async function getPropertyById(id: string) {
 }
 
 export async function getPropertyImages(propertyId: string) {
-  const response = await apiRequest<PagedResponse<PropertyImageResponse>>("PropertyImage/GetPropertyImagesByFilter", {
-    query: { propertyId, pageSize: 100 },
+  // Use the dedicated endpoint that explicitly filters by property (more reliable than the general filter endpoint)
+  const images = await apiRequest<PropertyImageResponse[]>("PropertyImage/GetPropertyImagesByPropertyId", {
+    query: { propertyId },
   });
-  return response.items;
+  return images || [];
 }
 
 export async function createPropertyImage(
@@ -138,6 +139,24 @@ export async function updatePropertyImage(
     method: "PUT",
     authToken: token,
     body: input,
+  });
+}
+
+export async function replacePropertyImage(
+  token: string,
+  input: {
+    id: string;
+    file: File;
+  },
+) {
+  const form = new FormData();
+  form.append("id", input.id);
+  form.append("file", input.file);
+
+  return apiRequest<PropertyImageResponse>("PropertyImage/ReplacePropertyImage", {
+    method: "PUT",
+    authToken: token,
+    body: form,
   });
 }
 
@@ -191,14 +210,28 @@ export async function getPropertyListing(id: string): Promise<PropertyListing> {
   const detail = await getPropertyDetail(id);
 
   // Support both camelCase (from JSON) and Pascal (defensive)
-  const rawImages: any[] = detail.propertyImages || detail.PropertyImages || [];
   const rawAmenities: any[] = detail.roomAmenities || detail.RoomAmenities || [];
-
-  const images = rawImages
-    .sort((a, b) => Number(b.isPrimary ?? b.IsPrimary) - Number(a.isPrimary ?? a.IsPrimary))
-    .map((item) => item.imageUrl ?? item.ImageUrl);
-
   const amenities = rawAmenities.map((item) => item.amenityName ?? item.AmenityName);
+
+  // Use embedded images from PropertyDetail when available (efficient).
+  // Fall back to dedicated PropertyImage/GetPropertyImagesByFilter if the embedded list is empty.
+  // This ensures images always appear in chi tiết and listing views.
+  let images: string[] = [];
+  const rawImages: any[] = detail.propertyImages || detail.PropertyImages || [];
+  if (rawImages.length > 0) {
+    images = rawImages
+      .sort((a, b) => Number(b.isPrimary ?? b.IsPrimary) - Number(a.isPrimary ?? a.IsPrimary))
+      .map((item) => item.imageUrl ?? item.ImageUrl);
+  } else {
+    try {
+      const imgResponses = await getPropertyImages(id);
+      images = imgResponses
+        .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+        .map((item) => item.imageUrl);
+    } catch {
+      // leave images as []
+    }
+  }
 
   return {
     ...attachUtilityMeta(detail as PropertyResponse),

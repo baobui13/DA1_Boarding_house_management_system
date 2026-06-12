@@ -28,6 +28,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         // For personalized recommendation from history (injected; already registered in DI)
         private readonly IViewHistoryRepository _viewHistoryRepository;
         private readonly ISearchHistoryRepository _searchHistoryRepository;
+        private readonly IPhotoService _photoService;
 
         public PropertyService(
             AppDbContext context,
@@ -37,7 +38,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             IMapper mapper,
             IHttpContextAccessor httpContextAccessor,
             IViewHistoryRepository viewHistoryRepository,
-            ISearchHistoryRepository searchHistoryRepository)
+            ISearchHistoryRepository searchHistoryRepository,
+            IPhotoService photoService)
         {
             _context = context;
             _propertyRepository = propertyRepository;
@@ -47,6 +49,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             _httpContextAccessor = httpContextAccessor;
             _viewHistoryRepository = viewHistoryRepository;
             _searchHistoryRepository = searchHistoryRepository;
+            _photoService = photoService;
         }
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
@@ -525,6 +528,37 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             {
                 throw new ConflictException(
                     $"Khong the xoa bat dong san voi Id '{request.Id}' vi van con du lieu lien quan: {string.Join(", ", blockers)}.");
+            }
+
+            // Best-effort cleanup of images on Cloudinary to prevent orphaned files.
+            // Must happen BEFORE DB delete (cascade will remove PropertyImage rows).
+            // Parallelized for speed when property has many images.
+            try
+            {
+                var images = await _context.PropertyImages
+                    .AsNoTracking()
+                    .Where(pi => pi.PropertyId == request.Id)
+                    .ToListAsync();
+
+                var deleteTasks = images
+                    .Where(img => !string.IsNullOrWhiteSpace(img.PublicId))
+                    .Select(async img =>
+                    {
+                        try
+                        {
+                            await _photoService.DeletePhotoAsync(img.PublicId);
+                        }
+                        catch
+                        {
+                            // Ignore per-image failures; we still want to allow property deletion.
+                        }
+                    });
+
+                await Task.WhenAll(deleteTasks);
+            }
+            catch
+            {
+                // Ignore overall cleanup errors to not block deletion.
             }
 
             try

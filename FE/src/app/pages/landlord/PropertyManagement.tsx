@@ -27,6 +27,7 @@ import {
   getPropertyImages,
   getPropertyAmenities,
   getPropertyListings,
+  replacePropertyImage,
   updatePropertyImage,
   updateProperty,
 } from "../../lib/properties";
@@ -95,6 +96,7 @@ export default function PropertyManagement() {
   const [roomImages, setRoomImages] = useState<PropertyImageResponse[]>([]);
   const [pendingRoomFiles, setPendingRoomFiles] = useState<File[]>([]);
   const [removedRoomImageIds, setRemovedRoomImageIds] = useState<string[]>([]);
+  const [replacedRoomImageFiles, setReplacedRoomImageFiles] = useState<Record<string, File>>({});
   const [primaryRoomImageId, setPrimaryRoomImageId] = useState("");
   const [expandedAreas, setExpandedAreas] = useState<Record<string, boolean>>({});
 
@@ -206,13 +208,16 @@ export default function PropertyManagement() {
     setRoomImages([]);
     setPendingRoomFiles([]);
     setRemovedRoomImageIds([]);
+    setReplacedRoomImageFiles({});
     setPrimaryRoomImageId("");
     setShowRoomModal(true);
   };
 
   const openRoomEdit = async (property: PropertyListing) => {
     setEditingProperty(property);
-    const images = await getPropertyImages(property.id);
+    const rawImages = await getPropertyImages(property.id);
+    // Defensive client-side filter to ensure only this property's images (in case filter endpoint leaks)
+    const images = rawImages.filter((img: any) => (img.propertyId || img.PropertyId) === property.id);
     setRoomForm({
       propertyName: property.propertyName,
       address: property.address || "",
@@ -228,6 +233,7 @@ export default function PropertyManagement() {
     setRoomImages(images);
     setPendingRoomFiles([]);
     setRemovedRoomImageIds([]);
+    setReplacedRoomImageFiles({});
     setPrimaryRoomImageId(images.find((item) => item.isPrimary)?.id || images[0]?.id || "");
     setShowRoomModal(true);
   };
@@ -245,6 +251,7 @@ export default function PropertyManagement() {
     setRoomImages([]);
     setPendingRoomFiles([]);
     setRemovedRoomImageIds([]);
+    setReplacedRoomImageFiles({});
     setPrimaryRoomImageId("");
   };
 
@@ -329,15 +336,30 @@ export default function PropertyManagement() {
         await syncRoomAmenities(token, propertyId, roomForm.amenities, amenityOptions);
         await Promise.all(removedRoomImageIds.map((imageId) => deletePropertyImage(token, imageId)));
 
-        let currentImages = await getPropertyImages(propertyId);
-        for (let index = 0; index < pendingRoomFiles.length; index += 1) {
-          const file = pendingRoomFiles[index];
-          const createdImage = await createPropertyImage(token, {
-            propertyId,
-            file,
-            isPrimary: currentImages.length === 0 && index === 0,
-          });
-          currentImages = [...currentImages, createdImage];
+        // Replace existing images (in-place file swap via API) - parallel
+        const replaceEntries = Object.entries(replacedRoomImageFiles);
+        if (replaceEntries.length > 0) {
+          await Promise.all(
+            replaceEntries.map(([imageId, file]) => replacePropertyImage(token, { id: imageId, file }))
+          );
+        }
+
+        // Add new images in parallel (major speed improvement)
+        // Compute remaining existing count client-side to avoid extra refetch
+        const remainingExistingCount = (roomImages || []).filter(
+          (img: any) => !removedRoomImageIds.includes(img.id)
+        ).length;
+
+        if (pendingRoomFiles.length > 0) {
+          await Promise.all(
+            pendingRoomFiles.map((file, index) =>
+              createPropertyImage(token, {
+                propertyId,
+                file,
+                isPrimary: remainingExistingCount === 0 && index === 0,
+              })
+            )
+          );
         }
 
         if (primaryRoomImageId) {
@@ -393,8 +415,27 @@ export default function PropertyManagement() {
     setPendingRoomFiles((prev) => prev.filter((file) => file !== targetFile));
   };
 
+  const handleReplaceRoomImage = (imageId: string) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && file.type.startsWith("image/")) {
+        setReplacedRoomImageFiles((prev) => ({ ...prev, [imageId]: file }));
+      }
+      input.value = "";
+    };
+    input.click();
+  };
+
   const markRoomImageForRemoval = (imageId: string) => {
     setRemovedRoomImageIds((prev) => (prev.includes(imageId) ? prev : [...prev, imageId]));
+    setReplacedRoomImageFiles((prev) => {
+      const next = { ...prev };
+      delete next[imageId];
+      return next;
+    });
     if (primaryRoomImageId === imageId) {
       const fallback = roomImages.find((item) => item.id !== imageId && !removedRoomImageIds.includes(item.id));
       setPrimaryRoomImageId(fallback?.id || "");
@@ -658,10 +699,12 @@ export default function PropertyManagement() {
             images={roomImages}
             pendingFiles={pendingRoomFiles}
             removedImageIds={removedRoomImageIds}
+            replacedImageFiles={replacedRoomImageFiles}
             primaryImageId={primaryRoomImageId}
             onPickFiles={handleRoomFilesSelected}
             onRemovePending={removePendingRoomFile}
             onRemoveExisting={markRoomImageForRemoval}
+            onReplaceExisting={handleReplaceRoomImage}
             onSelectPrimary={setPrimaryRoomImageId}
           />
           <TextArea label="Mô tả" value={roomForm.description} onChange={(value) => setRoomForm((prev) => ({ ...prev, description: value }))} />
@@ -817,19 +860,23 @@ function ImagePicker({
   images,
   pendingFiles,
   removedImageIds,
+  replacedImageFiles = {},
   primaryImageId,
   onPickFiles,
   onRemovePending,
   onRemoveExisting,
+  onReplaceExisting,
   onSelectPrimary,
 }: {
   images: PropertyImageResponse[];
   pendingFiles: File[];
   removedImageIds: string[];
+  replacedImageFiles?: Record<string, File>;
   primaryImageId: string;
   onPickFiles: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemovePending: (file: File) => void;
   onRemoveExisting: (id: string) => void;
+  onReplaceExisting?: (id: string) => void;
   onSelectPrimary: (id: string) => void;
 }) {
   const visibleImages = images.filter((item) => !removedImageIds.includes(item.id));
@@ -857,27 +904,51 @@ function ImagePicker({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {visibleImages.map((image) => (
-            <div key={image.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-              <img src={image.imageUrl} alt="" className="h-28 w-full object-cover" />
-              <div className="flex items-center justify-between gap-2 p-2">
-                <button
-                  type="button"
-                  onClick={() => onSelectPrimary(image.id)}
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
-                    primaryImageId === image.id ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"
-                  }`}
-                  style={{ fontSize: "11px", fontWeight: 700 }}
-                >
-                  <Star className="w-3.5 h-3.5" />
-                  Ảnh chính
-                </button>
-                <button type="button" onClick={() => onRemoveExisting(image.id)} className="text-red-500 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+          {visibleImages.map((image) => {
+            const replacementFile = replacedImageFiles[image.id];
+            const displaySrc = replacementFile ? URL.createObjectURL(replacementFile) : image.imageUrl;
+            const isReplaced = !!replacementFile;
+            return (
+              <div key={image.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                <img src={displaySrc} alt="" className="h-28 w-full object-cover" />
+                <div className="flex items-center justify-between gap-2 p-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelectPrimary(image.id)}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
+                      primaryImageId === image.id ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"
+                    }`}
+                    style={{ fontSize: "11px", fontWeight: 700 }}
+                  >
+                    <Star className="w-3.5 h-3.5" />
+                    Ảnh chính
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {onReplaceExisting && (
+                      <button
+                        type="button"
+                        onClick={() => onReplaceExisting(image.id)}
+                        className="text-gray-500 hover:text-orange-600"
+                        title="Thay ảnh này"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button type="button" onClick={() => onRemoveExisting(image.id)} className="text-red-500 hover:text-red-600">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {isReplaced && (
+                  <div className="px-2 pb-2">
+                    <span className="inline-block rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700">
+                      Sẽ thay thế
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {pendingFiles.map((file, index) => (
             <div key={`${file.name}-${index}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">

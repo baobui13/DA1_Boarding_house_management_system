@@ -17,6 +17,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityPage page);
         Task<PropertyImageResponse> CreatePropertyImageAsync(CreatePropertyImageRequest request);
         Task<bool> UpdatePropertyImageAsync(UpdatePropertyImageRequest request);
+        Task<PropertyImageResponse> ReplacePropertyImageAsync(ReplacePropertyImageRequest request);
+        Task<List<PropertyImageResponse>> GetByPropertyIdAsync(string propertyId);
         Task<bool> DeletePropertyImageAsync(DeletePropertyImageRequest request);
     }
 }

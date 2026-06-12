@@ -72,7 +72,11 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.AvailabilityStatus.ToString()))
                 .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => src.ModerationStatus.ToString()));
             CreateMap<Property, PropertyDetailResponse>()
-                .IncludeBase<Property, PropertyResponse>();
+                .IncludeBase<Property, PropertyResponse>()
+                .ForMember(dest => dest.PropertyImages, opt => opt.MapFrom(src => src.PropertyImages))
+                .ForMember(dest => dest.RoomAmenities, opt => opt.MapFrom(src => src.RoomAmenities))
+                .ForMember(dest => dest.Contracts, opt => opt.MapFrom(src => src.Contracts))
+                .ForMember(dest => dest.Appointments, opt => opt.MapFrom(src => src.Appointments));
             CreateMap<CreatePropertyRequest, Property>()
                 .ForMember(dest => dest.ModerationStatus, opt => opt.Ignore())
                 .ForMember(dest => dest.AvailabilityStatus, opt => opt.Ignore())
