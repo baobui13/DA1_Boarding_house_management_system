@@ -38,7 +38,7 @@ export default function UserManagement() {
   const [error, setError] = useState("");
 
   const loadSummaryTotals = async () => {
-    const summary = await getUserSummary();
+    const summary = await getUserSummary(token ?? undefined);
     setSummaryTotals(summary);
   };
 
@@ -51,12 +51,15 @@ export default function UserManagement() {
 
       try {
         const [response] = await Promise.all([
-          getUsers({
-            page: pageNumber,
-            pageSize: PAGE_SIZE,
-            role: roleFilter === "all" ? undefined : toBackendRole(roleFilter),
-            isBlocked: statusFilter === "all" ? undefined : statusFilter === "locked",
-          }),
+          getUsers(
+            {
+              page: pageNumber,
+              pageSize: PAGE_SIZE,
+              role: roleFilter === "all" ? undefined : toBackendRole(roleFilter),
+              isBlocked: statusFilter === "all" ? undefined : statusFilter === "locked",
+            },
+            token,
+          ),
           loadSummaryTotals(),
         ]);
         if (!cancelled) {

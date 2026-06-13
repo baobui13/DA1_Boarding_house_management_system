@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend_Boarding_house_management_system.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260503193419_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260611230857_AddHistoryUserTimestampIndexes")]
+    partial class AddHistoryUserTimestampIndexes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -708,7 +708,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "Timestamp")
+                        .HasDatabaseName("IX_SearchHistories_UserId_Timestamp");
 
                     b.ToTable("SearchHistories");
                 });
@@ -763,11 +764,6 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
-
-                    b.Property<string>("CCCD")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -867,7 +863,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "Timestamp")
+                        .HasDatabaseName("IX_ViewHistories_UserId_Timestamp");
 
                     b.ToTable("ViewHistories");
                 });

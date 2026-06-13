@@ -101,10 +101,11 @@ export async function getPropertyById(id: string) {
 }
 
 export async function getPropertyImages(propertyId: string) {
-  const response = await apiRequest<PagedResponse<PropertyImageResponse>>("PropertyImage/GetPropertyImagesByFilter", {
-    query: { propertyId, pageSize: 100 },
+  // Use the dedicated endpoint that explicitly filters by property (more reliable than the general filter endpoint)
+  const images = await apiRequest<PropertyImageResponse[]>("PropertyImage/GetPropertyImagesByPropertyId", {
+    query: { propertyId },
   });
-  return response.items;
+  return images || [];
 }
 
 export async function createPropertyImage(
@@ -138,6 +139,24 @@ export async function updatePropertyImage(
     method: "PUT",
     authToken: token,
     body: input,
+  });
+}
+
+export async function replacePropertyImage(
+  token: string,
+  input: {
+    id: string;
+    file: File;
+  },
+) {
+  const form = new FormData();
+  form.append("id", input.id);
+  form.append("file", input.file);
+
+  return apiRequest<PropertyImageResponse>("PropertyImage/ReplacePropertyImage", {
+    method: "PUT",
+    authToken: token,
+    body: form,
   });
 }
 
@@ -180,19 +199,44 @@ export async function deletePropertyAmenity(token: string, id: string) {
   });
 }
 
+// Uses the richer backend endpoint (includes images + amenities in one roundtrip)
+async function getPropertyDetail(id: string) {
+  return apiRequest<any>("Property/GetPropertyDetailById", {
+    query: { id },
+  });
+}
+
 export async function getPropertyListing(id: string): Promise<PropertyListing> {
-  const [property, images, amenities] = await Promise.all([
-    getPropertyById(id),
-    getPropertyImages(id),
-    getPropertyAmenities(id),
-  ]);
+  const detail = await getPropertyDetail(id);
+
+  // Support both camelCase (from JSON) and Pascal (defensive)
+  const rawAmenities: any[] = detail.roomAmenities || detail.RoomAmenities || [];
+  const amenities = rawAmenities.map((item) => item.amenityName ?? item.AmenityName);
+
+  // Use embedded images from PropertyDetail when available (efficient).
+  // Fall back to dedicated PropertyImage/GetPropertyImagesByFilter if the embedded list is empty.
+  // This ensures images always appear in chi tiết and listing views.
+  let images: string[] = [];
+  const rawImages: any[] = detail.propertyImages || detail.PropertyImages || [];
+  if (rawImages.length > 0) {
+    images = rawImages
+      .sort((a, b) => Number(b.isPrimary ?? b.IsPrimary) - Number(a.isPrimary ?? a.IsPrimary))
+      .map((item) => item.imageUrl ?? item.ImageUrl);
+  } else {
+    try {
+      const imgResponses = await getPropertyImages(id);
+      images = imgResponses
+        .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+        .map((item) => item.imageUrl);
+    } catch {
+      // leave images as []
+    }
+  }
 
   return {
-    ...attachUtilityMeta(property),
-    images: images
-      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
-      .map((item) => item.imageUrl),
-    amenities: amenities.map((item) => item.amenityName),
+    ...attachUtilityMeta(detail as PropertyResponse),
+    images,
+    amenities,
   };
 }
 
@@ -204,6 +248,81 @@ export async function getPropertyListings(query: Record<string, string | number 
     ...response,
     items: listings,
   };
+}
+
+export async function getRecommendedProperties(
+  token: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetRecommendedProperties", {
+    authToken: token,
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getRecommendedPropertyListings(
+  token: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getRecommendedProperties(token, query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getMostViewedProperties(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetMostViewedProperties", {
+    ...(token ? { authToken: token } : {}),
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getMostViewedPropertyListings(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getMostViewedProperties(token, query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getTrendingProperties(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  return apiRequest<PagedResponse<PropertyResponse>>("Property/GetTrendingProperties", {
+    ...(token ? { authToken: token } : {}),
+    query: { pageSize: 12, ...query },
+  });
+}
+
+export async function getTrendingPropertyListings(
+  token?: string,
+  query: Record<string, string | number | boolean | undefined> = {},
+) {
+  const response = await getTrendingProperties(token, query);
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
+export async function getPopularPriceRanges(token?: string) {
+  return apiRequest<any>("Property/GetPopularPriceRanges", {
+    ...(token ? { authToken: token } : {}),
+  });
 }
 
 export async function createProperty(
@@ -222,12 +341,17 @@ export async function createProperty(
     waterPrice?: number | null;
   },
 ) {
+  const electricPrice = Number(input.electricPrice ?? 0);
+  const waterPrice = Number(input.waterPrice ?? 0);
+
   return apiRequest<PropertyResponse>("Property/CreateProperty", {
     method: "POST",
     authToken: token,
     body: {
       ...input,
-      description: encodePropertyDescription(input),
+      electricPrice,
+      waterPrice,
+      description: encodePropertyDescription({ ...input, electricPrice, waterPrice }),
     },
   });
 }
@@ -249,12 +373,21 @@ export async function updateProperty(
     waterPrice?: number | null;
   },
 ) {
+  const electricPrice = input.electricPrice != null ? Number(input.electricPrice) : undefined;
+  const waterPrice = input.waterPrice != null ? Number(input.waterPrice) : undefined;
+
   return apiRequest<void>("Property/UpdateProperty", {
     method: "PUT",
     authToken: token,
     body: {
       ...input,
-      description: encodePropertyDescription(input),
+      ...(electricPrice !== undefined ? { electricPrice } : {}),
+      ...(waterPrice !== undefined ? { waterPrice } : {}),
+      description: encodePropertyDescription({
+        ...input,
+        electricPrice: electricPrice ?? null,
+        waterPrice: waterPrice ?? null,
+      }),
     },
   });
 }
@@ -264,5 +397,21 @@ export async function deleteProperty(token: string, id: string) {
     method: "DELETE",
     authToken: token,
     body: { id },
+  });
+}
+
+export async function approveProperty(token: string, id: string) {
+  return apiRequest<void>("Property/ApproveProperty", {
+    method: "POST",
+    authToken: token,
+    body: { propertyId: id },
+  });
+}
+
+export async function rejectProperty(token: string, id: string, rejectionReason: string) {
+  return apiRequest<void>("Property/RejectProperty", {
+    method: "POST",
+    authToken: token,
+    body: { propertyId: id, rejectionReason },
   });
 }

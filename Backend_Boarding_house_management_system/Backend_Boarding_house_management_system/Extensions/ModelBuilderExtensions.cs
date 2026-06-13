@@ -299,6 +299,15 @@ namespace Backend_Boarding_house_management_system.Extensions
             modelBuilder.Entity<Complaint>()
                 .HasIndex(c => c.CreatorId);
 
+            // Indexes hỗ trợ truy vấn lịch sử gần đây cho recommendation (UserId + Timestamp)
+            modelBuilder.Entity<ViewHistory>()
+                .HasIndex(v => new { v.UserId, v.Timestamp })
+                .HasDatabaseName("IX_ViewHistories_UserId_Timestamp");
+
+            modelBuilder.Entity<SearchHistory>()
+                .HasIndex(s => new { s.UserId, s.Timestamp })
+                .HasDatabaseName("IX_SearchHistories_UserId_Timestamp");
+
             return modelBuilder;
         }
     }

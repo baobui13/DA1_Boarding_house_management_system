@@ -49,17 +49,17 @@ export default function SystemAnalytics() {
       };
 
       await Promise.all([
-        getUsers({ page: 1, pageSize: 1000 })
+        getUsers({ page: 1, pageSize: 300 }, token)
           .then((response) => {
             if (!cancelled) setUsers(response.items);
           })
           .catch((err) => nextErrors.push(toErrorMessage("Users", err))),
-        getAreas({ page: 1, pageSize: 1000 })
+        getAreas({ page: 1, pageSize: 300 })
           .then((response) => {
             if (!cancelled) setAreasCount(response.totalCount || response.items.length);
           })
           .catch((err) => nextErrors.push(toErrorMessage("Areas", err))),
-        getPropertyListings({ page: 1, pageSize: 1000 })
+        getPropertyListings({ page: 1, pageSize: 300 })
           .then((response) => {
             if (!cancelled) setProperties(response.items);
           })

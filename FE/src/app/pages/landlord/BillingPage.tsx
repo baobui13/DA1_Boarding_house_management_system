@@ -78,14 +78,15 @@ export default function BillingPage() {
     setError("");
 
     try {
-      const landlord = currentUser.email ? await getUserByEmail(currentUser.email) : null;
+      const landlord = currentUser.email ? await getUserByEmail(currentUser.email, token) : null;
       const landlordId = landlord?.id || currentUser.id;
 
       const [contractResponse, userResponse, propertyResponse, invoiceResponse] = await Promise.all([
-        getContracts(token, { pageSize: 1000 }),
-        getUsers({ role: "Tenant", pageSize: 1000 }),
-        getPropertyListings({ landlordId, pageSize: 1000 }),
-        getInvoices(token, { page: 1, pageSize: 1000 }),
+        // Generous but not unlimited page; we scope further client-side using owned properties
+        getContracts(token, { pageSize: 300 }),
+        getUsers({ role: "Tenant", pageSize: 300 }, token),
+        getPropertyListings({ landlordId, pageSize: 300 }),
+        getInvoices(token, { page: 1, pageSize: 300 }),
       ]);
       const areaResponse = await getAreas({ landlordId, pageSize: 1000 });
 

@@ -3,6 +3,7 @@ using System;
 using Backend_Boarding_house_management_system.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend_Boarding_house_management_system.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260506164142_Migration1")]
+    partial class Migration1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -705,8 +708,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Timestamp")
-                        .HasDatabaseName("IX_SearchHistories_UserId_Timestamp");
+                    b.HasIndex("UserId");
 
                     b.ToTable("SearchHistories");
                 });
@@ -860,8 +862,7 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("UserId", "Timestamp")
-                        .HasDatabaseName("IX_ViewHistories_UserId_Timestamp");
+                    b.HasIndex("UserId");
 
                     b.ToTable("ViewHistories");
                 });
@@ -1063,7 +1064,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Contract", "Contract")
                         .WithMany("Invoices")
                         .HasForeignKey("ContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Contract");
@@ -1118,7 +1119,7 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Invoice", "Invoice")
                         .WithMany("Payments")
                         .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Invoice");

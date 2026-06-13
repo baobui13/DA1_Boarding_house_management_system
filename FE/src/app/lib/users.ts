@@ -8,19 +8,26 @@ export interface UserSummaryResponse {
   totalLandlords: number;
 }
 
-export async function getUsers(query: Record<string, string | number | boolean | undefined> = {}) {
+export async function getUsers(
+  query: Record<string, string | number | boolean | undefined> = {},
+  token?: string,
+) {
   return apiRequest<PagedResponse<UserResponse>>("User/GetUsersByFilter", {
     query,
+    ...(token ? { authToken: token } : {}),
   });
 }
 
-export async function getUserSummary() {
-  return apiRequest<UserSummaryResponse>("User/GetUserSummary");
+export async function getUserSummary(token?: string) {
+  return apiRequest<UserSummaryResponse>("User/GetUserSummary", {
+    ...(token ? { authToken: token } : {}),
+  });
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(email: string, token?: string) {
   return apiRequest<UserResponse>("User/GetUserByIdOrEmail", {
     query: { email },
+    ...(token ? { authToken: token } : {}),
   });
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ArrowLeft, Save, Home, MapPin, DollarSign, Maximize2, AlertTriangle, ImagePlus, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Home, MapPin, DollarSign, Maximize2, AlertTriangle, ImagePlus, Star, Trash2, Pencil } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { getAmenities } from "../../lib/amenities";
 import { getAreas } from "../../lib/areas";
@@ -13,6 +13,7 @@ import {
   getPropertyAmenities,
   getPropertyById,
   getPropertyImages,
+  replacePropertyImage,
   updatePropertyImage,
   updateProperty,
 } from "../../lib/properties";
@@ -30,6 +31,7 @@ export default function RoomFormPage() {
   const [images, setImages] = useState<PropertyImageResponse[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [replacedImageFiles, setReplacedImageFiles] = useState<Record<string, File>>({});
   const [primaryImageId, setPrimaryImageId] = useState<string>("");
   const [formData, setFormData] = useState({
     propertyName: "",
@@ -72,8 +74,10 @@ export default function RoomFormPage() {
               amenities: roomAmenities.map((item) => item.amenityName),
             });
           }
-          setImages(propertyImages);
-          setPrimaryImageId(propertyImages.find((item) => item.isPrimary)?.id || propertyImages[0]?.id || "");
+          // Defensive filter to this property only
+          const safeImages = (propertyImages || []).filter((img: any) => (img.propertyId || img.PropertyId) === id);
+          setImages(safeImages);
+          setPrimaryImageId(safeImages.find((item) => item.isPrimary)?.id || safeImages[0]?.id || "");
         }
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Không tải được dữ liệu.");
@@ -116,10 +120,29 @@ export default function RoomFormPage() {
 
   const markImageForRemoval = (imageId: string) => {
     setRemovedImageIds((prev) => (prev.includes(imageId) ? prev : [...prev, imageId]));
+    setReplacedImageFiles((prev) => {
+      const next = { ...prev };
+      delete next[imageId];
+      return next;
+    });
     if (primaryImageId === imageId) {
       const fallback = images.find((item) => item.id !== imageId && !removedImageIds.includes(item.id));
       setPrimaryImageId(fallback?.id || "");
     }
+  };
+
+  const handleReplaceImage = (imageId: string) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && file.type.startsWith("image/")) {
+        setReplacedImageFiles((prev) => ({ ...prev, [imageId]: file }));
+      }
+      input.value = "";
+    };
+    input.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -143,15 +166,30 @@ export default function RoomFormPage() {
         await syncRoomAmenities(token, propertyId, formData.amenities, amenities);
         await Promise.all(removedImageIds.map((imageId) => deletePropertyImage(token, imageId)));
 
-        let currentImages = await getPropertyImages(propertyId);
-        for (let index = 0; index < newFiles.length; index += 1) {
-          const file = newFiles[index];
-          const createdImage = await createPropertyImage(token, {
-            propertyId,
-            file,
-            isPrimary: currentImages.length === 0 && index === 0,
-          });
-          currentImages = [...currentImages, createdImage];
+        // Replace existing images (keeps the same image record id + primary status) - parallel
+        const replaceEntries = Object.entries(replacedImageFiles);
+        if (replaceEntries.length > 0) {
+          await Promise.all(
+            replaceEntries.map(([imageId, file]) => replacePropertyImage(token, { id: imageId, file }))
+          );
+        }
+
+        // Add new images in parallel (major speed improvement)
+        // Compute remaining existing count client-side to avoid extra refetch + sequential awaits
+        const remainingExistingCount = (images || []).filter(
+          (img: any) => !removedImageIds.includes(img.id)
+        ).length;
+
+        if (newFiles.length > 0) {
+          await Promise.all(
+            newFiles.map((file, index) =>
+              createPropertyImage(token, {
+                propertyId,
+                file,
+                isPrimary: remainingExistingCount === 0 && index === 0,
+              })
+            )
+          );
         }
 
         if (primaryImageId) {
@@ -305,27 +343,49 @@ export default function RoomFormPage() {
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                       {images
                         .filter((item) => !removedImageIds.includes(item.id))
-                        .map((image) => (
-                          <div key={image.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-                            <img src={image.imageUrl} alt="" className="h-28 w-full object-cover" />
-                            <div className="flex items-center justify-between gap-2 p-2">
-                              <button
-                                type="button"
-                                onClick={() => setPrimaryImageId(image.id)}
-                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
-                                  primaryImageId === image.id ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"
-                                }`}
-                                style={{ fontSize: "11px", fontWeight: 700 }}
-                              >
-                                <Star className="w-3.5 h-3.5" />
-                                Ảnh chính
-                              </button>
-                              <button type="button" onClick={() => markImageForRemoval(image.id)} className="text-red-500 hover:text-red-600">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                        .map((image) => {
+                          const replacementFile = replacedImageFiles[image.id];
+                          const displaySrc = replacementFile ? URL.createObjectURL(replacementFile) : image.imageUrl;
+                          const isReplaced = !!replacementFile;
+                          return (
+                            <div key={image.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                              <img src={displaySrc} alt="" className="h-28 w-full object-cover" />
+                              <div className="flex items-center justify-between gap-2 p-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setPrimaryImageId(image.id)}
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 ${
+                                    primaryImageId === image.id ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-500"
+                                  }`}
+                                  style={{ fontSize: "11px", fontWeight: 700 }}
+                                >
+                                  <Star className="w-3.5 h-3.5" />
+                                  Ảnh chính
+                                </button>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleReplaceImage(image.id)}
+                                    className="text-gray-500 hover:text-orange-600"
+                                    title="Thay ảnh này"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button type="button" onClick={() => markImageForRemoval(image.id)} className="text-red-500 hover:text-red-600">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              {isReplaced && (
+                                <div className="px-2 pb-2">
+                                  <span className="inline-block rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700">
+                                    Sẽ thay thế
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
 
                       {newFiles.map((file, index) => (
                         <div key={`${file.name}-${index}`} className="overflow-hidden rounded-2xl border border-gray-200 bg-white">

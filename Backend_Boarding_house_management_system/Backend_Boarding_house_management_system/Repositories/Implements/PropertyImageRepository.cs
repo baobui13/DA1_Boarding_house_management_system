@@ -33,5 +33,13 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             var items = await query.Page(page).ToListAsync();
             return (items, totalCount);
         }
+
+        public async Task<IEnumerable<PropertyImage>> GetByPropertyIdAsync(string propertyId)
+        {
+            return await _dbSet
+                .Where(pi => pi.PropertyId == propertyId)
+                .OrderBy(pi => pi.CreatedAt)
+                .ToListAsync();
+        }
     }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, CheckCircle2, XCircle, Clock, Eye, MapPin, X, Home, Ruler, Image as ImageIcon } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { getModerationProperties, getPropertyListing, updateProperty } from "../../lib/properties";
+import { approveProperty, getModerationProperties, getPropertyListing, rejectProperty } from "../../lib/properties";
 import type { PropertyListing, PropertyResponse } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 
@@ -99,7 +99,7 @@ export default function ContentModeration() {
     }
 
     try {
-      await updateProperty(token, { id, moderationStatus: "Approved", rejectionReason: "" });
+      await approveProperty(token, id);
       setPosts((current) => current.filter((post) => post.id !== id));
       setTotalCount((current) => Math.max(0, current - 1));
       if (selectedPostId === id) {
@@ -118,11 +118,7 @@ export default function ContentModeration() {
     }
 
     try {
-      await updateProperty(token, {
-        id,
-        moderationStatus: "Rejected",
-        rejectionReason: rejectReason || "Nội dung không đạt yêu cầu.",
-      });
+      await rejectProperty(token, id, rejectReason || "Nội dung không đạt yêu cầu.");
 
       setShowRejectModal(null);
       setRejectReason("");

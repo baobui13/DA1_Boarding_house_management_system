@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   Download,
   Eye,
@@ -15,7 +16,7 @@ import { useApp } from "../../context/AppContext";
 import { getAppointments, type AppointmentResponse } from "../../lib/appointments";
 import { getInvoices, type InvoiceResponse } from "../../lib/invoices";
 import { getContracts, type ContractResponse } from "../../lib/contracts";
-import { getPropertyListing, getPropertyListings } from "../../lib/properties";
+import { getPropertyListing, getPropertyListings, getRecommendedPropertyListings } from "../../lib/properties";
 import { getAreas } from "../../lib/areas";
 import { formatCurrency } from "../../lib/format";
 
@@ -58,6 +59,8 @@ export default function TenantDashboard() {
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [contracts, setContracts] = useState<ContractResponse[]>([]);
   const [propertyMeta, setPropertyMeta] = useState<Record<string, PropertyMeta>>({});
+  const [recommended, setRecommended] = useState<PropertyListing[]>([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -125,6 +128,41 @@ export default function TenantDashboard() {
 
   useEffect(() => {
     void loadData();
+  }, [token, currentUser?.id]);
+
+  // Load personalized recommendations based on search + view history
+  useEffect(() => {
+    if (!token || !currentUser) {
+      setRecommended([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingRecommended(true);
+
+    (async () => {
+      try {
+        const recResponse = await getRecommendedPropertyListings(token, {
+          page: 1,
+          pageSize: 6,
+        });
+        if (!cancelled) {
+          // Filter out already rented/unavailable if needed
+          const visible = recResponse.items.filter(
+            (p) => !["rejected", "unavailable", "rented"].includes(p.status.toLowerCase()),
+          );
+          setRecommended(visible.slice(0, 6));
+        }
+      } catch {
+        if (!cancelled) setRecommended([]);
+      } finally {
+        if (!cancelled) setLoadingRecommended(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [token, currentUser?.id]);
 
   const currentContract = useMemo(
@@ -233,6 +271,57 @@ export default function TenantDashboard() {
               hint={currentContract ? `Hết hạn: ${formatShortDate(currentContract.endDate)}` : "Chưa có hợp đồng hiệu lực"}
             />
           </div>
+
+          {/* Personalized recommendations based on search & view history */}
+          {(recommended.length > 0 || loadingRecommended) && (
+            <div className="rounded-[28px] border border-orange-100 bg-white px-5 py-5">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-orange-600" style={{ fontSize: "12px", fontWeight: 800 }}>
+                    ĐỀ CỬ CHO BẠN
+                  </p>
+                  <p className="text-gray-900" style={{ fontSize: "16px", fontWeight: 800 }}>
+                    Dựa trên hoạt động tìm kiếm và xem phòng của bạn
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate("/search")}
+                  className="text-sm text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1"
+                >
+                  Xem thêm <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              {loadingRecommended ? (
+                <div className="text-gray-500 text-sm py-4">Đang tải gợi ý...</div>
+              ) : recommended.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {recommended.map((room) => (
+                    <button
+                      key={room.id}
+                      onClick={() => navigate(`/room/${room.id}?view=tenant`)}
+                      className="text-left group rounded-2xl border border-gray-100 p-3 hover:border-orange-200 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex gap-3">
+                        <div className="w-20 h-16 rounded-xl bg-gray-100 overflow-hidden shrink-0">
+                          {room.images?.[0] ? (
+                            <img src={room.images[0]} alt={room.propertyName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          ) : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-gray-900 text-sm truncate">{room.propertyName}</div>
+                          <div className="text-xs text-gray-500 truncate">{room.address || "—"}</div>
+                          <div className="mt-1 text-orange-600 font-bold text-sm">
+                            {formatCurrency(room.price)}<span className="font-normal text-xs">/tháng</span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div className="rounded-[28px] border border-amber-200 bg-gradient-to-r from-amber-50 to-white px-5 py-6">
             <div className="mb-3 flex items-center justify-between gap-3">

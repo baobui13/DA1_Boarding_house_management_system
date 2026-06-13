@@ -1,6 +1,9 @@
 ﻿{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
+    // RECOMMENDED for daily development on Windows.
+    // This profile avoids the very frequent "Failed to bind to https://localhost:7134" error
+    // caused by Kestrel's LocalhostListenOptions + dev certificate problems.
     "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
@@ -10,6 +13,10 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
+
+    // Only use this profile when your dev cert is healthy.
+    // If you get AggregateException + IOException on https://localhost:7134, switch back to "http" profile
+    // or run: dotnet dev-certs https --clean && dotnet dev-certs https --trust
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,

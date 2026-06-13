@@ -13,5 +13,6 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
             EntityFilter<PropertyImage> filter,
             EntitySort<PropertyImage> sort,
             EntityPage page);
+        Task<IEnumerable<PropertyImage>> GetByPropertyIdAsync(string propertyId);
     }
 }

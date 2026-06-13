@@ -47,6 +47,18 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(images);
         }
 
+        [AllowAnonymous]
+        [HttpGet("GetPropertyImagesByPropertyId")]
+        public async Task<ActionResult<List<PropertyImageResponse>>> GetPropertyImagesByPropertyId([FromQuery] string propertyId)
+        {
+            if (string.IsNullOrWhiteSpace(propertyId))
+            {
+                return Ok(new List<PropertyImageResponse>());
+            }
+            var images = await _propertyImageService.GetByPropertyIdAsync(propertyId);
+            return Ok(images);
+        }
+
         [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreatePropertyImage")]
         public async Task<ActionResult<PropertyImageResponse>> CreatePropertyImage([FromForm] CreatePropertyImageRequest request)
@@ -61,6 +73,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         {
             await _propertyImageService.UpdatePropertyImageAsync(request);
             return Ok();
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
+        [HttpPut("ReplacePropertyImage")]
+        public async Task<ActionResult<PropertyImageResponse>> ReplacePropertyImage([FromForm] ReplacePropertyImageRequest request)
+        {
+            var image = await _propertyImageService.ReplacePropertyImageAsync(request);
+            return Ok(image);
         }
 
         [Authorize(Roles = "Landlord,Admin")]
