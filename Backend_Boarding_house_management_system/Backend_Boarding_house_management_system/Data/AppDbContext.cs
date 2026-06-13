@@ -23,6 +23,8 @@ namespace Backend_Boarding_house_management_system.Data
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Rating> Ratings { get; set; }
+        public DbSet<RatingAspect> RatingAspects { get; set; }
+        public DbSet<PropertyAspectScore> PropertyAspectScores { get; set; }
         public DbSet<Complaint> Complaints { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<SearchHistory> SearchHistories { get; set; }

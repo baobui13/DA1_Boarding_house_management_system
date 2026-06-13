@@ -80,5 +80,6 @@ namespace Backend_Boarding_house_management_system.Entities
         public ICollection<Message> Messages { get; set; } = new List<Message>();
         public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
         public ICollection<ViewHistory> ViewHistories { get; set; } = new List<ViewHistory>();
+        public ICollection<PropertyAspectScore> PropertyAspectScores { get; set; } = new List<PropertyAspectScore>();
     }
 }

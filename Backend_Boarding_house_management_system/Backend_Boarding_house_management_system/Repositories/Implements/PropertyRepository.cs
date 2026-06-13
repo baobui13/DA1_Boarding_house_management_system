@@ -21,7 +21,8 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
                 .Include(p => p.RoomAmenities)
                     .ThenInclude(ra => ra.Amenity)
                 .Include(p => p.Contracts)
-                .Include(p => p.Appointments);
+                .Include(p => p.Appointments)
+                .Include(p => p.PropertyAspectScores);
 
         public async Task<Property?> GetByIdWithDetailsAsync(string id)
             => await GetDetailsQuery().FirstOrDefaultAsync(p => p.Id == id);

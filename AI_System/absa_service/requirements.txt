@@ -1,0 +1,23 @@
+# ABSA Inference Service for Boarding House Rating Analysis
+# Python 3.10+ recommended
+# For CPU-only (common on dev Windows): install torch CPU wheel first, then the rest.
+
+# Core ML
+torch>=2.0.0
+transformers>=4.40.0
+peft>=0.10.0
+accelerate>=0.30.0
+
+# API
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.6.0
+
+# Utils
+numpy>=1.24.0
+python-dotenv>=1.0.0
+# safetensors is pulled by peft/transformers
+
+# Optional: for better perf / logging
+# sentencepiece  # if tokenizer needs it (PhoBERT usually uses it)
+# protobuf

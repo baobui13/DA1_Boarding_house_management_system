@@ -355,12 +355,28 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 // Xây preference từ history (View + Search)
                 var pref = await BuildUserPreferenceAsync(userId);
 
-                // Lấy bounded candidates (kèm RoomAmenities để scoring) – reuse pattern GetDetailsQuery
+                // Lấy bounded candidates (kèm RoomAmenities + AspectScores để scoring)
                 var candidates = (await _propertyRepository.GetFilteredCandidatesForRecAsync(filter, maxCandidates: 200)).ToList();
+
+                // ABSA aspect interests: direct positive ratings (strong) + from view history (via pref.AspectInterests)
+                HashSet<ReviewAspect> userLikedAspects = new HashSet<ReviewAspect>(pref.AspectInterests);
+                try
+                {
+                    // Direct from user's positive ratings (strongest personal signal, merge with viewed)
+                    var directLiked = await _context.RatingAspects
+                        .AsNoTracking()
+                        .Where(ra => ra.Rating.TenantId == userId && ra.Sentiment == RatingAttitude.Positive)
+                        .Select(ra => ra.Aspect)
+                        .Distinct()
+                        .Take(5)
+                        .ToListAsync();
+                    foreach (var a in directLiked) userLikedAspects.Add(a);
+                }
+                catch { /* non-fatal for recs */ }
 
                 // Tính điểm + re-rank
                 var scored = candidates
-                    .Select(p => new { Property = p, Score = ComputeRelevanceScore(p, pref) })
+                    .Select(p => new { Property = p, Score = ComputeRelevanceScore(p, pref, userId, userLikedAspects) })
                     .OrderByDescending(x => x.Score)
                     // Secondary: ưu tiên mới tạo nếu score ngang nhau (có thể mở rộng dùng sort nếu cần)
                     .ThenByDescending(x => x.Property.CreatedAt)
@@ -653,7 +669,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             decimal? PriceMean,
             decimal? PriceMin,
             decimal? PriceMax,
-            HashSet<string> AmenityIds);
+            HashSet<string> AmenityIds,
+            HashSet<ReviewAspect> AspectInterests);
 
         private async Task<UserPreference> BuildUserPreferenceAsync(string userId)
         {
@@ -661,8 +678,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var amenityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var prices = new List<decimal>();
             decimal? priceMin = null, priceMax = null;
+            var aspectInterests = new HashSet<ReviewAspect>();
 
             // 1. Từ ViewHistory (tín hiệu mạnh: user đã thực sự xem chi tiết)
+            //    Cũng phối hợp aspect scores từ các property đã xem (để infer sở thích aspect)
             var recentViews = await _viewHistoryRepository.GetRecentForUserAsync(userId, limit: 30);
             foreach (var vh in recentViews)
             {
@@ -678,6 +697,15 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 {
                     if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase))
                         amenityIds.Add(ra.AmenityId);
+                }
+
+                // Aggregate high aspect scores from viewed properties (coordinates view history + ABSA data)
+                if (p.PropertyAspectScores != null)
+                {
+                    foreach (var pas in p.PropertyAspectScores.Where(s => s.WeightedScore >= 65))
+                    {
+                        aspectInterests.Add(pas.Aspect);
+                    }
                 }
             }
 
@@ -732,10 +760,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             decimal? effectiveMin = priceMin ?? (prices.Count > 0 ? prices.Min() : null);
             decimal? effectiveMax = priceMax ?? (prices.Count > 0 ? prices.Max() : null);
 
-            return new UserPreference(areaIds, priceMean, effectiveMin, effectiveMax, amenityIds);
+            return new UserPreference(areaIds, priceMean, effectiveMin, effectiveMax, amenityIds, aspectInterests);
         }
 
-        private double ComputeRelevanceScore(Property property, UserPreference pref)
+        private double ComputeRelevanceScore(Property property, UserPreference pref, string? userId = null, HashSet<ReviewAspect>? userLikedAspects = null)
         {
             if (pref == null)
                 return 0;
@@ -768,6 +796,38 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             }
             if (matchCount > 0)
                 score += Math.Min(matchCount * 7, 25);
+
+            // --- ABSA / aspect-based boost (real model data now drives this) ---
+            // Coordinates with view/search history (via userLikedAspects from viewed props + own ratings).
+            // 1. Personal match: properties strong on aspects user has shown interest in (from ratings or viewed high-score props).
+            // 2. Global quality: properties with generally high aspect scores (from tenant ratings) get pushed up in lists.
+            var liked = userLikedAspects ?? new HashSet<ReviewAspect>();
+
+            // Personal aspect match boost (stronger weight now that we have real AI data)
+            if (liked.Count > 0 && property.PropertyAspectScores?.Count > 0)
+            {
+                double aspectBonus = 0;
+                foreach (var pas in property.PropertyAspectScores)
+                {
+                    if (liked.Contains(pas.Aspect) && pas.WeightedScore > 50)
+                    {
+                        aspectBonus += (double)pas.WeightedScore / 7.0;  // stronger per-aspect contribution
+                    }
+                }
+                if (aspectBonus > 0)
+                    score += Math.Min(aspectBonus, 30);  // higher cap for personalization via ABSA
+            }
+
+            // Global aspect quality boost (helps push well-reviewed properties higher across lists,
+            // even for users without direct rating history yet)
+            if (property.PropertyAspectScores?.Any() == true)
+            {
+                var avgWeighted = property.PropertyAspectScores.Average(s => (double)s.WeightedScore);
+                if (avgWeighted > 55)
+                {
+                    score += Math.Min((avgWeighted - 55) / 3.0 , 12);
+                }
+            }
 
             // Clamp
             return Math.Clamp(score, 0, 100);

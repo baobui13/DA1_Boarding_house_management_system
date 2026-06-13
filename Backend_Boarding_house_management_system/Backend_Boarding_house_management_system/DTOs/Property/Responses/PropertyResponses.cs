@@ -43,5 +43,18 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
         public List<RoomAmenityResponse> RoomAmenities { get; set; } = new();
         public List<ContractResponse> Contracts { get; set; } = new();
         public List<AppointmentResponse> Appointments { get; set; } = new();
+        public List<PropertyAspectScoreResponse> AspectScores { get; set; } = new();
+    }
+
+    public class PropertyAspectScoreResponse
+    {
+        public string Id { get; set; } = null!;
+        public ReviewAspect Aspect { get; set; }
+        public int PositiveCount { get; set; }
+        public int NegativeCount { get; set; }
+        public int NeutralCount { get; set; }
+        public int TotalCount { get; set; }
+        public decimal WeightedScore { get; set; }
+        public DateTime LastUpdated { get; set; }
     }
 }

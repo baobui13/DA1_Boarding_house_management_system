@@ -1,0 +1,4 @@
+{
+  "feature_mode": "conditional_attention",
+  "num_aspects": 10
+}

@@ -84,6 +84,20 @@ Enum complaint_related_type {
   Property
 }
 
+Enum review_aspect {
+  RoomQuality
+  Noise
+  Wifi
+  Utilities
+  Parking
+  Security
+  Environment
+  Landlord
+  Location
+  Price
+  Overall
+}
+
 // =============================================
 // TABLES
 // =============================================
@@ -103,7 +117,6 @@ Table Users {
   ConcurrencyStamp varchar(255)
 
   FullName varchar(100) [not null]
-  CCCD varchar(20) [not null]
   Address varchar(255)
   Role user_role [not null]
   ReputationScore int [default: 0, note: 'Điểm uy tín chủ trọ, tự động +1/0/-1 từ Ratings']
@@ -296,4 +309,28 @@ Table Complaints {
   AdminResponse text
   ResolvedAt datetime
   CreatedAt datetime [default: `now()`]
+}
+
+Table RatingAspects {
+  Id varchar(50) [pk, not null]
+  RatingId varchar(50) [ref: > Ratings.Id, not null]
+  Aspect review_aspect [not null]
+  Sentiment rating_attitude [not null]
+  Confidence decimal(3,2)
+  CreatedAt datetime [not null, default: `now()`]
+}
+
+Table PropertyAspectScores {
+  Id varchar(50) [pk, not null]
+  PropertyId varchar(50) [ref: > Properties.Id, not null]
+  Aspect review_aspect [not null]
+  
+  PositiveCount int [default: 0]
+  NegativeCount int [default: 0]
+  NeutralCount int [default: 0]
+  TotalCount int [default: 0]                    // = Positive + Negative + Neutral
+  
+  WeightedScore decimal(10,2) [default: 0]
+  
+  LastUpdated datetime [not null, default: `now()`]
 }
