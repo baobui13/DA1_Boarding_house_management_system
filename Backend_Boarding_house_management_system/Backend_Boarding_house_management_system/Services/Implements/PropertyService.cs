@@ -138,9 +138,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 .Select(p => new
                 {
                     Property = p,
-                    ViewCount = viewCounts.TryGetValue(p.Id, out var c) ? c : 0
+                    ViewCount = viewCounts.TryGetValue(p.Id, out var c) ? c : 0,
+                    AspectQuality = p.PropertyAspectScores?.Any() == true 
+                        ? p.PropertyAspectScores.Average(s => (double)s.WeightedScore) 
+                        : 40.0   // default neutral
                 })
-                .OrderByDescending(x => x.ViewCount)
+                .OrderByDescending(x => x.ViewCount * 1.0 + x.AspectQuality * 0.8)  // phối hợp view count + property ABSA score
                 .ThenByDescending(x => x.Property.CreatedAt)
                 .ToList();
 
@@ -261,6 +264,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 // View count boost (most viewed cũng là tín hiệu trending)
                 if (viewCounts.TryGetValue(p.Id, out var vc))
                     score += Math.Min(vc * 1.5, 30);
+
+                // === Property ABSA score (global, từ tất cả tenant ratings) ===
+                // Đảm bảo property có WeightedScore cao được đẩy lên, ngay cả cho anonymous load danh sách.
+                if (p.PropertyAspectScores?.Any() == true)
+                {
+                    var avgAspect = p.PropertyAspectScores.Average(s => (double)s.WeightedScore);
+                    score += (avgAspect - 40) * 0.9;   // global aspect weight cao trong trending
+                }
 
                 return new { Property = p, Score = score };
             })
@@ -765,72 +776,91 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
         private double ComputeRelevanceScore(Property property, UserPreference pref, string? userId = null, HashSet<ReviewAspect>? userLikedAspects = null)
         {
-            if (pref == null)
+            bool isLoggedIn = !string.IsNullOrEmpty(userId);
+
+            // === Linh hoạt trọng số theo trạng thái đăng nhập ===
+            // Mục tiêu: 
+            // - Chưa login: personal history weight = 0, đẩy global history + đặc biệt là PropertyAspectScore (ABSA) cao hơn để property có score cao nổi lên.
+            // - Đã login: đẩy personal SearchHistory + ViewHistory cao, nhưng vẫn giữ PropertyAspectScore có trọng số mạnh để property chất lượng cao (từ rating AI) thường xuất hiện sớm.
+            double wPersonalHistory = isLoggedIn ? 1.0 : 0.0;
+            double wGlobalHistory   = isLoggedIn ? 0.55 : 1.1;
+            double wPropertyAspect  = isLoggedIn ? 1.6 : 2.8;   // cao để đảm bảo property có WeightedScore cao thường đứng trên
+
+            if (pref == null && isLoggedIn)
                 return 0;
 
-            double score = 5; // base
+            double score = 10; // base
 
-            // Area match (tín hiệu mạnh nhất từ lịch sử xem/tìm)
-            if (!string.IsNullOrEmpty(property.AreaId) && pref.AreaIds.Contains(property.AreaId))
-                score += 40;
+            // === History signals (area, price, amenity) từ pref ===
+            // pref chứa tín hiệu từ ViewHistory (personal) + SearchHistory (personal của user hiện tại)
+            // Khi anonymous (pref rỗng hoặc gọi với pref=null), các contribution này sẽ gần như 0 nhờ wPersonalHistory=0.
+
+            double historyContribution = 0;
+
+            // Area match
+            if (!string.IsNullOrEmpty(property.AreaId) && pref != null && pref.AreaIds.Contains(property.AreaId))
+                historyContribution += 35;
 
             // Price fit
-            if (pref.PriceMean.HasValue || (pref.PriceMin.HasValue && pref.PriceMax.HasValue))
+            if (pref != null && (pref.PriceMean.HasValue || (pref.PriceMin.HasValue && pref.PriceMax.HasValue)))
             {
                 decimal target = pref.PriceMean ?? ((pref.PriceMin!.Value + pref.PriceMax!.Value) / 2);
                 decimal distance = Math.Abs(property.Price - target);
-                decimal tolerance = Math.Max(300_000, target * 0.25m); // 25% hoặc 300k
+                decimal tolerance = Math.Max(300_000, target * 0.25m);
                 double priceFit = Math.Max(0, 1 - (double)(distance / tolerance));
-                score += priceFit * 30;
+                historyContribution += priceFit * 28;
             }
 
-            // Amenity overlap (aspects)
-            int matchCount = 0;
-            foreach (var ra in property.RoomAmenities)
+            // Amenity overlap
+            if (pref != null)
             {
-                if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
-                    pref.AmenityIds.Contains(ra.AmenityId))
+                int matchCount = 0;
+                foreach (var ra in property.RoomAmenities)
                 {
-                    matchCount++;
+                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                        pref.AmenityIds.Contains(ra.AmenityId))
+                        matchCount++;
                 }
+                if (matchCount > 0)
+                    historyContribution += Math.Min(matchCount * 6, 22);
             }
-            if (matchCount > 0)
-                score += Math.Min(matchCount * 7, 25);
 
-            // --- ABSA / aspect-based boost (real model data now drives this) ---
-            // Coordinates with view/search history (via userLikedAspects from viewed props + own ratings).
-            // 1. Personal match: properties strong on aspects user has shown interest in (from ratings or viewed high-score props).
-            // 2. Global quality: properties with generally high aspect scores (from tenant ratings) get pushed up in lists.
+            // Áp dụng trọng số cho history
+            score += historyContribution * (wPersonalHistory * 0.85 + wGlobalHistory * 0.15); 
+            // Phần lớn history đến từ personal view/search của user (trong pref), global được mix nhẹ.
+
+            // === Property Aspect Score (ABSA) - trọng số cao, linh hoạt ===
+            // Sử dụng WeightedScore (0-100) từ PropertyAspectScore.
+            // Personal match (nếu user có liked aspects từ rating/view history) + Global quality.
+            // Trọng số wPropertyAspect được đẩy cao khi chưa login để property "có score cao" nổi bật.
             var liked = userLikedAspects ?? new HashSet<ReviewAspect>();
+            double aspectContribution = 0;
 
-            // Personal aspect match boost (stronger weight now that we have real AI data)
-            if (liked.Count > 0 && property.PropertyAspectScores?.Count > 0)
-            {
-                double aspectBonus = 0;
-                foreach (var pas in property.PropertyAspectScores)
-                {
-                    if (liked.Contains(pas.Aspect) && pas.WeightedScore > 50)
-                    {
-                        aspectBonus += (double)pas.WeightedScore / 7.0;  // stronger per-aspect contribution
-                    }
-                }
-                if (aspectBonus > 0)
-                    score += Math.Min(aspectBonus, 30);  // higher cap for personalization via ABSA
-            }
-
-            // Global aspect quality boost (helps push well-reviewed properties higher across lists,
-            // even for users without direct rating history yet)
-            if (property.PropertyAspectScores?.Any() == true)
+            if (property.PropertyAspectScores != null && property.PropertyAspectScores.Any())
             {
                 var avgWeighted = property.PropertyAspectScores.Average(s => (double)s.WeightedScore);
-                if (avgWeighted > 55)
+                aspectContribution += avgWeighted * 0.65;   // base global quality
+
+                // Personal aspect match (chỉ có khi logged + có data từ rating/view)
+                if (liked.Count > 0)
                 {
-                    score += Math.Min((avgWeighted - 55) / 3.0 , 12);
+                    double personalAspectBonus = 0;
+                    foreach (var pas in property.PropertyAspectScores)
+                    {
+                        if (liked.Contains(pas.Aspect) && pas.WeightedScore > 50)
+                        {
+                            personalAspectBonus += (double)pas.WeightedScore / 6.5;
+                        }
+                    }
+                    aspectContribution += personalAspectBonus * 0.9;
                 }
             }
 
-            // Clamp
-            return Math.Clamp(score, 0, 100);
+            score += aspectContribution * wPropertyAspect;
+
+            // Final score - không clamp chặt để aspect score cao (80-100+) có ảnh hưởng lớn đến thứ tự.
+            // OrderByDescending sẽ tự nhiên đẩy property có aspect score cao lên trước.
+            return Math.Max(0, score);
         }
 
         private string? GetCurrentUserId()
