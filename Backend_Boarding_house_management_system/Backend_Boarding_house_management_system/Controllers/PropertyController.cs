@@ -8,6 +8,7 @@ using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Options;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Security.Claims;
@@ -55,11 +56,13 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page,
-            [FromQuery] string[]? boostAspect = null)   // User điền thêm aspect khi search, ví dụ: ?boostAspect=Wifi&boostAspect=Noise
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
             await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
-            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page, aspectBoosts);
+            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -68,13 +71,15 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page,
-            [FromQuery] string[]? boostAspect = null)
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             // Personalized recommendations (dựa trên lịch sử cá nhân của user hiện tại)
             // + aspect user vừa chọn khi search/filter sẽ được boost mạnh
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
             await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
-            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page, aspectBoosts);
+            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -84,11 +89,13 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page,
-            [FromQuery] string[]? boostAspect = null)
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
             await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
-            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page, aspectBoosts);
+            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -98,12 +105,30 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page,
-            [FromQuery] string[]? boostAspect = null)
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
             await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
-            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page, aspectBoosts);
+            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
+        }
+
+        /// <summary>
+        /// Parse query param recommendationMode từ client thành enum.
+        /// Chấp nhận tên mode hoặc số (0=PersonalMatch, 1=HighAspectQuality,...).
+        /// Mặc định PersonalMatch nếu không truyền hoặc sai.
+        /// </summary>
+        private static RecommendationMode ParseRecommendationMode(string? modeStr)
+        {
+            if (string.IsNullOrWhiteSpace(modeStr))
+                return RecommendationMode.PersonalMatch;
+
+            if (Enum.TryParse<RecommendationMode>(modeStr, ignoreCase: true, out var mode))
+                return mode;
+
+            return RecommendationMode.PersonalMatch;
         }
 
         /// <summary>

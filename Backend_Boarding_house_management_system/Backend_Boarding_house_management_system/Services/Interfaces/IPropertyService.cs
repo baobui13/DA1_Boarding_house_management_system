@@ -1,6 +1,7 @@
 using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Options;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -16,7 +17,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.PersonalMatch);
 
         /// <summary>
         /// Danh sách được ưu tiên đề cử theo lịch sử xem/tìm kiếm của user hiện tại (nếu đã đăng nhập).
@@ -26,7 +28,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.PersonalMatch);
 
         /// <summary>
         /// Danh sách phòng được xem nhiều nhất (global popularity từ ViewHistory, có thể filter thêm).
@@ -35,7 +38,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.HighAspectQuality);
 
         /// <summary>
         /// Danh sách trending / được tìm kiếm nhiều nhất (dựa trên global SearchHistory + view signals).
@@ -44,7 +48,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.HighAspectQuality);
 
         /// <summary>
         /// Các khoảng giá phổ biến hiện nay (dựa trên supply Properties đã approved + available, optional demand từ searches).

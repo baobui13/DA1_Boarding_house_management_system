@@ -108,27 +108,30 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.PersonalMatch)
         {
             // Giữ nguyên hành vi cũ (có thể personalize nếu có user) + hỗ trợ aspect boost từ search
-            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts);
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts, recommendationMode);
         }
 
         public async Task<PropertyListResponse> GetRecommendedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.PersonalMatch)
         {
-            // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize (mặc định PersonalMatch) + aspect boost từ search hiện tại
-            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts);
+            // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize + mode từ client
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts, recommendationMode);
         }
 
         public async Task<PropertyListResponse> GetMostViewedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.HighAspectQuality)
         {
             // Lấy view counts toàn cục (giới hạn candidates)
             var viewCounts = await _propertyRepository.GetPropertyViewCountsAsync(filter, maxCandidates: 300);
@@ -152,8 +155,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                         preference: null,
                         userPositiveAspects: null,
                         userNegativeAspects: null,
-                        mode: RecommendationMode.HighAspectQuality,   // MostViewed ưu tiên chất lượng aspect cao
-                        searchAspectBoosts: searchAspectBoosts,       // hỗ trợ boost theo aspect user đang search
+                        mode: recommendationMode,
+                        searchAspectBoosts: searchAspectBoosts,
                         userId: null)
                 })
                 .OrderByDescending(x => x.ViewCount * 1.0 + x.Score * 0.6)
@@ -183,7 +186,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.HighAspectQuality)
         {
             // 1. Lấy global recent searches (không per-user) để trích xuất trending terms.
             // (Sử dụng direct context vì repo hiện tại tập trung vào per-user recent.)
@@ -285,7 +289,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     preference: null,
                     userPositiveAspects: null,
                     userNegativeAspects: null,
-                    mode: RecommendationMode.HighAspectQuality,
+                    mode: recommendationMode,
                     searchAspectBoosts: searchAspectBoosts,
                     userId: null);
 
@@ -363,7 +367,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntitySort<Property> sort,
             EntityPage page,
             bool personalizeIfPossible,
-            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
+            RecommendationMode recommendationMode = RecommendationMode.PersonalMatch)
         {
             var userId = GetCurrentUserId();
 
@@ -394,7 +399,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                                 preference: null,
                                 userPositiveAspects: null,
                                 userNegativeAspects: null,
-                                mode: RecommendationMode.Balanced,
+                                mode: recommendationMode,
                                 searchAspectBoosts: searchAspectBoosts,
                                 userId: null)
                         })
@@ -437,8 +442,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 }
                 catch { /* non-fatal for recs */ }
 
-                // Mặc định dùng PersonalMatch (có thể sau này nhận từ query param)
-                var mode = RecommendationMode.PersonalMatch;
+                // Dùng mode từ client (hoặc mặc định PersonalMatch nếu không truyền)
+                var mode = recommendationMode;
 
                 // Tính điểm + re-rank bằng Scoring Engine mới (tách biệt, hỗ trợ nhiều mode)
                 // searchAspectBoosts từ lần search hiện tại được truyền vào → property có điểm aspect cao theo user vừa chọn sẽ được đẩy lên
