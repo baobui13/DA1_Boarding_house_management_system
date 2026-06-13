@@ -7,6 +7,7 @@ using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
+using System.Collections.Generic;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -42,9 +43,11 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null)   // User điền thêm aspect khi search, ví dụ: ?boostAspect=Wifi&boostAspect=Noise
         {
-            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
 
@@ -52,10 +55,13 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetRecommendedProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null)
         {
             // Personalized recommendations (dựa trên lịch sử cá nhân của user hiện tại)
-            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page);
+            // + aspect user vừa chọn khi search/filter sẽ được boost mạnh
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
 
@@ -64,9 +70,11 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetMostViewedProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null)
         {
-            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
 
@@ -75,10 +83,37 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetTrendingProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null)
         {
-            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
+        }
+
+        /// <summary>
+        /// Parse query param boostAspect=Wifi&boostAspect=Landlord thành dictionary để scorer dùng.
+        /// Mặc định boost factor = 1.6 (có thể sau nâng cấp cho phép chỉ định weight).
+        /// </summary>
+        private static IDictionary<ReviewAspect, double>? ParseAspectBoosts(string[]? boostAspects)
+        {
+            if (boostAspects == null || boostAspects.Length == 0)
+                return null;
+
+            var result = new Dictionary<ReviewAspect, double>();
+            const double defaultBoost = 1.6;
+
+            foreach (var aspStr in boostAspects)
+            {
+                if (string.IsNullOrWhiteSpace(aspStr)) continue;
+                if (Enum.TryParse<ReviewAspect>(aspStr, ignoreCase: true, out var aspect))
+                {
+                    if (!result.ContainsKey(aspect))
+                        result[aspect] = defaultBoost;
+                }
+            }
+
+            return result.Count > 0 ? result : null;
         }
 
         [AllowAnonymous]

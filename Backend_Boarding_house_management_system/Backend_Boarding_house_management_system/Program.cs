@@ -85,6 +85,9 @@ builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection(
 // Bind cấu hình ABSA Python service (two-head model)
 builder.Services.Configure<AspectAnalysisOptions>(builder.Configuration.GetSection("AspectAnalysis"));
 
+// Bind cấu hình Recommendation Scoring Engine (Hướng 1 - nhiều Profile/Mode)
+builder.Services.Configure<RecommendationOptions>(builder.Configuration.GetSection(RecommendationOptions.SectionName));
+
 // Đăng ký cấu hình authentication bằng extension
 builder.Services.AddAuthenticationServices(builder.Configuration);
 

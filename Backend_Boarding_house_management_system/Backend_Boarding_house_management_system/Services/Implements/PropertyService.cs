@@ -3,10 +3,12 @@ using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
+using Backend_Boarding_house_management_system.Options;
 using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -29,6 +31,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IViewHistoryRepository _viewHistoryRepository;
         private readonly ISearchHistoryRepository _searchHistoryRepository;
         private readonly IPhotoService _photoService;
+        private readonly IPropertyScorer _propertyScorer;
 
         public PropertyService(
             AppDbContext context,
@@ -39,7 +42,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             IHttpContextAccessor httpContextAccessor,
             IViewHistoryRepository viewHistoryRepository,
             ISearchHistoryRepository searchHistoryRepository,
-            IPhotoService photoService)
+            IPhotoService photoService,
+            IPropertyScorer propertyScorer)
         {
             _context = context;
             _propertyRepository = propertyRepository;
@@ -50,6 +54,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             _viewHistoryRepository = viewHistoryRepository;
             _searchHistoryRepository = searchHistoryRepository;
             _photoService = photoService;
+            _propertyScorer = propertyScorer;
         }
 
         public async Task<PropertyResponse> GetPropertyByIdAsync(GetPropertyByIdRequest request)
@@ -102,25 +107,28 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         public async Task<PropertyListResponse> GetPropertiesByFilterAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page)
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
         {
-            // Giữ nguyên hành vi cũ (có thể personalize nếu có user)
-            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
+            // Giữ nguyên hành vi cũ (có thể personalize nếu có user) + hỗ trợ aspect boost từ search
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts);
         }
 
         public async Task<PropertyListResponse> GetRecommendedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page)
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
         {
-            // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize
-            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true);
+            // Dedicated endpoint for explicit "đề cử" – luôn cố gắng personalize (mặc định PersonalMatch) + aspect boost từ search hiện tại
+            return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts);
         }
 
         public async Task<PropertyListResponse> GetMostViewedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page)
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
         {
             // Lấy view counts toàn cục (giới hạn candidates)
             var viewCounts = await _propertyRepository.GetPropertyViewCountsAsync(filter, maxCandidates: 300);
@@ -128,7 +136,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (viewCounts.Count == 0)
             {
                 // Fallback: trả về list thường nếu chưa có view history
-                return await GetPropertiesByFilterAsync(filter, sort, page);
+                return await GetPropertiesByFilterAsync(filter, sort, page, searchAspectBoosts);
             }
 
             // Lấy candidates (giới hạn) rồi sort theo view count desc + secondary CreatedAt
@@ -139,11 +147,16 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 {
                     Property = p,
                     ViewCount = viewCounts.TryGetValue(p.Id, out var c) ? c : 0,
-                    AspectQuality = p.PropertyAspectScores?.Any() == true 
-                        ? p.PropertyAspectScores.Average(s => (double)s.WeightedScore) 
-                        : 40.0   // default neutral
+                    Score = _propertyScorer.CalculateScore(
+                        p,
+                        preference: null,
+                        userPositiveAspects: null,
+                        userNegativeAspects: null,
+                        mode: RecommendationMode.HighAspectQuality,   // MostViewed ưu tiên chất lượng aspect cao
+                        searchAspectBoosts: searchAspectBoosts,       // hỗ trợ boost theo aspect user đang search
+                        userId: null)
                 })
-                .OrderByDescending(x => x.ViewCount * 1.0 + x.AspectQuality * 0.8)  // phối hợp view count + property ABSA score
+                .OrderByDescending(x => x.ViewCount * 1.0 + x.Score * 0.6)
                 .ThenByDescending(x => x.Property.CreatedAt)
                 .ToList();
 
@@ -169,7 +182,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         public async Task<PropertyListResponse> GetTrendingPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page)
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
         {
             // 1. Lấy global recent searches (không per-user) để trích xuất trending terms.
             // (Sử dụng direct context vì repo hiện tại tập trung vào per-user recent.)
@@ -265,13 +279,17 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 if (viewCounts.TryGetValue(p.Id, out var vc))
                     score += Math.Min(vc * 1.5, 30);
 
-                // === Property ABSA score (global, từ tất cả tenant ratings) ===
-                // Đảm bảo property có WeightedScore cao được đẩy lên, ngay cả cho anonymous load danh sách.
-                if (p.PropertyAspectScores?.Any() == true)
-                {
-                    var avgAspect = p.PropertyAspectScores.Average(s => (double)s.WeightedScore);
-                    score += (avgAspect - 40) * 0.9;   // global aspect weight cao trong trending
-                }
+                // === Sử dụng Scoring Engine (HighAspectQuality + global bias) + search aspect boosts ===
+                double aspectScore = _propertyScorer.CalculateScore(
+                    p,
+                    preference: null,
+                    userPositiveAspects: null,
+                    userNegativeAspects: null,
+                    mode: RecommendationMode.HighAspectQuality,
+                    searchAspectBoosts: searchAspectBoosts,
+                    userId: null);
+
+                score += (aspectScore - 10) * 0.75;   // bias global aspect chất lượng cao cho trending
 
                 return new { Property = p, Score = score };
             })
@@ -344,7 +362,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
             EntityPage page,
-            bool personalizeIfPossible)
+            bool personalizeIfPossible,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null)
         {
             var userId = GetCurrentUserId();
 
@@ -358,8 +377,34 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!personalizeIfPossible || string.IsNullOrEmpty(userId))
             {
                 // Giữ nguyên hành vi cũ hoàn toàn cho anonymous hoặc khi không personalize
+                // Vẫn hỗ trợ searchAspectBoosts từ query hiện tại (boost theo aspect user vừa chọn)
                 var (items, _) = await _propertyRepository.GetByFilterAsync(filter, sort, page);
                 finalItems = items.ToList();
+
+                // Nếu có aspect boosts từ search, re-rank nhẹ bằng scorer (không có lịch sử cá nhân)
+                if (searchAspectBoosts != null && searchAspectBoosts.Any())
+                {
+                    var candidates = items.ToList();
+                    var scoredAnonymous = candidates
+                        .Select(p => new
+                        {
+                            Property = p,
+                            Score = _propertyScorer.CalculateScore(
+                                p,
+                                preference: null,
+                                userPositiveAspects: null,
+                                userNegativeAspects: null,
+                                mode: RecommendationMode.Balanced,
+                                searchAspectBoosts: searchAspectBoosts,
+                                userId: null)
+                        })
+                        .OrderByDescending(x => x.Score)
+                        .ThenByDescending(x => x.Property.CreatedAt)
+                        .Select(x => x.Property)
+                        .ToList();
+
+                    finalItems = scoredAnonymous;
+                }
             }
             else
             {
@@ -370,24 +415,39 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 var candidates = (await _propertyRepository.GetFilteredCandidatesForRecAsync(filter, maxCandidates: 200)).ToList();
 
                 // ABSA aspect interests: direct positive ratings (strong) + from view history (via pref.AspectInterests)
-                HashSet<ReviewAspect> userLikedAspects = new HashSet<ReviewAspect>(pref.AspectInterests);
+                HashSet<ReviewAspect> userPositiveAspects = new HashSet<ReviewAspect>(pref.AspectInterests);
+                HashSet<ReviewAspect> userNegativeAspects = new HashSet<ReviewAspect>();
+
                 try
                 {
-                    // Direct from user's positive ratings (strongest personal signal, merge with viewed)
-                    var directLiked = await _context.RatingAspects
+                    // Direct from user's ratings (strongest personal signal)
+                    var userRatings = await _context.RatingAspects
                         .AsNoTracking()
-                        .Where(ra => ra.Rating.TenantId == userId && ra.Sentiment == RatingAttitude.Positive)
-                        .Select(ra => ra.Aspect)
-                        .Distinct()
-                        .Take(5)
+                        .Where(ra => ra.Rating.TenantId == userId)
+                        .Select(ra => new { ra.Aspect, ra.Sentiment })
                         .ToListAsync();
-                    foreach (var a in directLiked) userLikedAspects.Add(a);
+
+                    foreach (var r in userRatings)
+                    {
+                        if (r.Sentiment == RatingAttitude.Positive)
+                            userPositiveAspects.Add(r.Aspect);
+                        else if (r.Sentiment == RatingAttitude.Negative)
+                            userNegativeAspects.Add(r.Aspect);
+                    }
                 }
                 catch { /* non-fatal for recs */ }
 
-                // Tính điểm + re-rank
+                // Mặc định dùng PersonalMatch (có thể sau này nhận từ query param)
+                var mode = RecommendationMode.PersonalMatch;
+
+                // Tính điểm + re-rank bằng Scoring Engine mới (tách biệt, hỗ trợ nhiều mode)
+                // searchAspectBoosts từ lần search hiện tại được truyền vào → property có điểm aspect cao theo user vừa chọn sẽ được đẩy lên
                 var scored = candidates
-                    .Select(p => new { Property = p, Score = ComputeRelevanceScore(p, pref, userId, userLikedAspects) })
+                    .Select(p => new
+                    {
+                        Property = p,
+                        Score = _propertyScorer.CalculateScore(p, pref, userPositiveAspects, userNegativeAspects, mode, searchAspectBoosts, userId)
+                    })
                     .OrderByDescending(x => x.Score)
                     // Secondary: ưu tiên mới tạo nếu score ngang nhau (có thể mở rộng dùng sort nếu cần)
                     .ThenByDescending(x => x.Property.CreatedAt)
@@ -672,16 +732,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             await _context.SaveChangesAsync();
         }
 
-        /// <summary>
-        /// Preference được xây từ lịch sử xem + tìm kiếm gần đây của user.
-        /// </summary>
-        private record UserPreference(
-            HashSet<string> AreaIds,
-            decimal? PriceMean,
-            decimal? PriceMin,
-            decimal? PriceMax,
-            HashSet<string> AmenityIds,
-            HashSet<ReviewAspect> AspectInterests);
+        // UserPreference record đã được di chuyển sang IPropertyScorer.cs (public)
+        // để scorer và service dùng chung. (Hướng 1)
 
         private async Task<UserPreference> BuildUserPreferenceAsync(string userId)
         {
@@ -772,95 +824,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             decimal? effectiveMax = priceMax ?? (prices.Count > 0 ? prices.Max() : null);
 
             return new UserPreference(areaIds, priceMean, effectiveMin, effectiveMax, amenityIds, aspectInterests);
-        }
-
-        private double ComputeRelevanceScore(Property property, UserPreference pref, string? userId = null, HashSet<ReviewAspect>? userLikedAspects = null)
-        {
-            bool isLoggedIn = !string.IsNullOrEmpty(userId);
-
-            // === Linh hoạt trọng số theo trạng thái đăng nhập ===
-            // Mục tiêu: 
-            // - Chưa login: personal history weight = 0, đẩy global history + đặc biệt là PropertyAspectScore (ABSA) cao hơn để property có score cao nổi lên.
-            // - Đã login: đẩy personal SearchHistory + ViewHistory cao, nhưng vẫn giữ PropertyAspectScore có trọng số mạnh để property chất lượng cao (từ rating AI) thường xuất hiện sớm.
-            double wPersonalHistory = isLoggedIn ? 1.0 : 0.0;
-            double wGlobalHistory   = isLoggedIn ? 0.55 : 1.1;
-            double wPropertyAspect  = isLoggedIn ? 1.6 : 2.8;   // cao để đảm bảo property có WeightedScore cao thường đứng trên
-
-            if (pref == null && isLoggedIn)
-                return 0;
-
-            double score = 10; // base
-
-            // === History signals (area, price, amenity) từ pref ===
-            // pref chứa tín hiệu từ ViewHistory (personal) + SearchHistory (personal của user hiện tại)
-            // Khi anonymous (pref rỗng hoặc gọi với pref=null), các contribution này sẽ gần như 0 nhờ wPersonalHistory=0.
-
-            double historyContribution = 0;
-
-            // Area match
-            if (!string.IsNullOrEmpty(property.AreaId) && pref != null && pref.AreaIds.Contains(property.AreaId))
-                historyContribution += 35;
-
-            // Price fit
-            if (pref != null && (pref.PriceMean.HasValue || (pref.PriceMin.HasValue && pref.PriceMax.HasValue)))
-            {
-                decimal target = pref.PriceMean ?? ((pref.PriceMin!.Value + pref.PriceMax!.Value) / 2);
-                decimal distance = Math.Abs(property.Price - target);
-                decimal tolerance = Math.Max(300_000, target * 0.25m);
-                double priceFit = Math.Max(0, 1 - (double)(distance / tolerance));
-                historyContribution += priceFit * 28;
-            }
-
-            // Amenity overlap
-            if (pref != null)
-            {
-                int matchCount = 0;
-                foreach (var ra in property.RoomAmenities)
-                {
-                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
-                        pref.AmenityIds.Contains(ra.AmenityId))
-                        matchCount++;
-                }
-                if (matchCount > 0)
-                    historyContribution += Math.Min(matchCount * 6, 22);
-            }
-
-            // Áp dụng trọng số cho history
-            score += historyContribution * (wPersonalHistory * 0.85 + wGlobalHistory * 0.15); 
-            // Phần lớn history đến từ personal view/search của user (trong pref), global được mix nhẹ.
-
-            // === Property Aspect Score (ABSA) - trọng số cao, linh hoạt ===
-            // Sử dụng WeightedScore (0-100) từ PropertyAspectScore.
-            // Personal match (nếu user có liked aspects từ rating/view history) + Global quality.
-            // Trọng số wPropertyAspect được đẩy cao khi chưa login để property "có score cao" nổi bật.
-            var liked = userLikedAspects ?? new HashSet<ReviewAspect>();
-            double aspectContribution = 0;
-
-            if (property.PropertyAspectScores != null && property.PropertyAspectScores.Any())
-            {
-                var avgWeighted = property.PropertyAspectScores.Average(s => (double)s.WeightedScore);
-                aspectContribution += avgWeighted * 0.65;   // base global quality
-
-                // Personal aspect match (chỉ có khi logged + có data từ rating/view)
-                if (liked.Count > 0)
-                {
-                    double personalAspectBonus = 0;
-                    foreach (var pas in property.PropertyAspectScores)
-                    {
-                        if (liked.Contains(pas.Aspect) && pas.WeightedScore > 50)
-                        {
-                            personalAspectBonus += (double)pas.WeightedScore / 6.5;
-                        }
-                    }
-                    aspectContribution += personalAspectBonus * 0.9;
-                }
-            }
-
-            score += aspectContribution * wPropertyAspect;
-
-            // Final score - không clamp chặt để aspect score cao (80-100+) có ảnh hưởng lớn đến thứ tự.
-            // OrderByDescending sẽ tự nhiên đẩy property có aspect score cao lên trước.
-            return Math.Max(0, score);
         }
 
         private string? GetCurrentUserId()

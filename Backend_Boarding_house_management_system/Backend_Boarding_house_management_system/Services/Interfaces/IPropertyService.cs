@@ -15,15 +15,18 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<PropertyListResponse> GetPropertiesByFilterAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page);
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
 
         /// <summary>
         /// Danh sách được ưu tiên đề cử theo lịch sử xem/tìm kiếm của user hiện tại (nếu đã đăng nhập).
+        /// Hỗ trợ thêm aspect boosts từ search hiện tại.
         /// </summary>
         Task<PropertyListResponse> GetRecommendedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page);
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
 
         /// <summary>
         /// Danh sách phòng được xem nhiều nhất (global popularity từ ViewHistory, có thể filter thêm).
@@ -31,7 +34,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<PropertyListResponse> GetMostViewedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page);
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
 
         /// <summary>
         /// Danh sách trending / được tìm kiếm nhiều nhất (dựa trên global SearchHistory + view signals).
@@ -39,7 +43,8 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<PropertyListResponse> GetTrendingPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,
-            EntityPage page);
+            EntityPage page,
+            IDictionary<ReviewAspect, double>? searchAspectBoosts = null);
 
         /// <summary>
         /// Các khoảng giá phổ biến hiện nay (dựa trên supply Properties đã approved + available, optional demand từ searches).

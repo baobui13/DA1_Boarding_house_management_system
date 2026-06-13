@@ -2,6 +2,7 @@ using Backend_Boarding_house_management_system.Repositories.Interfaces;
 using Backend_Boarding_house_management_system.Repositories.Implements;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Backend_Boarding_house_management_system.Services.Implements;
+using Backend_Boarding_house_management_system.Services.Implements.Recommendation;
 
 namespace Backend_Boarding_house_management_system.Extensions
 {
@@ -60,6 +61,9 @@ namespace Backend_Boarding_house_management_system.Extensions
             services.AddScoped<IRatingRepository, RatingRepository>();
             services.AddScoped<IRatingService, RatingService>();
             services.AddScoped<IAspectAnalysisService, AspectAnalysisService>();
+
+            // Recommendation Scoring Engine (Hướng 1 - tách biệt scoring + hỗ trợ nhiều Profile/Mode)
+            services.AddScoped<IPropertyScorer, ProfileBasedPropertyScorer>();
 
             // Named HttpClient for the external Python ABSA (two-head PhoBERT) microservice.
             // Actual timeout + base address logic lives in AspectAnalysisService (uses IOptions + per-request timeout).
