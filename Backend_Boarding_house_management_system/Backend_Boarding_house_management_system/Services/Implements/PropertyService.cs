@@ -808,6 +808,49 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                         }
                     }
 
+                    // === MỚI: Parse aspect boosts từ lịch sử search (để recommendation ưu tiên aspect user từng search) ===
+                    // Hỗ trợ 2 format phổ biến:
+                    // "aspectBoosts": { "Wifi": 1.6, "Noise": 1.6 }
+                    // hoặc "boostAspects": ["Wifi", "Noise"] hoặc "preferredAspects"
+                    try
+                    {
+                        JsonElement aspectNode = default;
+                        bool hasAspectNode = false;
+
+                        if (root.TryGetProperty("aspectBoosts", out aspectNode) && aspectNode.ValueKind == JsonValueKind.Object)
+                            hasAspectNode = true;
+                        else if (root.TryGetProperty("boostAspects", out aspectNode) && aspectNode.ValueKind == JsonValueKind.Array)
+                            hasAspectNode = true;
+                        else if (root.TryGetProperty("preferredAspects", out aspectNode) && aspectNode.ValueKind == JsonValueKind.Array)
+                            hasAspectNode = true;
+
+                        if (hasAspectNode)
+                        {
+                            if (aspectNode.ValueKind == JsonValueKind.Object)
+                            {
+                                foreach (var prop in aspectNode.EnumerateObject())
+                                {
+                                    if (Enum.TryParse<ReviewAspect>(prop.Name, ignoreCase: true, out var asp))
+                                    {
+                                        aspectInterests.Add(asp);
+                                    }
+                                }
+                            }
+                            else if (aspectNode.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var el in aspectNode.EnumerateArray())
+                                {
+                                    if (el.ValueKind == JsonValueKind.String &&
+                                        Enum.TryParse<ReviewAspect>(el.GetString(), ignoreCase: true, out var asp))
+                                    {
+                                        aspectInterests.Add(asp);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { /* ignore bad aspect data in history */ }
+
                     // sizeMin/sizeMax cũng có thể parse tương tự nếu cần mở rộng
                 }
                 catch

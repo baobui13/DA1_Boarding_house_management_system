@@ -1,5 +1,6 @@
 using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
+using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,8 @@ using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -17,9 +20,17 @@ namespace Backend_Boarding_house_management_system.Controllers
     public class PropertyController : ControllerBase
     {
         private readonly IPropertyService _propertyService;
-        public PropertyController(IPropertyService propertyService)
+        private readonly ISearchHistoryService _searchHistoryService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public PropertyController(
+            IPropertyService propertyService,
+            ISearchHistoryService searchHistoryService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _propertyService = propertyService;
+            _searchHistoryService = searchHistoryService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [AllowAnonymous]
@@ -47,6 +58,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] string[]? boostAspect = null)   // User điền thêm aspect khi search, ví dụ: ?boostAspect=Wifi&boostAspect=Noise
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
             var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
@@ -61,6 +73,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             // Personalized recommendations (dựa trên lịch sử cá nhân của user hiện tại)
             // + aspect user vừa chọn khi search/filter sẽ được boost mạnh
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
             var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
@@ -74,6 +87,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] string[]? boostAspect = null)
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
             var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
@@ -87,6 +101,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] string[]? boostAspect = null)
         {
             var aspectBoosts = ParseAspectBoosts(boostAspect);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
             var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page, aspectBoosts);
             return Ok(properties);
         }
@@ -114,6 +129,59 @@ namespace Backend_Boarding_house_management_system.Controllers
             }
 
             return result.Count > 0 ? result : null;
+        }
+
+        /// <summary>
+        /// Tự động ghi nhận vào SearchHistory khi user thực hiện search có boostAspect.
+        /// Điều này đảm bảo lịch sử search chứa thông tin aspect boost để BuildUserPreferenceAsync
+        /// và recommendation sau này có thể tận dụng (kết hợp với aspect từ rating).
+        /// </summary>
+        private async Task LogAspectBoostSearchIfAuthenticatedAsync(string[]? boostAspect)
+        {
+            if (boostAspect == null || boostAspect.Length == 0)
+                return;
+
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            try
+            {
+                var boostList = new List<string>();
+                var aspectBoostsObj = new Dictionary<string, double>();
+
+                foreach (var asp in boostAspect)
+                {
+                    if (!string.IsNullOrWhiteSpace(asp))
+                    {
+                        boostList.Add(asp);
+                        aspectBoostsObj[asp] = 1.6;
+                    }
+                }
+
+                if (boostList.Count == 0)
+                    return;
+
+                var filtersJson = JsonSerializer.Serialize(new
+                {
+                    boostAspects = boostList,
+                    aspectBoosts = aspectBoostsObj,
+                    source = "propertySearchWithBoost",
+                    timestamp = DateTime.UtcNow
+                });
+
+                var request = new CreateSearchHistoryRequest
+                {
+                    UserId = userId,
+                    Filters = filtersJson
+                };
+
+                await _searchHistoryService.CreateAsync(request);
+            }
+            catch
+            {
+                // Không để lỗi ghi search history làm fail request list property
+            }
         }
 
         [AllowAnonymous]
