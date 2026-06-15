@@ -1,5 +1,6 @@
 using Backend_Boarding_house_management_system.DTOs.Property.Requests;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
+using Backend_Boarding_house_management_system.DTOs.SearchHistory.Requests;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,10 @@ using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
+using Backend_Boarding_house_management_system.Options;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -16,9 +21,17 @@ namespace Backend_Boarding_house_management_system.Controllers
     public class PropertyController : ControllerBase
     {
         private readonly IPropertyService _propertyService;
-        public PropertyController(IPropertyService propertyService)
+        private readonly ISearchHistoryService _searchHistoryService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public PropertyController(
+            IPropertyService propertyService,
+            ISearchHistoryService searchHistoryService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _propertyService = propertyService;
+            _searchHistoryService = searchHistoryService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [AllowAnonymous]
@@ -43,10 +56,15 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] string? landlordId,
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             if (!string.IsNullOrEmpty(landlordId)) filter.Add(x => x.LandlordId, "==" + landlordId);
-            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
+            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -54,10 +72,16 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetRecommendedProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
             // Personalized recommendations (dựa trên lịch sử cá nhân của user hiện tại)
-            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page);
+            // + aspect user vừa chọn khi search/filter sẽ được boost mạnh
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
+            var properties = await _propertyService.GetRecommendedPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -66,9 +90,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetMostViewedProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
-            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
+            var properties = await _propertyService.GetMostViewedPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
         }
 
@@ -77,10 +106,109 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<ActionResult<PropertyListResponse>> GetTrendingProperties(
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string[]? boostAspect = null,
+            [FromQuery] string? recommendationMode = null)
         {
-            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page);
+            var aspectBoosts = ParseAspectBoosts(boostAspect);
+            var mode = ParseRecommendationMode(recommendationMode);
+            await LogAspectBoostSearchIfAuthenticatedAsync(boostAspect);
+            var properties = await _propertyService.GetTrendingPropertiesAsync(filter, sort, page, aspectBoosts, mode);
             return Ok(properties);
+        }
+
+        /// <summary>
+        /// Parse query param recommendationMode từ client thành enum.
+        /// Chấp nhận tên mode hoặc số (0=PersonalMatch, 1=HighAspectQuality,...).
+        /// Mặc định PersonalMatch nếu không truyền hoặc sai.
+        /// </summary>
+        private static RecommendationMode ParseRecommendationMode(string? modeStr)
+        {
+            if (string.IsNullOrWhiteSpace(modeStr))
+                return RecommendationMode.PersonalMatch;
+
+            if (Enum.TryParse<RecommendationMode>(modeStr, ignoreCase: true, out var mode))
+                return mode;
+
+            return RecommendationMode.PersonalMatch;
+        }
+
+        /// <summary>
+        /// Parse query param boostAspect=Wifi&boostAspect=Landlord thành dictionary để scorer dùng.
+        /// Mặc định boost factor = 1.6 (có thể sau nâng cấp cho phép chỉ định weight).
+        /// </summary>
+        private static IDictionary<ReviewAspect, double>? ParseAspectBoosts(string[]? boostAspects)
+        {
+            if (boostAspects == null || boostAspects.Length == 0)
+                return null;
+
+            var result = new Dictionary<ReviewAspect, double>();
+            const double defaultBoost = 1.6;
+
+            foreach (var aspStr in boostAspects)
+            {
+                if (string.IsNullOrWhiteSpace(aspStr)) continue;
+                if (Enum.TryParse<ReviewAspect>(aspStr, ignoreCase: true, out var aspect))
+                {
+                    if (!result.ContainsKey(aspect))
+                        result[aspect] = defaultBoost;
+                }
+            }
+
+            return result.Count > 0 ? result : null;
+        }
+
+        /// <summary>
+        /// Tự động ghi nhận vào SearchHistory khi user thực hiện search có boostAspect.
+        /// Điều này đảm bảo lịch sử search chứa thông tin aspect boost để BuildUserPreferenceAsync
+        /// và recommendation sau này có thể tận dụng (kết hợp với aspect từ rating).
+        /// </summary>
+        private async Task LogAspectBoostSearchIfAuthenticatedAsync(string[]? boostAspect)
+        {
+            if (boostAspect == null || boostAspect.Length == 0)
+                return;
+
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            try
+            {
+                var boostList = new List<string>();
+                var aspectBoostsObj = new Dictionary<string, double>();
+
+                foreach (var asp in boostAspect)
+                {
+                    if (!string.IsNullOrWhiteSpace(asp))
+                    {
+                        boostList.Add(asp);
+                        aspectBoostsObj[asp] = 1.6;
+                    }
+                }
+
+                if (boostList.Count == 0)
+                    return;
+
+                var filtersJson = JsonSerializer.Serialize(new
+                {
+                    boostAspects = boostList,
+                    aspectBoosts = aspectBoostsObj,
+                    source = "propertySearchWithBoost",
+                    timestamp = DateTime.UtcNow
+                });
+
+                var request = new CreateSearchHistoryRequest
+                {
+                    UserId = userId,
+                    Filters = filtersJson
+                };
+
+                await _searchHistoryService.CreateAsync(request);
+            }
+            catch
+            {
+                // Không để lỗi ghi search history làm fail request list property
+            }
         }
 
         [AllowAnonymous]

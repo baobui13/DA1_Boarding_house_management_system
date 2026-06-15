@@ -97,4 +97,19 @@ namespace Backend_Boarding_house_management_system.Entities
         Contract,
         Property
     }
+
+    public enum ReviewAspect
+    {
+        RoomQuality,
+        Noise,
+        Wifi,
+        Utilities,
+        Parking,
+        Security,
+        Environment,
+        Landlord,
+        Location,
+        Price,
+        Overall
+    }
 }

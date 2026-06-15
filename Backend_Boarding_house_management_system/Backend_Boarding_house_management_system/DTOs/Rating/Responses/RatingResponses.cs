@@ -1,6 +1,7 @@
 using Backend_Boarding_house_management_system.DTOs.Base;
 using Backend_Boarding_house_management_system.DTOs.Property.Responses;
 using Backend_Boarding_house_management_system.DTOs.User.Responses;
+using Backend_Boarding_house_management_system.Entities;
 
 namespace Backend_Boarding_house_management_system.DTOs.Rating.Responses
 {
@@ -23,5 +24,15 @@ namespace Backend_Boarding_house_management_system.DTOs.Rating.Responses
     {
         public UserResponse? Tenant { get; set; }
         public PropertyResponse? Property { get; set; }
+        public List<RatingAspectResponse> RatingAspects { get; set; } = new();
+    }
+
+    public class RatingAspectResponse
+    {
+        public string Id { get; set; } = null!;
+        public ReviewAspect Aspect { get; set; }
+        public RatingAttitude Sentiment { get; set; }
+        public decimal? Confidence { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

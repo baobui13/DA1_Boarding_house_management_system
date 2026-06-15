@@ -1,6 +1,7 @@
 using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Extensions;
+using Backend_Boarding_house_management_system.Options;
 using Backend_Boarding_house_management_system.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -86,6 +87,12 @@ builder.Services.AddAutoMapper(cfg =>
 // Bind cấu hình Cloudinary
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
+// Bind cấu hình ABSA Python service (two-head model)
+builder.Services.Configure<AspectAnalysisOptions>(builder.Configuration.GetSection("AspectAnalysis"));
+
+// Bind cấu hình Recommendation Scoring Engine (Hướng 1 - nhiều Profile/Mode)
+builder.Services.Configure<RecommendationOptions>(builder.Configuration.GetSection(RecommendationOptions.SectionName));
+
 // Đăng ký cấu hình authentication bằng extension
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
@@ -107,6 +114,9 @@ await app.CheckDatabaseConnectionAsync();
 
 // Kiểm tra kết nối tới Cloudinary khi ứng dụng khởi động
 await app.CheckCloudinaryConnectionAsync();
+
+// Kiểm tra kết nối tới Python ABSA microservice (non-fatal — keyword fallback exists)
+await app.CheckAspectAnalysisConnectionAsync();
 
 // Kiểm tra kết nối tới các dịch vụ authentication (JWT, Google, Facebook) khi ứng dụng khởi động
 app.CheckAuthenticationConnections();

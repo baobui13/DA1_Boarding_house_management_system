@@ -35,5 +35,7 @@ namespace Backend_Boarding_house_management_system.Entities
 
         [ForeignKey(nameof(PropertyId))]
         public Property Property { get; set; } = null!;
+
+        public ICollection<RatingAspect> RatingAspects { get; set; } = new List<RatingAspect>();
     }
 }

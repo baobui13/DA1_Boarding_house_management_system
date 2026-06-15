@@ -23,6 +23,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly IPropertyRepository _propertyRepository;
         private readonly IMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAspectAnalysisService _aspectAnalysisService;
 
         public RatingService(
             AppDbContext context,
@@ -30,7 +31,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             IUserRepository userRepository,
             IPropertyRepository propertyRepository,
             IMapper mapper,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IAspectAnalysisService aspectAnalysisService)
         {
             _context = context;
             _ratingRepository = ratingRepository;
@@ -38,6 +40,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             _propertyRepository = propertyRepository;
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
+            _aspectAnalysisService = aspectAnalysisService;
         }
 
         public async Task<RatingResponse> GetRatingByIdAsync(GetRatingByIdRequest request)
@@ -101,10 +104,34 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             rating.Id = Guid.NewGuid().ToString();
             rating.CreatedAt = DateTime.UtcNow;
 
+            // Server-side ABSA (tối ưu luồng):
+            // - Gọi mô hình Two-Head (Python FastAPI) để phân tích review thành các (Aspect, Sentiment, Confidence).
+            // - Tạo RatingAspect entities.
+            // - Trong transaction: lưu Rating + RatingAspects → RecalculatePropertyAspectScores (cập nhật counts + WeightedScore).
+            // - Luôn có fallback keyword nếu model service chậm/lỗi (đảm bảo không block tạo rating).
+            // - Phối hợp: dữ liệu này sau đó được dùng trong recommendation (xem PropertyService).
+            var analyzed = await _aspectAnalysisService.AnalyzeReviewAspectsAsync(request.Content, request.Stars);
+            var ratingAspects = analyzed.Select(a => new RatingAspect
+            {
+                Id = Guid.NewGuid().ToString(),
+                RatingId = rating.Id,
+                Aspect = a.Aspect,
+                Sentiment = a.Sentiment,
+                Confidence = a.Confidence,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+
             await using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
                 await _ratingRepository.AddAsync(rating);
+
+                if (ratingAspects.Count > 0)
+                {
+                    _context.RatingAspects.AddRange(ratingAspects);
+                    await _context.SaveChangesAsync();
+                    await RecalculatePropertyAspectScoresAsync(request.PropertyId);
+                }
 
                 // Update landlord reputation (+1 on new rating)
                 if (property != null)
@@ -197,7 +224,78 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 }
             }
 
+            await RecalculatePropertyAspectScoresAsync(rating.PropertyId);
+            await _context.SaveChangesAsync();
+
             return true;
+        }
+
+        private async Task RecalculatePropertyAspectScoresAsync(string propertyId)
+        {
+            if (string.IsNullOrWhiteSpace(propertyId)) return;
+
+            var aspectGroups = await _context.RatingAspects
+                .Where(ra => ra.Rating.PropertyId == propertyId)
+                .AsNoTracking()
+                .GroupBy(ra => ra.Aspect)
+                .Select(g => new
+                {
+                    Aspect = g.Key,
+                    Pos = g.Count(x => x.Sentiment == RatingAttitude.Positive),
+                    Neg = g.Count(x => x.Sentiment == RatingAttitude.Negative),
+                    Neu = g.Count(x => x.Sentiment == RatingAttitude.Neutral)
+                })
+                .ToListAsync();
+
+            var existingScores = await _context.PropertyAspectScores
+                .Where(s => s.PropertyId == propertyId)
+                .ToListAsync();
+
+            var scoreDict = existingScores.ToDictionary(s => s.Aspect);
+            var touched = new HashSet<ReviewAspect>();
+
+            foreach (var g in aspectGroups)
+            {
+                touched.Add(g.Aspect);
+                int total = g.Pos + g.Neg + g.Neu;
+                decimal wScore = 0m;
+                if (total > 0)
+                {
+                    double raw = (g.Pos - g.Neg) / (double)total;
+                    wScore = Math.Round((decimal)((raw + 1) / 2 * 100), 2);
+                }
+
+                if (scoreDict.TryGetValue(g.Aspect, out var ent))
+                {
+                    ent.PositiveCount = g.Pos;
+                    ent.NegativeCount = g.Neg;
+                    ent.NeutralCount = g.Neu;
+                    ent.TotalCount = total;
+                    ent.WeightedScore = wScore;
+                    ent.LastUpdated = DateTime.UtcNow;
+                }
+                else
+                {
+                    var newEnt = new PropertyAspectScore
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        PropertyId = propertyId,
+                        Aspect = g.Aspect,
+                        PositiveCount = g.Pos,
+                        NegativeCount = g.Neg,
+                        NeutralCount = g.Neu,
+                        TotalCount = total,
+                        WeightedScore = wScore,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                    _context.PropertyAspectScores.Add(newEnt);
+                }
+            }
+
+            foreach (var kvp in scoreDict.Where(k => !touched.Contains(k.Key)).ToList())
+            {
+                _context.PropertyAspectScores.Remove(kvp.Value);
+            }
         }
 
         private string? GetCurrentUserId()

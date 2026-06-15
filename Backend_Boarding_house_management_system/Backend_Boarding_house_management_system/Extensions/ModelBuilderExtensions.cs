@@ -73,6 +73,21 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasConversion<string>()
                 .HasMaxLength(50);
 
+            modelBuilder.Entity<RatingAspect>()
+                .Property(ra => ra.Aspect)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<RatingAspect>()
+                .Property(ra => ra.Sentiment)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<PropertyAspectScore>()
+                .Property(pas => pas.Aspect)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+
             modelBuilder.Entity<Complaint>()
                 .Property(c => c.Status)
                 .HasConversion<string>()
@@ -250,6 +265,20 @@ namespace Backend_Boarding_house_management_system.Extensions
                 .HasForeignKey(r => r.PropertyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Rating → RatingAspect
+            modelBuilder.Entity<RatingAspect>()
+                .HasOne(ra => ra.Rating)
+                .WithMany(r => r.RatingAspects)
+                .HasForeignKey(ra => ra.RatingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Property → PropertyAspectScore
+            modelBuilder.Entity<PropertyAspectScore>()
+                .HasOne(pas => pas.Property)
+                .WithMany(p => p.PropertyAspectScores)
+                .HasForeignKey(pas => pas.PropertyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // User → Complaint
             modelBuilder.Entity<Complaint>()
                 .HasOne(c => c.Creator)
@@ -295,6 +324,14 @@ namespace Backend_Boarding_house_management_system.Extensions
             modelBuilder.Entity<Rating>()
                 .HasIndex(r => new { r.TenantId, r.PropertyId })
                 .IsUnique();
+
+            modelBuilder.Entity<RatingAspect>()
+                .HasIndex(ra => ra.RatingId);
+
+            modelBuilder.Entity<PropertyAspectScore>()
+                .HasIndex(pas => new { pas.PropertyId, pas.Aspect })
+                .IsUnique()
+                .HasDatabaseName("IX_PropertyAspectScores_PropertyId_Aspect");
 
             modelBuilder.Entity<Complaint>()
                 .HasIndex(c => c.CreatorId);

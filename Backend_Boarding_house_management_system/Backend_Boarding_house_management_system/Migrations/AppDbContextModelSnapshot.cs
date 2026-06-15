@@ -547,6 +547,49 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.ToTable("Properties");
                 });
 
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.PropertyAspectScore", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Aspect")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("LastUpdated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("NegativeCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NeutralCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PositiveCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PropertyId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("TotalCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("WeightedScore")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PropertyId", "Aspect")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PropertyAspectScores_PropertyId_Aspect");
+
+                    b.ToTable("PropertyAspectScores");
+                });
+
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.PropertyImage", b =>
                 {
                     b.Property<string>("Id")
@@ -620,6 +663,40 @@ namespace Backend_Boarding_house_management_system.Migrations
                         .IsUnique();
 
                     b.ToTable("Ratings");
+                });
+
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RatingAspect", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Aspect")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal?>("Confidence")
+                        .HasColumnType("decimal(3,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RatingId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Sentiment")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatingId");
+
+                    b.ToTable("RatingAspects");
                 });
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RefreshToken", b =>
@@ -1142,6 +1219,17 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("Landlord");
                 });
 
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.PropertyAspectScore", b =>
+                {
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
+                        .WithMany("PropertyAspectScores")
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Property");
+                });
+
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.PropertyImage", b =>
                 {
                     b.HasOne("Backend_Boarding_house_management_system.Entities.Property", "Property")
@@ -1170,6 +1258,17 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RatingAspect", b =>
+                {
+                    b.HasOne("Backend_Boarding_house_management_system.Entities.Rating", "Rating")
+                        .WithMany("RatingAspects")
+                        .HasForeignKey("RatingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rating");
                 });
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.RefreshToken", b =>
@@ -1324,6 +1423,8 @@ namespace Backend_Boarding_house_management_system.Migrations
 
                     b.Navigation("Messages");
 
+                    b.Navigation("PropertyAspectScores");
+
                     b.Navigation("PropertyImages");
 
                     b.Navigation("Ratings");
@@ -1331,6 +1432,11 @@ namespace Backend_Boarding_house_management_system.Migrations
                     b.Navigation("RoomAmenities");
 
                     b.Navigation("ViewHistories");
+                });
+
+            modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.Rating", b =>
+                {
+                    b.Navigation("RatingAspects");
                 });
 
             modelBuilder.Entity("Backend_Boarding_house_management_system.Entities.User", b =>

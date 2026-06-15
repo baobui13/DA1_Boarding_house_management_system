@@ -22,7 +22,8 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
                     .ThenInclude(ra => ra.Amenity)
                 .Include(p => p.Contracts)
                 .Include(p => p.Appointments)
-                .Include(p => p.Ratings);
+                .Include(p => p.Ratings)
+                .Include(p => p.PropertyAspectScores);
 
         protected override IQueryable<Property> GetQueryWithIncludes()
             => _dbSet.Include(p => p.Ratings);

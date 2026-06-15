@@ -16,7 +16,8 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         private IQueryable<Rating> GetDetailsQuery()
             => _dbSet
                 .Include(r => r.Tenant)
-                .Include(r => r.Property);
+                .Include(r => r.Property)
+                .Include(r => r.RatingAspects);
 
         public async Task<Rating?> GetByIdWithDetailsAsync(string id)
             => await GetDetailsQuery().FirstOrDefaultAsync(r => r.Id == id);
