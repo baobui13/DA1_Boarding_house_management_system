@@ -5,14 +5,16 @@ export interface RatingResponse {
   id: string;
   propertyId: string;
   tenantId: string;
-  score: number;
-  comment?: string | null;
+  stars: number;
+  content: string;
+  aiAttitude: string;
   createdAt: string;
   updatedAt?: string | null;
 }
 
-export async function getRatings(query: Record<string, string | number | boolean | undefined> = {}) {
+export async function getRatings(query: Record<string, string | number | boolean | undefined> = {}, token?: string) {
   return apiRequest<PagedResponse<RatingResponse>>("Rating/GetRatingsByFilter", {
+    ...(token ? { authToken: token } : {}),
     query: { pageSize: 100, ...query },
   });
 }
@@ -23,13 +25,39 @@ export async function getRatingById(id: string) {
   });
 }
 
+export interface RatingDetailResponse extends RatingResponse {
+  tenant?: {
+    id: string;
+    fullName: string;
+    email: string;
+    phoneNumber?: string;
+    avatarUrl?: string;
+  };
+  property?: {
+    id: string;
+    propertyName: string;
+    address: string;
+    price: number;
+    size: number;
+    images: string[];
+    status: string;
+  };
+}
+
+export async function getRatingDetailById(id: string) {
+  return apiRequest<RatingDetailResponse>("Rating/GetRatingDetailById", {
+    query: { id },
+  });
+}
+
 export async function createRating(
   token: string,
   input: {
     propertyId: string;
     tenantId: string;
-    score: number;
-    comment?: string | null;
+    stars: number;
+    content: string;
+    aiAttitude: string;
   },
 ) {
   return apiRequest<RatingResponse>("Rating/CreateRating", {
@@ -43,8 +71,9 @@ export async function updateRating(
   token: string,
   input: {
     id: string;
-    score?: number;
-    comment?: string | null;
+    stars?: number;
+    content?: string;
+    aiAttitude?: string;
   },
 ) {
   return apiRequest<void>("Rating/UpdateRating", {

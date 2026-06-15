@@ -10,6 +10,7 @@ import {
   Pencil,
   Check,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { createAppointment } from "../../lib/appointments";
 import { getPropertyListing, deleteProperty } from "../../lib/properties";
@@ -17,6 +18,7 @@ import { createViewHistory } from "../../lib/viewHistory";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 import { useApp } from "../../context/AppContext";
+import { RoomRatings } from "../../components/RoomRatings";
 
 export default function RoomDetailPage() {
   const { id = "" } = useParams();
@@ -250,6 +252,27 @@ export default function RoomDetailPage() {
             ))}
           </div>
 
+          {/* Landlord Info */}
+          {room.landlord && (
+            <div 
+              className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer hover:border-orange-200 transition-colors mt-6"
+              onClick={() => navigate(`/landlord-profile/${room.landlord!.id}`)}
+            >
+              <div className="flex items-center gap-4">
+                <img 
+                  src={room.landlord.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(room.landlord.fullName)} 
+                  alt={room.landlord.fullName} 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-orange-100" 
+                />
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm">{room.landlord.fullName}</h3>
+                  <p className="text-xs text-gray-500">Chủ trọ</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+          )}
+
           <div>
             <h2 className="text-gray-900 mb-3" style={{ fontSize: "17px", fontWeight: 700 }}>
               Mô tả
@@ -283,6 +306,7 @@ export default function RoomDetailPage() {
             )}
           </div>
 
+          <RoomRatings propertyId={room.id} />
         </div>
 
         <div className="lg:col-span-1">
@@ -327,6 +351,14 @@ export default function RoomDetailPage() {
                     >
                       <Calendar className="w-4.5 h-4.5" style={{ width: "18px", height: "18px" }} />
                       Đặt lịch xem phòng
+                    </button>
+                    <button
+                      onClick={() => navigate(`/messages?userId=${room.landlordId}`)}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors"
+                      style={{ fontSize: "15px", fontWeight: 600 }}
+                    >
+                      <MessageSquare className="w-4.5 h-4.5" style={{ width: "18px", height: "18px" }} />
+                      Nhắn tin cho Chủ trọ
                     </button>
                   </>
                 )}

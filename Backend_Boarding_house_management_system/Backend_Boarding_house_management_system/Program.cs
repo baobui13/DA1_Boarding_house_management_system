@@ -36,6 +36,9 @@ builder.Services.AddDatabaseServices(builder.Configuration);
 // Đăng ký các Repository và Service của ứng dụng
 builder.Services.AddApplicationRepositoriesAndServices();
 
+// Đăng ký dịch vụ nền nhắc nhở thông báo (hóa đơn & hợp đồng sắp đến hạn)
+builder.Services.AddHostedService<Backend_Boarding_house_management_system.Services.Implements.NotificationReminderBackgroundService>();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -56,6 +59,8 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+builder.Services.AddSignalR();
 
 builder.Services.AddControllers()
     .AddFilterSupport()
@@ -136,6 +141,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<Backend_Boarding_house_management_system.Hubs.ChatHub>("/chathub");
 
 app.Run();
 
@@ -147,10 +153,8 @@ static async Task SyncPropertyAvailabilityStatusesAsync(IServiceProvider service
     var occupiedPropertyIds = await db.Contracts
         .AsNoTracking()
         .Where(contract =>
-            contract.Status == ContractStatus.Active.ToString() ||
-            contract.Status == ContractStatus.NearExpiry.ToString() ||
-            contract.Status == "Signed" ||
-            contract.Status == "Approved")
+            contract.Status == ContractStatus.Active ||
+            contract.Status == ContractStatus.NearExpiry)
         .Select(contract => contract.PropertyId)
         .Distinct()
         .ToListAsync();

@@ -12,6 +12,6 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
         Task<(IEnumerable<Complaint> Items, int TotalCount)> GetByFilterWithDetailsAsync(
             EntityFilter<Complaint> filter,
             EntitySort<Complaint> sort,
-            EntityPage page);
+            EntityPage page, string? landlordId = null);
     }
 }

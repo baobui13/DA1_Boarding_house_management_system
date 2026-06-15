@@ -17,6 +17,9 @@ import {
   LayoutDashboard,
   TrendingUp,
   CalendarDays,
+  Send,
+  MessageSquare,
+  Star,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import type { Role } from "../lib/types";
@@ -30,6 +33,7 @@ const tenantNav = [
   { path: "/", label: "Trang Chủ", icon: Home },
   { path: "/search", label: "Tìm Kiếm", icon: Search },
   { path: "/tenant/dashboard", label: "Quản Lý Cá Nhân", icon: LayoutDashboard },
+  { path: "/messages", label: "Tin Nhắn", icon: MessageSquare },
 ];
 
 const landlordNav = [
@@ -39,13 +43,18 @@ const landlordNav = [
   { path: "/landlord/billing", label: "Hóa Đơn", icon: Receipt },
   { path: "/landlord/contracts", label: "Hợp Đồng", icon: FileText },
   { path: "/landlord/appointments", label: "Lịch Hẹn", icon: CalendarDays },
+  { path: "/messages", label: "Tin Nhắn", icon: MessageSquare },
 ];
 
 const adminNav = [
   { path: "/admin/users", label: "Người Dùng", icon: Users },
+  { path: "/admin/notifications/new", label: "Gửi Thông Báo", icon: Send },
   { path: "/admin/moderation", label: "Kiểm Duyệt", icon: ShieldCheck },
   { path: "/admin/approved-posts", label: "Bài Đăng", icon: Building2 },
   { path: "/admin/analytics", label: "Báo Cáo", icon: TrendingUp },
+  { path: "/admin/complaints", label: "Khiếu Nại", icon: MessageSquare },
+  { path: "/admin/ratings", label: "Đánh Giá", icon: Star },
+  { path: "/messages", label: "Tin Nhắn", icon: MessageSquare },
 ];
 
 const roleLabels: Record<Role, string> = {

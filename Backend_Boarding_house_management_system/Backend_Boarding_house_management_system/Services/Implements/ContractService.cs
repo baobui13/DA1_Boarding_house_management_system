@@ -87,14 +87,14 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             var hasActiveContract = await _context.Contracts.AnyAsync(contract =>
                 contract.PropertyId == request.PropertyId &&
-                IsOccupyingContractStatus(contract.Status));
+                IsOccupyingContractStatus(contract.Status.ToString()));
             if (hasActiveContract)
                 throw new ConflictException("Phong nay da co hop dong dang hieu luc.");
 
             var entity = _mapper.Map<Contract>(request);
             entity.Id = Guid.NewGuid().ToString();
             entity.CreatedAt = DateTime.UtcNow;
-            entity.Status = ContractStatus.Active.ToString();
+            entity.Status = ContractStatus.Active;
 
             // Transaction: ensure contract + property availability are atomic
             await using var tx = await _context.Database.BeginTransactionAsync();
@@ -109,6 +109,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 await tx.RollbackAsync();
                 throw;
             }
+
+            // Tự động tạo thông báo gửi cho khách thuê khi kích hoạt hợp đồng
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = request.TenantId,
+                Type = NotificationType.Contract,
+                Content = $"Hợp đồng thuê {property.PropertyName} đang có hiệu lực đến ngày {entity.EndDate:dd/MM/yyyy}.",
+                IsRead = false,
+                Timestamp = DateTime.UtcNow,
+                RelatedId = entity.Id
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
 
             var savedEntity = await _contractRepository.GetByIdAsync(entity.Id);
             return _mapper.Map<ContractResponse>(savedEntity);
@@ -132,8 +146,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     throw new ForbiddenException("Ban khong co quyen cap nhat hop dong nay.");
             }
 
-            var nextStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status : request.Status;
-            ValidateStatusTransition(existing.Status, nextStatus);
+            var nextStatus = string.IsNullOrWhiteSpace(request.Status) ? existing.Status.ToString() : request.Status;
+            ValidateStatusTransition(existing.Status.ToString(), nextStatus);
 
             var isActivating = IsOccupyingContractStatus(nextStatus);
             if (isActivating)
@@ -141,7 +155,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 var hasAnotherActiveContract = await _context.Contracts.AnyAsync(contract =>
                     contract.PropertyId == existing.PropertyId &&
                     contract.Id != existing.Id &&
-                    IsOccupyingContractStatus(contract.Status));
+                    IsOccupyingContractStatus(contract.Status.ToString()));
                 if (hasAnotherActiveContract)
                     throw new ConflictException("Phong nay da co hop dong dang hieu luc khac.");
             }
@@ -204,7 +218,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         {
             var blockers = new List<string>();
 
-            if (string.Equals(contract.Status, ContractStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(contract.Status.ToString(), ContractStatus.Active.ToString(), StringComparison.OrdinalIgnoreCase))
                 blockers.Add("hop dong dang hoat dong");
 
             if (await _context.Invoices.AnyAsync(x => x.ContractId == contract.Id))
@@ -230,7 +244,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             var hasOccupyingContract = await _context.Contracts.AnyAsync(contract =>
                 contract.PropertyId == propertyId &&
-                IsOccupyingContractStatus(contract.Status));
+                IsOccupyingContractStatus(contract.Status.ToString()));
 
             if (hasOccupyingContract)
             {

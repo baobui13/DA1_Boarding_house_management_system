@@ -15,6 +15,34 @@ import {
   X,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+function LocationPicker({ position, onLocationSelect }: { position: [number, number] | null; onLocationSelect: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return position ? <Marker position={position} /> : null;
+}
+
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, map.getZoom(), { animate: true });
+  }, [center[0], center[1], map]);
+  return null;
+}
 import { getAmenities } from "../../lib/amenities";
 import { createArea, getAreas, updateArea } from "../../lib/areas";
 import {
@@ -56,6 +84,8 @@ type RoomForm = {
   status: string;
   areaId: string;
   amenities: string[];
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const initialAreaForm: AreaForm = {
@@ -75,6 +105,8 @@ const initialRoomForm: RoomForm = {
   status: "Available",
   areaId: "",
   amenities: [],
+  latitude: null,
+  longitude: null,
 };
 
 export default function PropertyManagement() {
@@ -109,12 +141,12 @@ export default function PropertyManagement() {
     try {
       const [areaResponse, propertyResponse, amenityResponse] = await Promise.all([
         getAreas({ landlordId: currentUser.id, pageSize: 1000 }),
-        getPropertyListings({ landlordId: currentUser.id, pageSize: 1000 }),
+        getPropertyListings({ landlordId: currentUser.id, pageSize: 1000 }, token),
         getAmenities(),
       ]);
 
       setAreas(areaResponse.items);
-      setProperties(propertyResponse.items.filter((p) => p.moderationStatus === "Approved"));
+      setProperties(propertyResponse.items);
       setAmenityOptions(amenityResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tải được dữ liệu.");
@@ -229,6 +261,8 @@ export default function PropertyManagement() {
       status: property.status,
       areaId: property.areaId || "",
       amenities: property.amenities,
+      latitude: property.latitude ?? null,
+      longitude: property.longitude ?? null,
     });
     setRoomImages(images);
     setPendingRoomFiles([]);
@@ -315,6 +349,8 @@ export default function PropertyManagement() {
           status: roomForm.status,
           electricPrice: roomForm.electricPrice ? Number(roomForm.electricPrice) : null,
           waterPrice: roomForm.waterPrice ? Number(roomForm.waterPrice) : null,
+          latitude: roomForm.latitude,
+          longitude: roomForm.longitude,
         });
       } else {
         const created = await createProperty(token, {
@@ -328,6 +364,8 @@ export default function PropertyManagement() {
           status: roomForm.status,
           electricPrice: roomForm.electricPrice ? Number(roomForm.electricPrice) : null,
           waterPrice: roomForm.waterPrice ? Number(roomForm.waterPrice) : null,
+          latitude: roomForm.latitude,
+          longitude: roomForm.longitude,
         });
         propertyId = created.id;
       }
@@ -392,6 +430,39 @@ export default function PropertyManagement() {
     }
   };
 
+  const handleAddressGeocode = async (addressStr: string) => {
+    if (!addressStr.trim()) return;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressStr + ", Hồ Chí Minh")}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        setRoomForm(prev => ({ ...prev, latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) }));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Trình duyệt không hỗ trợ lấy vị trí hiện tại.");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setRoomForm(prev => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+      },
+      (error) => {
+        alert("Không thể lấy vị trí hiện tại. Vui lòng kiểm tra quyền truy cập vị trí.");
+        console.error(error);
+      }
+    );
+  };
+
   const toggleArea = (areaId: string) => {
     setExpandedAreas((prev) => ({ ...prev, [areaId]: !prev[areaId] }));
   };
@@ -446,9 +517,12 @@ export default function PropertyManagement() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "26px", fontWeight: 700 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Quản Lý Khu Trọ & Phòng
           </h1>
+          <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
+            Quản lý các khu trọ, phòng và trạng thái cho thuê
+          </p>
         </div>
         <button
           onClick={openAreaCreate}
@@ -580,9 +654,19 @@ export default function PropertyManagement() {
                                   <p className="truncate text-gray-900" style={{ fontSize: "18px", fontWeight: 700 }}>
                                     {property.propertyName}
                                   </p>
-                                  <p className="text-gray-400 mt-1" style={{ fontSize: "13px" }}>
-                                    {property.size}m² • {formatCurrency(property.price)}/tháng
-                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <p className="text-gray-400" style={{ fontSize: "13px" }}>
+                                      {property.size}m² • {formatCurrency(property.price)}/tháng
+                                    </p>
+                                    {property.totalRatings && property.totalRatings > 0 ? (
+                                      <div className="flex items-center gap-1 text-orange-500" style={{ fontSize: "12px", fontWeight: 600 }}>
+                                        <span className="text-gray-300">•</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                        <span>{property.averageRating?.toFixed(1)}</span>
+                                        <span className="text-gray-400 font-normal">({property.totalRatings})</span>
+                                      </div>
+                                    ) : null}
+                                  </div>
                                   <p className="text-gray-400 mt-1" style={{ fontSize: "12px", fontWeight: 600 }}>
                                     Điện: {property.electricPrice ? `${formatCurrency(property.electricPrice)}/kWh` : "Chưa đặt"} • Nước: {property.waterPrice ? `${formatCurrency(property.waterPrice)}/m³` : "Chưa đặt"}
                                   </p>
@@ -669,7 +753,46 @@ export default function PropertyManagement() {
               ...areas.map((area) => ({ value: area.id, label: area.name })),
             ]}
           />
-          <Input label="Địa chỉ" value={roomForm.address} onChange={(value) => setRoomForm((prev) => ({ ...prev, address: value }))} />
+          <div className="mb-4">
+            <div className="flex items-end gap-2 mb-2">
+              <div className="flex-1">
+                <Input 
+                  label="Địa chỉ" 
+                  value={roomForm.address} 
+                  onChange={(value) => setRoomForm((prev) => ({ ...prev, address: value }))} 
+                  onBlur={() => handleAddressGeocode(roomForm.address)}
+                />
+              </div>
+              <button 
+                type="button" 
+                onClick={handleGetCurrentLocation}
+                className="px-4 py-2.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-2xl hover:bg-blue-100 transition whitespace-nowrap"
+                style={{ fontSize: "13px", fontWeight: 600 }}
+              >
+                Vị trí hiện tại
+              </button>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-gray-200 relative z-0" style={{ height: "250px" }}>
+              <MapContainer center={roomForm.latitude && roomForm.longitude ? [roomForm.latitude, roomForm.longitude] : [10.8231, 106.6297]} zoom={12} style={{ height: "100%", width: "100%" }}>
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {roomForm.latitude && roomForm.longitude && (
+                  <MapUpdater center={[roomForm.latitude, roomForm.longitude]} />
+                )}
+                <LocationPicker 
+                  position={roomForm.latitude && roomForm.longitude ? [roomForm.latitude, roomForm.longitude] : null} 
+                  onLocationSelect={(lat, lng) => {
+                    setRoomForm(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                  }} 
+                />
+              </MapContainer>
+            </div>
+            <p className="text-gray-500 mt-1" style={{ fontSize: "12px" }}>
+              Nhập địa chỉ để tự động tìm trên bản đồ. Nếu ghim bị lệch, nhấp chuột vào bản đồ để chọn lại vị trí chính xác (địa chỉ chữ sẽ được giữ nguyên).
+            </p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Input label="Diện tích (m²)" type="number" value={roomForm.size} onChange={(value) => setRoomForm((prev) => ({ ...prev, size: value }))} />
             <Input label="Giá thuê" type="number" value={roomForm.price} onChange={(value) => setRoomForm((prev) => ({ ...prev, price: value }))} />
@@ -1052,11 +1175,13 @@ function Input({
   label,
   value,
   onChange,
+  onBlur,
   type = "text",
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   type?: string;
 }) {
   return (
@@ -1068,6 +1193,7 @@ function Input({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 bg-gray-50 focus:outline-none"
       />
     </div>

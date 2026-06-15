@@ -11,6 +11,17 @@ import { createSearchHistory } from "../../lib/searchHistory";
 import type { PropertyListing } from "../../lib/types";
 import { formatCurrency } from "../../lib/format";
 import { useApp } from "../../context/AppContext";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 const districts = ["Tất cả", "Bình Thạnh", "Quận 7", "Quận 10", "Gò Vấp", "Thủ Đức", "Quận 3", "Quận 12"];
 
@@ -507,21 +518,64 @@ export default function SearchPage() {
         </div>
 
         {viewMode === "split" && (
-          <div className="hidden lg:flex flex-1 bg-[#eef3e8] items-center justify-center p-8">
-            <div className="max-w-sm text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-sm mb-4">
-                <MapPin className="w-6 h-6 text-orange-500" />
-              </div>
-              <h3 className="text-gray-900 mb-2" style={{ fontSize: "18px", fontWeight: 700 }}>
-                Chế độ bản đồ chưa được nối
-              </h3>
-              <p className="text-gray-500" style={{ fontSize: "14px" }}>
-                Backend hiện trả danh sách tin nhưng chưa có API bản đồ hoặc geocoding đầy đủ để hiển thị map thật.
-              </p>
-            </div>
+          <div className="hidden lg:block flex-1 bg-gray-100 relative z-0">
+            <MapContainer center={[10.8231, 106.6297]} zoom={11} style={{ height: "100%", width: "100%" }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {pagedRooms.map((room) => (
+                <GeocodedMarker key={room.id} room={room} navigate={navigate} />
+              ))}
+            </MapContainer>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function GeocodedMarker({ room, navigate }: { room: PropertyListing; navigate: any }) {
+  const [position, setPosition] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (room.latitude && room.longitude) {
+      setPosition([room.latitude, room.longitude]);
+      return;
+    }
+    
+    if (room.address) {
+      // Delay call to avoid rate limit (1 request per second for Nominatim)
+      const timer = setTimeout(() => {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(room.address + ", Hồ Chí Minh")}&limit=1`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && data.length > 0) {
+              setPosition([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+            }
+          })
+          .catch((err) => console.error("Geocoding failed", err));
+      }, Math.random() * 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [room.latitude, room.longitude, room.address]);
+
+  if (!position) return null;
+
+  return (
+    <Marker position={position}>
+      <Popup>
+        <div className="w-48 cursor-pointer" onClick={() => navigate(`/rooms/${room.id}`)}>
+          <img
+            src={room.images[0] || "https://placehold.co/400x300?text=No+Image"}
+            alt={room.propertyName}
+            className="w-full h-24 object-cover rounded mb-2"
+          />
+          <h4 className="font-bold text-sm mb-1 line-clamp-1">{room.propertyName}</h4>
+          <p className="text-orange-600 font-semibold">{formatCurrency(room.price)}/tháng</p>
+        </div>
+      </Popup>
+    </Marker>
   );
 }

@@ -3,18 +3,21 @@ import type { PagedResponse } from "./types";
 
 export interface ComplaintResponse {
   id: string;
-  propertyId?: string | null;
   creatorId: string;
-  subject: string;
+  relatedType: string;
+  relatedId: string;
+  title: string;
   content: string;
   status: string;
   resolutionNote?: string | null;
+  resolvedAt?: string | null;
   createdAt: string;
   updatedAt?: string | null;
 }
 
-export async function getComplaints(query: Record<string, string | number | boolean | undefined> = {}) {
+export async function getComplaints(query: Record<string, string | number | boolean | undefined> = {}, token?: string) {
   return apiRequest<PagedResponse<ComplaintResponse>>("Complaint/GetComplaintsByFilter", {
+    ...(token ? { authToken: token } : {}),
     query: { pageSize: 100, ...query },
   });
 }
@@ -28,8 +31,10 @@ export async function getComplaintById(id: string) {
 export async function createComplaint(
   token: string,
   input: {
-    propertyId?: string | null;
-    subject: string;
+    creatorId: string;
+    relatedType: string;
+    relatedId: string;
+    title: string;
     content: string;
   },
 ) {
@@ -44,7 +49,9 @@ export async function updateComplaint(
   token: string,
   input: {
     id: string;
-    subject?: string;
+    relatedType?: string;
+    relatedId?: string;
+    title?: string;
     content?: string;
     status?: string;
     resolutionNote?: string | null;

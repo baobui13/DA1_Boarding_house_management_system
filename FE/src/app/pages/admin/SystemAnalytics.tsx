@@ -59,7 +59,7 @@ export default function SystemAnalytics() {
             if (!cancelled) setAreasCount(response.totalCount || response.items.length);
           })
           .catch((err) => nextErrors.push(toErrorMessage("Areas", err))),
-        getPropertyListings({ page: 1, pageSize: 300 })
+        getPropertyListings({ page: 1, pageSize: 300 }, token)
           .then((response) => {
             if (!cancelled) setProperties(response.items);
           })
@@ -134,9 +134,12 @@ export default function SystemAnalytics() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Báo Cáo Hệ Thống
         </h1>
+        <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
+          Tổng hợp số liệu và thống kê toàn hệ thống
+        </p>
       </div>
 
       {errors.length > 0 && (
@@ -167,9 +170,9 @@ export default function SystemAnalytics() {
         </Panel>
 
         <Panel title="Tình trạng phòng / tài sản">
-          <StatusRow label="Available" count={availableCount} tone="green" />
-          <StatusRow label="Rented" count={rentedCount} tone="blue" />
-          <StatusRow label="Unavailable" count={unavailableCount} tone="red" />
+          <StatusRow label="Đang trống" count={availableCount} tone="green" />
+          <StatusRow label="Đang thuê" count={rentedCount} tone="blue" />
+          <StatusRow label="Bảo trì" count={unavailableCount} tone="red" />
         </Panel>
       </div>
 

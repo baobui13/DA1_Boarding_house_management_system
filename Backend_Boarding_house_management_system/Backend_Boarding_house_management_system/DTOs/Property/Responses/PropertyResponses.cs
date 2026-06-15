@@ -29,6 +29,8 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
         public string? RejectionReason { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public double AverageRating { get; set; }
+        public int TotalRatings { get; set; }
     }
 
     public class PropertyListResponse : Backend_Boarding_house_management_system.DTOs.Base.PagedResponse<PropertyResponse>

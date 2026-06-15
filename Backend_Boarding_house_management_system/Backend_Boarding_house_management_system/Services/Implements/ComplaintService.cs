@@ -68,9 +68,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         public async Task<ComplaintListResponse> GetComplaintsByFilterAsync(
             EntityFilter<Complaint> filter,
             EntitySort<Complaint> sort,
-            EntityPage page)
+            EntityPage page, string? landlordId = null)
         {
-            var (complaints, totalCount) = await _complaintRepository.GetByFilterAsync(filter, sort, page);
+            var (complaints, totalCount) = await _complaintRepository.GetByFilterWithDetailsAsync(filter, sort, page, landlordId);
             var currentUserId = GetCurrentUserId();
             var isAdmin = IsCurrentUserAdmin();
 
@@ -112,7 +112,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var complaint = _mapper.Map<Complaint>(request);
             complaint.Id = Guid.NewGuid().ToString();
             complaint.CreatedAt = DateTime.UtcNow;
-            complaint.Status = "Pending";
+            complaint.Status = ComplaintStatus.Pending;
 
             await _complaintRepository.AddAsync(complaint);
 
@@ -126,7 +126,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     {
                         Id = Guid.NewGuid().ToString(),
                         UserId = prop.LandlordId,
-                        Type = "Complaint",
+                        Type = NotificationType.System,
                         Content = "Co khieu nai moi ve bat dong san cua ban.",
                         IsRead = false,
                         Timestamp = DateTime.UtcNow,
@@ -151,13 +151,13 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!isAdmin && !string.Equals(complaint.CreatorId, currentUserId, StringComparison.Ordinal))
                 throw new ForbiddenException("Ban khong co quyen cap nhat khieu nai nay.");
 
-            var relatedType = request.RelatedType ?? complaint.RelatedType;
+            var relatedType = request.RelatedType ?? complaint.RelatedType.ToString();
             var relatedId = request.RelatedId ?? complaint.RelatedId;
             await ValidateRelatedEntityAsync(relatedType, relatedId);
 
             _mapper.Map(request, complaint);
 
-            if (string.Equals(complaint.Status, "Resolved", StringComparison.OrdinalIgnoreCase) && complaint.ResolvedAt == null)
+            if (string.Equals(complaint.Status.ToString(), "Resolved", StringComparison.OrdinalIgnoreCase) && complaint.ResolvedAt == null)
             {
                 complaint.ResolvedAt = DateTime.UtcNow;
             }

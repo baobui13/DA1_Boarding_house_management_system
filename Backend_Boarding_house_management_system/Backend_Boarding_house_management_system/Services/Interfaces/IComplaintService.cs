@@ -14,7 +14,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<ComplaintListResponse> GetComplaintsByFilterAsync(
             EntityFilter<Complaint> filter,
             EntitySort<Complaint> sort,
-            EntityPage page);
+            EntityPage page, string? landlordId = null);
         Task<ComplaintResponse> CreateComplaintAsync(CreateComplaintRequest request);
         Task<bool> UpdateComplaintAsync(UpdateComplaintRequest request);
         Task<bool> DeleteComplaintAsync(DeleteComplaintRequest request);

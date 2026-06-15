@@ -8,7 +8,6 @@ import {
   Pencil,
   MapPin,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { getPropertyListings, deleteProperty } from "../../lib/properties";
@@ -32,7 +31,7 @@ export default function PendingRejectedProperties() {
       const response = await getPropertyListings({
         landlordId: currentUser.id,
         pageSize: 1000,
-      });
+      }, token);
 
       // Lọc các phòng chưa duyệt hoặc bị từ chối
       const filtered = response.items.filter(
@@ -75,15 +74,11 @@ export default function PendingRejectedProperties() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header section */}
-      <div className="flex flex-col gap-2 mb-8">
-        <div className="flex items-center gap-2 text-orange-500 font-semibold" style={{ fontSize: "13px" }}>
-          <Sparkles className="w-4 h-4" />
-          <span>BẢNG ĐIỀU KHIỂN CHỦ TRỌ</span>
-        </div>
-        <h1 className="text-gray-900" style={{ fontSize: "28px", fontWeight: 800 }}>
+      <div className="mb-8">
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Kiểm Duyệt Tin Đăng
         </h1>
-        <p className="text-gray-500" style={{ fontSize: "14px" }}>
+        <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
           Quản lý trạng thái phê duyệt của các phòng trọ/tài sản mới đăng tải hoặc cần chỉnh sửa thông tin.
         </p>
       </div>

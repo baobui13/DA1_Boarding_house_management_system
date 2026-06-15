@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Backend_Boarding_house_management_system.DTOs.Appointment.Requests;
 using Backend_Boarding_house_management_system.DTOs.Appointment.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -33,11 +34,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         [Authorize(Roles = "Landlord,Tenant,Admin")]
         [HttpGet("GetAppointmentsByFilter")]
         public async Task<ActionResult<AppointmentListResponse>> GetAppointmentsByFilter(
+            [FromQuery] string? userId,
+            [FromQuery] string? landlordId,
             [FromQuery] EntityFilter<Appointment> filter,
             [FromQuery] EntitySort<Appointment> sort,
             [FromQuery] EntityPage page)
         {
-            var response = await _appointmentService.GetAppointmentsByFilterAsync(filter, sort, page);
+            if (!string.IsNullOrEmpty(userId)) filter.Add(x => x.UserId, "==" + userId);
+            var response = await _appointmentService.GetAppointmentsByFilterAsync(filter, sort, page, landlordId);
             return Ok(response);
         }
 
@@ -53,7 +57,8 @@ namespace Backend_Boarding_house_management_system.Controllers
         [HttpPut("UpdateAppointment")]
         public async Task<IActionResult> UpdateAppointment([FromBody] UpdateAppointmentRequest request)
         {
-            await _appointmentService.UpdateAppointmentAsync(request);
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            await _appointmentService.UpdateAppointmentAsync(request, currentUserId);
             return Ok(new { message = "Cập nhật cuộc hẹn thành công." });
         }
 

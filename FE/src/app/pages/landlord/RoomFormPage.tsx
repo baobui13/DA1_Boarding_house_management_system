@@ -2,6 +2,17 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { ArrowLeft, Save, Home, MapPin, DollarSign, Maximize2, AlertTriangle, ImagePlus, Star, Trash2, Pencil } from "lucide-react";
 import { useApp } from "../../context/AppContext";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix leaflet default icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 import { getAmenities } from "../../lib/amenities";
 import { getAreas } from "../../lib/areas";
 import {
@@ -18,6 +29,15 @@ import {
   updateProperty,
 } from "../../lib/properties";
 import type { AmenityResponse, AreaResponse, PropertyImageResponse } from "../../lib/types";
+
+function LocationPicker({ position, onLocationSelect }: { position: [number, number] | null; onLocationSelect: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return position ? <Marker position={position} /> : null;
+}
 
 export default function RoomFormPage() {
   const { id } = useParams();
@@ -44,6 +64,8 @@ export default function RoomFormPage() {
     description: "",
     areaId: "",
     amenities: [] as string[],
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   useEffect(() => {
@@ -72,6 +94,8 @@ export default function RoomFormPage() {
               description: property.description || "",
               areaId: property.areaId || "",
               amenities: roomAmenities.map((item) => item.amenityName),
+              latitude: property.latitude ?? null,
+              longitude: property.longitude ?? null,
             });
           }
           // Defensive filter to this property only
@@ -212,7 +236,7 @@ export default function RoomFormPage() {
           <ArrowLeft className="w-4 h-4" />
           Quay lại danh sách tài sản
         </Link>
-        <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           {isEdit ? "Chỉnh Sửa Tin / Tài Sản" : "Tạo Tin / Tài Sản"}
         </h1>
         <p className="text-gray-500 mt-0.5" style={{ fontSize: "14px" }}>
@@ -247,10 +271,32 @@ export default function RoomFormPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Địa chỉ</label>
-                <div className="relative">
+                <div className="relative mb-2">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input name="address" value={formData.address} onChange={handleChange} className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none" />
                 </div>
+                <div className="rounded-xl overflow-hidden border border-gray-200 relative z-0" style={{ height: "250px" }}>
+                  <MapContainer center={formData.latitude && formData.longitude ? [formData.latitude, formData.longitude] : [10.8231, 106.6297]} zoom={12} style={{ height: "100%", width: "100%" }}>
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <LocationPicker 
+                      position={formData.latitude && formData.longitude ? [formData.latitude, formData.longitude] : null} 
+                      onLocationSelect={(lat, lng) => {
+                        setFormData(prev => ({ ...prev, latitude: lat, longitude: lng }));
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data && data.display_name) {
+                              setFormData(prev => ({ ...prev, address: data.display_name }));
+                            }
+                          }).catch(console.error);
+                      }} 
+                    />
+                  </MapContainer>
+                </div>
+                <p className="text-gray-500 mt-1" style={{ fontSize: "12px" }}>Nhấp vào bản đồ để chọn vị trí chính xác (địa chỉ sẽ tự động điền theo vị trí được chọn).</p>
               </div>
               <div>
                 <label className="block text-gray-700 mb-1.5" style={{ fontSize: "13px", fontWeight: 500 }}>Giá thuê</label>

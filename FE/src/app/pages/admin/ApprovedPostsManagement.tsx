@@ -58,7 +58,7 @@ export default function ApprovedPostsManagement() {
           pageNumber: 1, // Fetch larger set to support full local search and metrics or keep it paginated
           pageSize: 1000,
         }),
-        getUsers({ page: 1, pageSize: 1000 }),
+        getUsers({ page: 1, pageSize: 1000 }, token),
       ]);
 
       setPosts(propertyResponse.items);
@@ -193,7 +193,7 @@ export default function ApprovedPostsManagement() {
   const viewedLandlord = viewedPost ? usersById[viewedPost.landlordId] : null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
@@ -305,9 +305,18 @@ export default function ApprovedPostsManagement() {
                         </div>
 
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
-                          <span className="text-orange-600" style={{ fontSize: "14px", fontWeight: 700 }}>
-                            {formatCurrency(post.price)}/tháng
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-orange-600" style={{ fontSize: "14px", fontWeight: 700 }}>
+                              {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(post.price)}/tháng
+                            </span>
+                            {post.totalRatings && post.totalRatings > 0 ? (
+                              <div className="flex items-center gap-1 text-orange-500" style={{ fontSize: "12px", fontWeight: 600 }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                <span>{post.averageRating?.toFixed(1)}</span>
+                                <span className="text-gray-400 font-normal">({post.totalRatings})</span>
+                              </div>
+                            ) : null}
+                          </div>
                           <span className="text-gray-400" style={{ fontSize: "11px" }}>
                             Chủ: {landlord?.fullName || "Chưa gán"}
                           </span>
@@ -391,10 +400,11 @@ export default function ApprovedPostsManagement() {
               )}
 
               {/* Technical indicators */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <InfoCard icon={Home} label="Mã tin" value={viewedPost.id.slice(0, 8)} />
                 <InfoCard icon={Ruler} label="Diện tích" value={`${viewedPost.size} m²`} />
                 <InfoCard icon={ImageIcon} label="Số ảnh" value={`${viewedPost.images.length}`} />
+                <InfoCard icon={() => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>} label="Đánh giá" value={viewedPost.totalRatings && viewedPost.totalRatings > 0 ? `${viewedPost.averageRating?.toFixed(1)} (${viewedPost.totalRatings})` : "Chưa có"} />
               </div>
 
               {/* Cost specifications */}

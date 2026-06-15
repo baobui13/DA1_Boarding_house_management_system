@@ -77,9 +77,20 @@ function encodePropertyDescription(input: {
   return cleanDescription ? `${cleanDescription}\n\n${UTILITY_META_PREFIX}${payload}` : `${UTILITY_META_PREFIX}${payload}`;
 }
 
-export async function getProperties(query: Record<string, string | number | boolean | undefined> = {}) {
+export async function getProperties(
+  query: Record<string, string | number | boolean | undefined> = {},
+  token?: string
+) {
+  // Map frontend 'status' to backend 'availabilityStatus' for EntityFilter
+  const { status, ...restQuery } = query;
+  const apiQuery = { ...restQuery };
+  if (status) {
+    apiQuery.availabilityStatus = status;
+  }
+
   return apiRequest<PagedResponse<PropertyResponse>>("Property/GetPropertiesByFilter", {
-    query,
+    ...(token ? { authToken: token } : {}),
+    query: apiQuery,
   });
 }
 
@@ -237,11 +248,15 @@ export async function getPropertyListing(id: string): Promise<PropertyListing> {
     ...attachUtilityMeta(detail as PropertyResponse),
     images,
     amenities,
+    landlord: detail.landlord || detail.Landlord,
   };
 }
 
-export async function getPropertyListings(query: Record<string, string | number | boolean | undefined> = {}) {
-  const response = await getProperties(query);
+export async function getPropertyListings(
+  query: Record<string, string | number | boolean | undefined> = {},
+  token?: string
+) {
+  const response = await getProperties(query, token);
   const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
 
   return {
@@ -332,6 +347,8 @@ export async function createProperty(
     areaId?: string | null;
     propertyName: string;
     address?: string;
+    latitude?: number | null;
+    longitude?: number | null;
     size: number;
     description?: string;
     price: number;
@@ -363,6 +380,8 @@ export async function updateProperty(
     areaId?: string | null;
     propertyName?: string;
     address?: string;
+    latitude?: number | null;
+    longitude?: number | null;
     size?: number;
     description?: string;
     price?: number;

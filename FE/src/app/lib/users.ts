@@ -31,6 +31,13 @@ export async function getUserByEmail(email: string, token?: string) {
   });
 }
 
+export async function getUserById(id: string, token?: string) {
+  return apiRequest<UserResponse>("User/GetUserByIdOrEmail", {
+    query: { id },
+    ...(token ? { authToken: token } : {}),
+  });
+}
+
 export async function blockUser(token: string, id: string, isBlocked: boolean) {
   return apiRequest<void>("User/BlockUser", {
     method: "PUT",

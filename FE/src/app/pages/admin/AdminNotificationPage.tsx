@@ -116,7 +116,7 @@ export default function AdminNotificationPage() {
       try {
         const response = await getUsers({
           pageSize: 20,
-        });
+        }, token);
 
         // Client side filtering to match the search query (name or email or phone)
         const q = searchQuery.toLowerCase();
@@ -185,7 +185,7 @@ export default function AdminNotificationPage() {
         const response = await getUsers({
           pageSize: 5000, // Fetch a large batch to get all matching users
           role: scope === "role" ? toBackendRole(targetRole) : undefined,
-        });
+        }, token);
 
         targetUsers = response.items.map((u) => ({ id: u.id, fullName: u.fullName, email: u.email }));
 

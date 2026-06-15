@@ -137,7 +137,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 {
                     Id = Guid.NewGuid().ToString(),
                     UserId = request.ReceiverId,
-                    Type = "Message",
+                    Type = NotificationType.Message,
                     Content = "Ban co tin nhan moi.",
                     IsRead = false,
                     Timestamp = DateTime.UtcNow,
@@ -186,6 +186,61 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 throw new ForbiddenException("Ban khong co quyen xoa tin nhan nay.");
 
             await _messageRepository.DeleteAsync(request.Id);
+        }
+
+        public async Task<List<ConversationResponse>> GetConversationsAsync(string userId)
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId != userId && !IsCurrentUserAdmin())
+                throw new ForbiddenException("Ban khong co quyen xem danh sach hoi thoai nay.");
+
+            var messages = _context.Messages
+                .Where(m => m.SenderId == userId || m.ReceiverId == userId)
+                .ToList();
+
+            var groups = messages.GroupBy(m => m.SenderId == userId ? m.ReceiverId : m.SenderId);
+
+            var conversations = new List<ConversationResponse>();
+
+            foreach (var group in groups)
+            {
+                var contactId = group.Key;
+                var latestMessage = group.OrderByDescending(m => m.Timestamp).First();
+                var unreadCount = group.Count(m => m.ReceiverId == userId && !m.IsRead);
+
+                var contact = await _userRepository.GetByIdAsync(contactId);
+                if (contact == null) continue;
+
+                conversations.Add(new ConversationResponse
+                {
+                    ContactId = contact.Id,
+                    ContactName = contact.FullName,
+                    ContactAvatarUrl = contact.AvatarUrl,
+                    ContactRole = contact.Role.ToString(),
+                    LastMessage = _mapper.Map<MessageResponse>(latestMessage),
+                    UnreadCount = unreadCount
+                });
+            }
+
+            return conversations.OrderByDescending(c => c.LastMessage.Timestamp).ToList();
+        }
+
+        public async Task MarkConversationAsReadAsync(string currentUserId, string senderId)
+        {
+            var unreadMessages = _context.Messages
+                .Where(m => m.ReceiverId == currentUserId && m.SenderId == senderId && !m.IsRead)
+                .ToList();
+
+            foreach (var message in unreadMessages)
+            {
+                message.IsRead = true;
+                _context.Messages.Update(message);
+            }
+
+            if (unreadMessages.Any())
+            {
+                await _context.SaveChangesAsync();
+            }
         }
 
         private string? GetCurrentUserId()

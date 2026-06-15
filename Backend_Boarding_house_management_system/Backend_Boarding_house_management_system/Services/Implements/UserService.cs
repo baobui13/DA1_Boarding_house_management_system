@@ -46,7 +46,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
             var currentUserId = GetCurrentUserId();
             var isAdmin = IsCurrentUserAdmin();
-            if (!isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
+            
+            // Allow public access to landlord profiles, but restrict tenant profiles
+            if (user.Role != "Landlord" && !isAdmin && !string.Equals(user.Id, currentUserId, StringComparison.Ordinal))
                 throw new ForbiddenException("Ban khong co quyen xem thong tin nguoi dung nay.");
 
             return _mapper.Map<UserResponse>(user);

@@ -11,7 +11,14 @@ import {
   Receipt,
   RefreshCw,
   XCircle,
+  AlertCircle,
+  Star,
+  Pencil,
 } from "lucide-react";
+import { RatingFormModal } from "../../components/RatingFormModal";
+import { ComplaintFormModal } from "../../components/ComplaintFormModal";
+import { getComplaints, type ComplaintResponse } from "../../lib/complaints";
+import { getRatings, type RatingResponse } from "../../lib/ratings";
 import { useApp } from "../../context/AppContext";
 import { getAppointments, type AppointmentResponse } from "../../lib/appointments";
 import { getInvoices, type InvoiceResponse } from "../../lib/invoices";
@@ -25,6 +32,8 @@ const tabs = [
   { id: "viewing", label: "Lịch Xem Phòng", icon: CalendarDays },
   { id: "invoices", label: "Hóa Đơn", icon: Receipt },
   { id: "contracts", label: "Hợp Đồng", icon: FileText },
+  { id: "complaints", label: "Khiếu Nại", icon: AlertCircle },
+  { id: "ratings", label: "Đánh Giá", icon: Star },
 ] as const;
 
 type TabKey = (typeof tabs)[number]["id"];
@@ -40,6 +49,7 @@ type EnrichedContract = {
   propertyName: string;
   areaName: string;
   rentAmount: number;
+  userRating: RatingResponse | null;
 };
 
 type EnrichedInvoice = {
@@ -58,6 +68,12 @@ export default function TenantDashboard() {
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [contracts, setContracts] = useState<ContractResponse[]>([]);
+  const [complaints, setComplaints] = useState<ComplaintResponse[]>([]);
+  const [ratings, setRatings] = useState<RatingResponse[]>([]);
+  
+  const [showRatingModal, setShowRatingModal] = useState<string | null>(null);
+  const [editingRating, setEditingRating] = useState<RatingResponse | null>(null);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [propertyMeta, setPropertyMeta] = useState<Record<string, PropertyMeta>>({});
   const [recommended, setRecommended] = useState<PropertyListing[]>([]);
   const [loadingRecommended, setLoadingRecommended] = useState(false);
@@ -75,11 +91,13 @@ export default function TenantDashboard() {
     setError("");
 
     try {
-      const [appointmentResponse, invoiceResponse, contractResponse, propertyResponse, areaResponse] = await Promise.all([
+      const [appointmentResponse, invoiceResponse, contractResponse, complaintResponse, ratingResponse, propertyResponse, areaResponse] = await Promise.all([
         getAppointments(token, { userId: currentUser.id, pageSize: 1000 }),
         getInvoices(token, { pageSize: 1000 }),
         getContracts(token, { pageSize: 1000 }),
-        getPropertyListings({ page: 1, pageSize: 1000 }),
+        getComplaints({}, token),
+        getRatings({ tenantId: currentUser.id }, token),
+        getPropertyListings({ page: 1, pageSize: 1000 }, token),
         getAreas({ page: 1, pageSize: 1000 }).catch(() => ({ items: [] })),
       ]);
 
@@ -104,9 +122,14 @@ export default function TenantDashboard() {
       );
       const allProperties = [...propertyResponse.items, ...missingProperties.filter((item): item is NonNullable<typeof item> => Boolean(item))];
 
+      // Assuming Promise.all resolves in order, getComplaints is 4th (index 3), getRatings is 5th (index 4) if we added them? 
+      // Wait, let's restructure the Promise.all array properly:
+
       setAppointments(appointmentResponse.items);
       setContracts(tenantContracts);
       setInvoices(tenantInvoices);
+      setComplaints(complaintResponse.items);
+      setRatings(ratingResponse.items);
       setPropertyMeta(
         Object.fromEntries(
           allProperties.map((item) => [
@@ -177,8 +200,9 @@ export default function TenantDashboard() {
         propertyName: propertyMeta[contract.propertyId]?.name || "Phòng không xác định",
         areaName: propertyMeta[contract.propertyId]?.areaName || "Chưa rõ khu",
         rentAmount: propertyMeta[contract.propertyId]?.price || 0,
+        userRating: ratings.find(r => r.propertyId === contract.propertyId) || null,
       })),
-    [contracts, propertyMeta],
+    [contracts, propertyMeta, ratings],
   );
 
   const enrichedInvoices = useMemo<EnrichedInvoice[]>(
@@ -208,7 +232,7 @@ export default function TenantDashboard() {
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 800 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Quản Lý Cá Nhân
           </h1>
           <p className="mt-1 text-gray-500" style={{ fontSize: "14px", fontWeight: 500 }}>
@@ -423,12 +447,136 @@ export default function TenantDashboard() {
                   item={item}
                   expanded={expandedContractId === item.contract.id}
                   onToggle={() => setExpandedContractId((current) => (current === item.contract.id ? null : item.contract.id))}
+                  setShowRatingModal={setShowRatingModal}
+                  setEditingRating={setEditingRating}
                 />
               ))}
             </div>
           ) : null}
         </Section>
       ) : null}
+
+      {activeTab === "complaints" ? (
+        <Section title="Khiếu nại của bạn">
+          <div className="mb-4 flex justify-end">
+            <button
+              onClick={() => setShowComplaintModal(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-white hover:bg-orange-600 transition-colors"
+              style={{ fontSize: "14px", fontWeight: 700 }}
+            >
+              <AlertCircle className="w-4 h-4" />
+              Tạo khiếu nại mới
+            </button>
+          </div>
+          {loading ? <LoadingBlock /> : null}
+          {!loading && complaints.length === 0 ? <EmptyBlock text="Bạn chưa tạo khiếu nại nào." /> : null}
+          {!loading ? (
+            <div className="space-y-4">
+              {complaints.map((complaint) => (
+                <div key={complaint.id} className="rounded-2xl border border-gray-100 bg-white p-5">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-gray-900 font-bold">{complaint.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Mã liên quan ({complaint.relatedType}): {complaint.relatedId}
+                      </p>
+                    </div>
+                    <StatusPill tone={complaint.status.toLowerCase() === "resolved" ? "green" : complaint.status.toLowerCase() === "processing" ? "blue" : "yellow"}>
+                      {complaint.status}
+                    </StatusPill>
+                  </div>
+                  <p className="text-gray-600 text-sm">{complaint.content}</p>
+                  {complaint.resolutionNote && (
+                    <div className="mt-4 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                      <p className="text-sm text-gray-700 font-semibold mb-1">Phản hồi giải quyết:</p>
+                      <p className="text-sm text-gray-600">{complaint.resolutionNote}</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 mt-3">{formatDateTime(complaint.createdAt)}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
+
+      {activeTab === "ratings" ? (
+        <Section title="Đánh giá của bạn">
+          <div className="mb-4 text-right">
+            <button
+              onClick={() => setShowRatingModal("SELECT")}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors text-sm font-semibold"
+            >
+              <Star className="w-4 h-4 fill-current" />
+              Viết đánh giá
+            </button>
+          </div>
+          {loading ? <LoadingBlock /> : null}
+          {!loading && ratings.length === 0 ? <EmptyBlock text="Bạn chưa tạo đánh giá nào." /> : null}
+          {!loading ? (
+            <div className="space-y-4">
+              {ratings.map((rating) => (
+                <div key={rating.id} className="rounded-2xl border border-gray-100 bg-white p-5">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-gray-900 font-bold">Phòng: {propertyMeta[rating.propertyId]?.name || rating.propertyId}</h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex text-orange-400">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`w-4 h-4 ${i < rating.stars ? "fill-current" : "text-gray-200"}`} />
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setEditingRating(rating)}
+                        className="text-gray-400 hover:text-orange-500 transition-colors"
+                        title="Sửa đánh giá"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm">{rating.content}</p>
+                  <p className="text-xs text-gray-400 mt-3">{formatShortDate(rating.createdAt)}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </Section>
+      ) : null}
+
+      {showRatingModal && (
+        <RatingFormModal
+          propertyId={showRatingModal}
+          eligibleProperties={Array.from(new Set(contracts.map((c) => c.propertyId)))
+            .filter((id) => !ratings.some(r => r.propertyId === id))
+            .map((id) => ({
+              id,
+              name: propertyMeta[id]?.name || id,
+            }))}
+          onClose={() => setShowRatingModal(null)}
+          onSuccess={() => {
+            void loadData();
+          }}
+        />
+      )}
+
+      {editingRating && (
+        <RatingFormModal
+          initialData={editingRating}
+          onClose={() => setEditingRating(null)}
+          onSuccess={() => {
+            void loadData();
+          }}
+        />
+      )}
+
+      {showComplaintModal && (
+        <ComplaintFormModal
+          onClose={() => setShowComplaintModal(false)}
+          onSuccess={() => {
+            void loadData();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -706,6 +854,8 @@ function ContractCard({
   item: EnrichedContract;
   expanded: boolean;
   onToggle: () => void;
+  setShowRatingModal: (id: string) => void;
+  setEditingRating: (rating: RatingResponse) => void;
 }) {
   const progress = getContractProgress(item.contract.startDate, item.contract.endDate);
 
@@ -740,6 +890,20 @@ function ContractCard({
         >
           <Eye className="h-5 w-5" />
           {expanded ? "Ẩn hợp đồng" : "Xem hợp đồng"}
+        </button>
+        <button
+          onClick={() => {
+            if (item.userRating) {
+              setEditingRating(item.userRating);
+            } else {
+              setShowRatingModal(item.contract.propertyId);
+            }
+          }}
+          className="inline-flex items-center gap-3 rounded-2xl bg-orange-50 px-5 py-4 text-orange-600 transition-colors hover:bg-orange-100"
+          style={{ fontSize: "14px", fontWeight: 700 }}
+        >
+          <Star className="h-5 w-5" />
+          {item.userRating ? "Sửa đánh giá" : "Đánh giá phòng"}
         </button>
         <button
           onClick={() => window.print()}

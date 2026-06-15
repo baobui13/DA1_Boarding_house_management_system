@@ -25,3 +25,20 @@ export async function updateNotificationRead(token: string, id: string, isRead: 
     body: { id, isRead },
   });
 }
+
+export async function createNotification(
+  token: string,
+  body: {
+    userId: string;
+    type: string;
+    content: string;
+    relatedId?: string | null;
+  }
+) {
+  return apiRequest<NotificationResponse>("Notification/CreateNotification", {
+    method: "POST",
+    authToken: token,
+    body,
+  });
+}
+

@@ -80,6 +80,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
 
             var query = _context.Properties
+                .Include(p => p.Ratings)
                 .AsNoTracking()
                 .Where(property => property.ModerationStatus == status)
                 .OrderByDescending(property => property.CreatedAt);
@@ -252,7 +253,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 int amenityHits = 0;
                 foreach (var ra in p.RoomAmenities)
                 {
-                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                    if (string.Equals(ra.Status.ToString(), "Working", StringComparison.OrdinalIgnoreCase) &&
                         popularAmenityIds.Contains(ra.AmenityId))
                         amenityHits++;
                 }
@@ -336,10 +337,27 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             bool personalizeIfPossible)
         {
             var userId = GetCurrentUserId();
+            var isAdmin = IsCurrentUserAdmin();
+            var requestedLandlordId = _httpContextAccessor.HttpContext?.Request.Query["landlordId"].ToString();
+            var isOwnProperties = !string.IsNullOrEmpty(userId) && string.Equals(userId, requestedLandlordId, StringComparison.OrdinalIgnoreCase);
+
+            if (isAdmin || isOwnProperties)
+            {
+                var (items, dbTotalCount) = await _propertyRepository.GetByFilterWithDetailsAsync(filter, sort, page);
+                return new PropertyListResponse
+                {
+                    Items = _mapper.Map<List<PropertyResponse>>(items),
+                    TotalCount = dbTotalCount,
+                    PageNumber = (int)(page.PageNumber ?? 1),
+                    PageSize = (int)(page.PageSize ?? 10)
+                };
+            }
 
             // Tính total theo filter (không bị ảnh hưởng bởi re-rank)
             // Dùng count trực tiếp trên filter (tận dụng IQueryable của Plainquire)
             var countQuery = _context.Properties.AsNoTracking().Where(filter);
+            // Enforce that only Approved and Available properties can be listed publicly
+            countQuery = countQuery.Where(p => p.ModerationStatus == ModerationStatusEnum.Approved && p.AvailabilityStatus == AvailabilityStatusEnum.Available);
             var totalCount = await countQuery.CountAsync();
 
             List<Property> finalItems;
@@ -676,7 +694,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
 
                 foreach (var ra in p.RoomAmenities)
                 {
-                    if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(ra.Status.ToString(), "Working", StringComparison.OrdinalIgnoreCase))
                         amenityIds.Add(ra.AmenityId);
                 }
             }
@@ -760,7 +778,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             int matchCount = 0;
             foreach (var ra in property.RoomAmenities)
             {
-                if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                if (string.Equals(ra.Status.ToString(), "Working", StringComparison.OrdinalIgnoreCase) &&
                     pref.AmenityIds.Contains(ra.AmenityId))
                 {
                     matchCount++;

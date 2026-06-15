@@ -93,14 +93,32 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     .SumAsync(p => p.Amount);
 
                 invoice.Status = totalPaid >= invoice.Total
-                    ? "Paid"
+                    ? InvoiceStatus.Paid
                     : totalPaid > 0
-                        ? "Partial"
-                        : "Pending";
+                        ? InvoiceStatus.Partial
+                        : InvoiceStatus.Pending;
                 invoice.UpdatedAt = DateTime.UtcNow;
 
                 await _invoiceRepository.UpdateAsync(invoice);
 
+                // Tự động gửi thông báo cho khách thuê khi thanh toán được ghi nhận
+                var contract = await _context.Contracts.FindAsync(invoice.ContractId);
+                if (contract != null && !string.IsNullOrWhiteSpace(contract.TenantId))
+                {
+                    var notification = new Notification
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = contract.TenantId,
+                        Type = NotificationType.System, // Hoặc Invoice, nhưng Payment hợp lý hơn nếu có
+                        Content = $"Thanh toán {entity.Amount:N0}đ cho hóa đơn tháng {invoice.Period:MM/yyyy} đã được ghi nhận thành công.",
+                        IsRead = false,
+                        Timestamp = DateTime.UtcNow,
+                        RelatedId = invoice.Id
+                    };
+                    _context.Notifications.Add(notification);
+                }
+
+                await _context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch
@@ -136,10 +154,10 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                         .SumAsync(p => p.Amount);
 
                     invoice.Status = totalPaid >= invoice.Total
-                        ? "Paid"
+                        ? InvoiceStatus.Paid
                         : totalPaid > 0
-                            ? "Partial"
-                            : "Pending";
+                            ? InvoiceStatus.Partial
+                            : InvoiceStatus.Pending;
                     invoice.UpdatedAt = DateTime.UtcNow;
 
                     await _invoiceRepository.UpdateAsync(invoice);

@@ -22,10 +22,23 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<(IEnumerable<Complaint> Items, int TotalCount)> GetByFilterWithDetailsAsync(
             EntityFilter<Complaint> filter,
             EntitySort<Complaint> sort,
-            EntityPage page)
+            EntityPage page, string? landlordId = null)
         {
             page = EnsurePage(page);
             var query = GetDetailsQuery().AsNoTracking();
+
+            if (!string.IsNullOrEmpty(landlordId))
+            {
+                var propertyIds = _context.Properties.Where(p => p.LandlordId == landlordId).Select(p => p.Id);
+                var contractIds = _context.Contracts.Where(c => propertyIds.Contains(c.PropertyId)).Select(c => c.Id);
+                var invoiceIds = _context.Invoices.Where(i => contractIds.Contains(i.ContractId)).Select(i => i.Id);
+                
+                query = query.Where(c => 
+                    (c.RelatedType == ComplaintRelatedType.Property && propertyIds.Contains(c.RelatedId)) ||
+                    (c.RelatedType == ComplaintRelatedType.Contract && contractIds.Contains(c.RelatedId)) ||
+                    (c.RelatedType == ComplaintRelatedType.Invoice && invoiceIds.Contains(c.RelatedId)));
+            }
+
             query = query.Where(filter);
             query = query.OrderBy(sort);
 

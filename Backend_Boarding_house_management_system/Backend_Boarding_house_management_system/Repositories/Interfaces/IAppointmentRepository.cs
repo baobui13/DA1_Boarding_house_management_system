@@ -8,7 +8,6 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
 {
     public interface IAppointmentRepository : IRepository<Appointment, string>
     {
-        // Tất cả CRUD chung đã được kế thừa từ IRepository.
-        // Thêm methods đặc thù của Appointment tại đây nếu cần.
+        Task<(IEnumerable<Appointment> Items, int TotalCount)> GetAppointmentsWithLandlordFilterAsync(EntityFilter<Appointment> filter, EntitySort<Appointment> sort, EntityPage page, string? landlordId);
     }
 }

@@ -91,6 +91,24 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             try
             {
                 await _invoiceRepository.AddAsync(entity);
+                
+                // Tự động gửi thông báo cho khách thuê khi có hóa đơn mới
+                if (!string.IsNullOrWhiteSpace(contract.TenantId))
+                {
+                    var notification = new Notification
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        UserId = contract.TenantId,
+                        Type = NotificationType.Invoice,
+                        Content = $"Hóa đơn mới tháng {entity.Period:MM/yyyy} đã được tạo với số tiền {entity.Total:N0}đ. Vui lòng kiểm tra và thanh toán.",
+                        IsRead = false,
+                        Timestamp = DateTime.UtcNow,
+                        RelatedId = entity.Id
+                    };
+                    _context.Notifications.Add(notification);
+                }
+                
+                await _context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch

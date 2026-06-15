@@ -23,8 +23,13 @@ import UserManagement from "./pages/admin/UserManagement";
 import ContentModeration from "./pages/admin/ContentModeration";
 import SystemAnalytics from "./pages/admin/SystemAnalytics";
 import ApprovedPostsManagement from "./pages/admin/ApprovedPostsManagement";
+import ComplaintManagement from "./pages/admin/ComplaintManagement";
+import RatingManagement from "./pages/admin/RatingManagement";
+import AdminNotificationPage from "./pages/admin/AdminNotificationPage";
 import NotificationsPage from "./pages/common/NotificationsPage";
 import ProfilePage from "./pages/common/ProfilePage";
+import Messages from "./pages/Messages";
+import LandlordProfilePage from "./pages/common/LandlordProfilePage";
 
 function RequireAuth() {
   const { isAuthenticated, authReady } = useApp();
@@ -79,6 +84,7 @@ export const router = createBrowserRouter([
       { index: true, Component: LandingPage },
       { path: "search", Component: SearchPage },
       { path: "rooms/:id", Component: RoomDetailPage },
+      { path: "landlord-profile/:id", Component: LandlordProfilePage },
       {
         Component: RequireAuth,
         children: [
@@ -87,6 +93,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "notifications", Component: NotificationsPage },
               { path: "profile", Component: ProfilePage },
+              { path: "messages", Component: Messages },
             ],
           },
           {
@@ -114,9 +121,12 @@ export const router = createBrowserRouter([
             Component: () => <RequireRole role="admin" />,
             children: [
               { path: "admin/users", Component: UserManagement },
+              { path: "admin/notifications/new", Component: AdminNotificationPage },
               { path: "admin/moderation", Component: ContentModeration },
               { path: "admin/analytics", Component: SystemAnalytics },
               { path: "admin/approved-posts", Component: ApprovedPostsManagement },
+              { path: "admin/complaints", Component: ComplaintManagement },
+              { path: "admin/ratings", Component: RatingManagement },
             ],
           },
         ],

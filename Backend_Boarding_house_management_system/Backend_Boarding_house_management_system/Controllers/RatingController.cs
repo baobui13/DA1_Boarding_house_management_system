@@ -41,11 +41,14 @@ namespace Backend_Boarding_house_management_system.Controllers
         [AllowAnonymous]
         [HttpGet("GetRatingsByFilter")]
         public async Task<ActionResult<RatingListResponse>> GetRatingsByFilter(
+            [FromQuery] string? tenantId,
             [FromQuery] EntityFilter<Rating> filter,
             [FromQuery] EntitySort<Rating> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string? landlordId = null)
         {
-            var ratings = await _ratingService.GetRatingsByFilterAsync(filter, sort, page);
+            if (!string.IsNullOrEmpty(tenantId)) filter.Add(x => x.TenantId, "==" + tenantId);
+            var ratings = await _ratingService.GetRatingsByFilterAsync(filter, sort, page, landlordId);
             return Ok(ratings);
         }
 

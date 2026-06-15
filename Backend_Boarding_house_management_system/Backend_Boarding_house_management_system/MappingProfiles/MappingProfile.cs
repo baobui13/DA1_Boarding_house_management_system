@@ -70,7 +70,9 @@ namespace Backend_Boarding_house_management_system.MappingProfiles
             // Property mappings
             CreateMap<Property, PropertyResponse>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.AvailabilityStatus.ToString()))
-                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => src.ModerationStatus.ToString()));
+                .ForMember(dest => dest.ModerationStatus, opt => opt.MapFrom(src => src.ModerationStatus.ToString()))
+                .ForMember(dest => dest.AverageRating, opt => opt.MapFrom(src => src.Ratings.Any() ? src.Ratings.Average(r => r.Stars) : 0))
+                .ForMember(dest => dest.TotalRatings, opt => opt.MapFrom(src => src.Ratings.Count));
             CreateMap<Property, PropertyDetailResponse>()
                 .IncludeBase<Property, PropertyResponse>()
                 .ForMember(dest => dest.PropertyImages, opt => opt.MapFrom(src => src.PropertyImages))

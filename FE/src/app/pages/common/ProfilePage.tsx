@@ -69,7 +69,7 @@ export default function ProfilePage() {
             </button>
           </div>
           <div>
-            <h1 className="text-gray-900" style={{ fontSize: "20px", fontWeight: 700 }}>
+            <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
               {currentUser?.name}
             </h1>
             <p className="text-gray-400 mt-0.5" style={{ fontSize: "14px" }}>

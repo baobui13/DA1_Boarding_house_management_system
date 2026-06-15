@@ -14,7 +14,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<RatingListResponse> GetRatingsByFilterAsync(
             EntityFilter<Rating> filter,
             EntitySort<Rating> sort,
-            EntityPage page);
+            EntityPage page, string? landlordId = null);
         Task<RatingResponse> CreateRatingAsync(CreateRatingRequest request);
         Task<bool> UpdateRatingAsync(UpdateRatingRequest request);
         Task<bool> DeleteRatingAsync(DeleteRatingRequest request);

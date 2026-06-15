@@ -13,9 +13,9 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<AppointmentListResponse> GetAppointmentsByFilterAsync(
             EntityFilter<Appointment> filter,
             EntitySort<Appointment> sort,
-            EntityPage page);
+            EntityPage page, string? landlordId = null);
         Task<AppointmentResponse> CreateAppointmentAsync(CreateAppointmentRequest request);
-        Task<bool> UpdateAppointmentAsync(UpdateAppointmentRequest request);
+        Task<bool> UpdateAppointmentAsync(UpdateAppointmentRequest request, string? currentUserId = null);
         Task<bool> DeleteAppointmentAsync(DeleteAppointmentRequest request);
     }
 }

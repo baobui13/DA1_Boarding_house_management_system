@@ -40,6 +40,9 @@ export interface PagedResponse<T> {
   pageSize: number;
 }
 
+export type AvailabilityStatus = "Available" | "Rented" | "Maintenance";
+export type ModerationStatus = "Pending" | "Approved" | "Rejected";
+
 export interface PropertyResponse {
   id: string;
   landlordId: string;
@@ -51,13 +54,16 @@ export interface PropertyResponse {
   size: number;
   description?: string | null;
   price: number;
-  status: string;
-  moderationStatus: string;
+  status: AvailabilityStatus;
+  moderationStatus: ModerationStatus;
+  rejectedAt?: string | null;
   rejectionReason?: string | null;
   createdAt: string;
   updatedAt?: string | null;
   electricPrice?: number | null;
   waterPrice?: number | null;
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 export interface PropertyImageResponse {
@@ -87,6 +93,7 @@ export interface AmenityResponse {
 export interface PropertyListing extends PropertyResponse {
   images: string[];
   amenities: string[];
+  landlord?: UserResponse;
 }
 
 export interface AreaResponse {

@@ -52,8 +52,8 @@ export default function AppointmentManagement() {
 
     try {
       const [propertyResponse, userResponse, appointmentResponse] = await Promise.all([
-        getPropertyListings({ landlordId: currentUser.id, pageSize: 1000 }),
-        getUsers({ page: 1, pageSize: 1000 }),
+        getPropertyListings({ landlordId: currentUser.id, pageSize: 1000 }, token),
+        getUsers({ page: 1, pageSize: 1000 }, token),
         getAppointments(token, { pageSize: 1000 }),
       ]);
 
@@ -235,7 +235,7 @@ export default function AppointmentManagement() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "26px", fontWeight: 700 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Quản Lý Lịch Hẹn
           </h1>
           <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>

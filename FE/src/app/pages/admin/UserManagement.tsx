@@ -4,6 +4,7 @@ import { useApp } from "../../context/AppContext";
 import { blockUser, getUserSummary, getUsers } from "../../lib/users";
 import { normalizeRole } from "../../lib/auth";
 import type { Role, UserResponse } from "../../lib/types";
+import UserDetailDrawer from "./UserDetailDrawer";
 
 type RoleFilter = "all" | Role;
 type StatusFilter = "all" | "active" | "locked";
@@ -36,6 +37,7 @@ export default function UserManagement() {
   const [statusOverrides, setStatusOverrides] = useState<Record<string, "active" | "locked">>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
 
   const loadSummaryTotals = async () => {
     const summary = await getUserSummary(token ?? undefined);
@@ -132,11 +134,14 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Quản Lý Người Dùng
         </h1>
+        <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
+          Quản lý và kiểm soát tài khoản người dùng toàn hệ thống
+        </p>
       </div>
 
       {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-600">{error}</div>}
@@ -167,7 +172,7 @@ export default function UserManagement() {
               <button
                 key={role}
                 onClick={() => setRoleFilter(role)}
-                className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                className={`px-3 py-1.5 rounded-xl border transition-colors ${
                   roleFilter === role ? "border-orange-400 bg-orange-50 text-orange-600" : "border-gray-200 text-gray-500 hover:border-gray-300"
                 }`}
                 style={{ fontSize: "12px" }}
@@ -182,7 +187,7 @@ export default function UserManagement() {
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                className={`px-3 py-1.5 rounded-xl border transition-colors ${
                   statusFilter === status ? "border-blue-400 bg-blue-50 text-blue-600" : "border-gray-200 text-gray-500 hover:border-gray-300"
                 }`}
                 style={{ fontSize: "12px" }}
@@ -265,6 +270,13 @@ export default function UserManagement() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
                           <button
+                            onClick={() => setSelectedUser(user)}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            style={{ fontSize: "11px" }}
+                          >
+                            Chi tiết
+                          </button>
+                          <button
                             onClick={() => handleToggleLock(user)}
                             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${
                               status === "active" ? "bg-red-50 text-red-500 hover:bg-red-100" : "bg-green-50 text-green-600 hover:bg-green-100"
@@ -313,6 +325,10 @@ export default function UserManagement() {
           Sau
         </button>
       </div>
+
+      {selectedUser && (
+        <UserDetailDrawer user={selectedUser} onClose={() => setSelectedUser(null)} />
+      )}
     </div>
   );
 }

@@ -22,6 +22,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             _userService = userService;
         }
 
+        [AllowAnonymous]
         [HttpGet("GetUserByIdOrEmail")]
         public async Task<ActionResult<UserResponse>> GetUserByIdOrEmail([FromQuery] GetUserByIdOrEmailRequest request)
         {

@@ -85,7 +85,7 @@ export default function BillingPage() {
         // Generous but not unlimited page; we scope further client-side using owned properties
         getContracts(token, { pageSize: 300 }),
         getUsers({ role: "Tenant", pageSize: 300 }, token),
-        getPropertyListings({ landlordId, pageSize: 300 }),
+        getPropertyListings({ landlordId, pageSize: 300 }, token),
         getInvoices(token, { page: 1, pageSize: 300 }),
       ]);
       const areaResponse = await getAreas({ landlordId, pageSize: 1000 });
@@ -326,7 +326,7 @@ export default function BillingPage() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 800 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Quản Lý Hóa Đơn
           </h1>
           <p className="mt-1 text-gray-500" style={{ fontSize: "14px", fontWeight: 500 }}>

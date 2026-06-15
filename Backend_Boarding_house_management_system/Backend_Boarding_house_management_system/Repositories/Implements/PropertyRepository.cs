@@ -21,7 +21,11 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
                 .Include(p => p.RoomAmenities)
                     .ThenInclude(ra => ra.Amenity)
                 .Include(p => p.Contracts)
-                .Include(p => p.Appointments);
+                .Include(p => p.Appointments)
+                .Include(p => p.Ratings);
+
+        protected override IQueryable<Property> GetQueryWithIncludes()
+            => _dbSet.Include(p => p.Ratings);
 
         public async Task<Property?> GetByIdWithDetailsAsync(string id)
             => await GetDetailsQuery().FirstOrDefaultAsync(p => p.Id == id);
@@ -63,6 +67,10 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<IEnumerable<Property>> GetFilteredCandidatesForRecAsync(EntityFilter<Property> filter, int maxCandidates = 200)
         {
             var query = GetDetailsQuery().AsNoTracking();
+            
+            // Lọc ra các property được hiển thị công khai (Approved & Available)
+            query = query.Where(p => p.ModerationStatus == ModerationStatusEnum.Approved && p.AvailabilityStatus == AvailabilityStatusEnum.Available);
+            
             query = query.Where(filter);
             // Dùng order ổn định để có tập candidate deterministic trước khi re-rank ở service
             query = query.OrderByDescending(p => p.CreatedAt);

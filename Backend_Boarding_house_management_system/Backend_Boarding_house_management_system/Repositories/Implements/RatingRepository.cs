@@ -24,10 +24,14 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
         public async Task<(IEnumerable<Rating> Items, int TotalCount)> GetByFilterWithDetailsAsync(
             EntityFilter<Rating> filter,
             EntitySort<Rating> sort,
-            EntityPage page)
+            EntityPage page, string? landlordId = null)
         {
             page = EnsurePage(page);
             var query = GetDetailsQuery().AsNoTracking();
+            if (!string.IsNullOrEmpty(landlordId))
+            {
+                query = query.Where(r => r.Property.LandlordId == landlordId);
+            }
             query = query.Where(filter);
             query = query.OrderBy(sort);
 

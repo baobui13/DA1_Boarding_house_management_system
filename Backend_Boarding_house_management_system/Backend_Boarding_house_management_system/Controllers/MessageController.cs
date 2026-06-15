@@ -7,6 +7,7 @@ using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Services.Interfaces;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -62,6 +63,28 @@ namespace Backend_Boarding_house_management_system.Controllers
         public async Task<IActionResult> DeleteMessage([FromBody] DeleteMessageRequest request)
         {
             await _messageService.DeleteAsync(request);
+            return Ok();
+        }
+
+        [Authorize(Roles = "Landlord,Tenant,Admin")]
+        [HttpGet("GetConversations")]
+        public async Task<ActionResult<List<ConversationResponse>>> GetConversations()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            
+            var result = await _messageService.GetConversationsAsync(userId);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Landlord,Tenant,Admin")]
+        [HttpPut("MarkAsRead")]
+        public async Task<IActionResult> MarkAsRead([FromBody] MarkAsReadRequest request)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _messageService.MarkConversationAsReadAsync(userId, request.SenderId);
             return Ok();
         }
     }

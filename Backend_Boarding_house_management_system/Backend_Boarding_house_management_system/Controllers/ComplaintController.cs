@@ -38,11 +38,14 @@ namespace Backend_Boarding_house_management_system.Controllers
 
         [HttpGet("GetComplaintsByFilter")]
         public async Task<ActionResult<ComplaintListResponse>> GetComplaintsByFilter(
+            [FromQuery] string? creatorId,
             [FromQuery] EntityFilter<Complaint> filter,
             [FromQuery] EntitySort<Complaint> sort,
-            [FromQuery] EntityPage page)
+            [FromQuery] EntityPage page,
+            [FromQuery] string? landlordId = null)
         {
-            var complaints = await _complaintService.GetComplaintsByFilterAsync(filter, sort, page);
+            if (!string.IsNullOrEmpty(creatorId)) filter.Add(x => x.CreatorId, "==" + creatorId);
+            var complaints = await _complaintService.GetComplaintsByFilterAsync(filter, sort, page, landlordId);
             return Ok(complaints);
         }
 

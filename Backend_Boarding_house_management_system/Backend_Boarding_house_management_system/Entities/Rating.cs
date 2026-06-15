@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Plainquire.Filter;
 
 namespace Backend_Boarding_house_management_system.Entities
 {

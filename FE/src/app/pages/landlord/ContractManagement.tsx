@@ -92,7 +92,7 @@ export default function ContractManagement() {
       const [contractResponse, propertyResponse, userResponse, areaResponse] = await Promise.all([
         // Load a generous page; server-side landlord role + client filter by owned properties
         getContracts(token, { pageSize: 300 }),
-        getPropertyListings({ landlordId, pageSize: 300 }),
+        getPropertyListings({ landlordId, pageSize: 300 }, token),
         getUsers({ role: "Tenant", pageSize: 300 }, token),
         getAreas({ landlordId, pageSize: 300 }),
       ]);
@@ -384,10 +384,10 @@ export default function ContractManagement() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 800 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Quản Lý Hợp Đồng
           </h1>
           <p className="mt-1 text-gray-500" style={{ fontSize: "14px", fontWeight: 500 }}>

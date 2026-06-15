@@ -1,4 +1,4 @@
-﻿using Backend_Boarding_house_management_system.Extensions;
+using Backend_Boarding_house_management_system.Extensions;
 using Backend_Boarding_house_management_system.Services.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
@@ -13,7 +13,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         private readonly Cloudinary _cloudinary;
         private readonly string _folder;
 
-        public PhotoService(IOptions<CloudinarySettings> options)
+        public PhotoService(IOptions<CloudinarySettings> options, Microsoft.Extensions.Configuration.IConfiguration config)
         {
             var settings = options.Value;
             var acc = new Account(

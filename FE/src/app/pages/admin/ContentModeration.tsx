@@ -160,11 +160,14 @@ export default function ContentModeration() {
     : null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Kiểm Duyệt Tin Đăng
         </h1>
+        <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
+          Xem xét và phê duyệt các tin đăng phòng trọ chờ kiểm duyệt
+        </p>
       </div>
 
       {error && <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-600">{error}</div>}
@@ -185,7 +188,7 @@ export default function ContentModeration() {
               setSelectedPostId(null);
               setSelectedPostDetail(null);
             }}
-            className={`px-3 py-1.5 rounded-lg border transition-colors ${
+            className={`px-3 py-1.5 rounded-xl border transition-colors ${
               statusFilter === status ? "border-orange-400 bg-orange-50 text-orange-600" : "border-gray-200 text-gray-500 hover:border-gray-300"
             }`}
             style={{ fontSize: "13px", fontWeight: statusFilter === status ? 600 : 400 }}

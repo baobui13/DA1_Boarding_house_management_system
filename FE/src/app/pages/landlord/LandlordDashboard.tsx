@@ -19,6 +19,8 @@ import { getPropertyListings } from "../../lib/properties";
 import { getInvoices } from "../../lib/invoices";
 import { getContracts } from "../../lib/contracts";
 import { getAppointments } from "../../lib/appointments";
+import { getComplaints, type ComplaintResponse } from "../../lib/complaints";
+import { getRatings, type RatingResponse } from "../../lib/ratings";
 import { getUserByEmail, getUsers } from "../../lib/users";
 import type { PropertyListing, UserResponse } from "../../lib/types";
 import type { InvoiceResponse } from "../../lib/invoices";
@@ -45,6 +47,8 @@ export default function LandlordDashboard() {
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [contracts, setContracts] = useState<ContractResponse[]>([]);
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [complaints, setComplaints] = useState<ComplaintResponse[]>([]);
+  const [ratings, setRatings] = useState<RatingResponse[]>([]);
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<DashboardError[]>([]);
@@ -59,11 +63,10 @@ export default function LandlordDashboard() {
       const landlordId = landlord?.id || currentUser?.id;
 
       await Promise.all([
-        getPropertyListings(landlordId ? { landlordId, pageSize: 200 } : {})
+        getPropertyListings(landlordId ? { landlordId, pageSize: 200 } : {}, token)
           .then((response) => {
             if (!cancelled) {
-              const approvedProperties = response.items.filter((p) => p.moderationStatus === "Approved");
-              setProperties(approvedProperties);
+              setProperties(response.items);
             }
           })
           .catch((err) => nextErrors.push({ section: "Tài sản", message: err instanceof Error ? err.message : "Không tải được tài sản." })),
@@ -93,6 +96,16 @@ export default function LandlordDashboard() {
             if (!cancelled) setUsers(response.items);
           })
           .catch((err) => nextErrors.push({ section: "Người dùng", message: err instanceof Error ? err.message : "Không tải được người dùng." })),
+        getComplaints({}, token)
+          .then((response) => {
+            if (!cancelled) setComplaints(response.items);
+          })
+          .catch((err) => nextErrors.push({ section: "Khiếu nại", message: "Không tải được khiếu nại." })),
+        getRatings({}, token)
+          .then((response) => {
+            if (!cancelled) setRatings(response.items);
+          })
+          .catch((err) => nextErrors.push({ section: "Đánh giá", message: "Không tải được đánh giá." })),
       ]);
 
       if (!cancelled) {
@@ -212,6 +225,18 @@ export default function LandlordDashboard() {
       .sort((a, b) => new Date(a.appointmentDateTime).getTime() - new Date(b.appointmentDateTime).getTime());
   }, [landlordAppointments]);
 
+  const landlordComplaints = useMemo(() => {
+    return complaints.filter(c => 
+      (c.relatedType === "Property" && landlordPropertyIds.has(c.relatedId)) ||
+      (c.relatedType === "Contract" && landlordContractIds.has(c.relatedId))
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [complaints, landlordPropertyIds, landlordContractIds]);
+
+  const landlordRatings = useMemo(() => {
+    return ratings.filter(r => landlordPropertyIds.has(r.propertyId))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [ratings, landlordPropertyIds]);
+
   const roomOverview = useMemo(() => {
     return properties.map((property) => {
       if (occupiedPropertyIds.has(property.id)) {
@@ -242,6 +267,9 @@ export default function LandlordDashboard() {
         <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Tổng Quan Chủ Trọ
         </h1>
+        <p className="text-gray-500 mt-1" style={{ fontSize: "14px" }}>
+          Theo dõi phòng trọ, doanh thu và lịch hẹn của bạn
+        </p>
       </div>
 
       {errors.length > 0 && (
@@ -423,6 +451,62 @@ export default function LandlordDashboard() {
                   </div>
                 );
               })
+            )}
+          </SidePanel>
+
+          <SidePanel
+            icon={AlertTriangle}
+            iconTone="red"
+            title="Khiếu nại liên quan"
+            count={loading ? "..." : String(landlordComplaints.length)}
+          >
+            {loading ? (
+              <PanelSkeleton lines={2} />
+            ) : landlordComplaints.length === 0 ? (
+              <EmptyPanelText text="Không có khiếu nại nào." />
+            ) : (
+              landlordComplaints.slice(0, 3).map((complaint) => (
+                <div key={complaint.id} className="rounded-2xl bg-orange-50 px-4 py-3 border border-orange-100">
+                  <p className="text-gray-900 truncate font-semibold" style={{ fontSize: "14px" }}>
+                    {complaint.title}
+                  </p>
+                  <p className="text-gray-600 line-clamp-2 mt-1" style={{ fontSize: "12px" }}>
+                    {complaint.content}
+                  </p>
+                  <p className="text-gray-400 mt-2" style={{ fontSize: "11px" }}>
+                    Trạng thái: {complaint.status}
+                  </p>
+                </div>
+              ))
+            )}
+          </SidePanel>
+
+          <SidePanel
+            icon={UserRound}
+            iconTone="blue"
+            title="Đánh giá nhận được"
+            count={loading ? "..." : String(landlordRatings.length)}
+          >
+            {loading ? (
+              <PanelSkeleton lines={2} />
+            ) : landlordRatings.length === 0 ? (
+              <EmptyPanelText text="Chưa có đánh giá nào." />
+            ) : (
+              landlordRatings.slice(0, 3).map((rating) => (
+                <div key={rating.id} className="rounded-2xl bg-gray-50 px-4 py-3 border border-gray-100">
+                  <div className="flex justify-between items-center mb-1">
+                    <p className="text-gray-900 truncate font-semibold" style={{ fontSize: "13px" }}>
+                      Phòng: {propertiesById[rating.propertyId]?.propertyName || rating.propertyId}
+                    </p>
+                    <span className="text-orange-500 font-bold" style={{ fontSize: "13px" }}>
+                      {rating.stars} ★
+                    </span>
+                  </div>
+                  <p className="text-gray-600 line-clamp-2" style={{ fontSize: "12px" }}>
+                    {rating.content}
+                  </p>
+                </div>
+              ))
             )}
           </SidePanel>
         </div>

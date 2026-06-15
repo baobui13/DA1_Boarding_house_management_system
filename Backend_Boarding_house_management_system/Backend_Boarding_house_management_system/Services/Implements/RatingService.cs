@@ -61,9 +61,9 @@ namespace Backend_Boarding_house_management_system.Services.Implements
         public async Task<RatingListResponse> GetRatingsByFilterAsync(
             EntityFilter<Rating> filter,
             EntitySort<Rating> sort,
-            EntityPage page)
+            EntityPage page, string? landlordId = null)
         {
-            var (ratings, totalCount) = await _ratingRepository.GetByFilterAsync(filter, sort, page);
+            var (ratings, totalCount) = await _ratingRepository.GetByFilterWithDetailsAsync(filter, sort, page, landlordId);
             return new RatingListResponse
             {
                 Items = _mapper.Map<List<RatingResponse>>(ratings),
@@ -87,7 +87,8 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             if (!string.Equals(tenant.Role, "Tenant", StringComparison.OrdinalIgnoreCase))
                 throw new BadRequestException("User duoc chon khong phai tenant.");
 
-            if (!await _propertyRepository.ExistsAsync(request.PropertyId))
+            var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
+            if (property == null)
                 throw new NotFoundException($"Khong tim thay bat dong san voi Id '{request.PropertyId}'.");
 
             if (!await _context.Contracts.AnyAsync(c => c.TenantId == request.TenantId && c.PropertyId == request.PropertyId))
@@ -106,7 +107,6 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 await _ratingRepository.AddAsync(rating);
 
                 // Update landlord reputation (+1 on new rating)
-                var property = await _propertyRepository.GetByIdAsync(request.PropertyId);
                 if (property != null)
                 {
                     var landlord = await _userRepository.GetByIdAsync(property.LandlordId);
@@ -121,7 +121,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                     {
                         Id = Guid.NewGuid().ToString(),
                         UserId = property.LandlordId,
-                        Type = "Rating",
+                        Type = NotificationType.Rating,
                         Content = "Ban co danh gia moi.",
                         IsRead = false,
                         Timestamp = DateTime.UtcNow,
@@ -138,6 +138,20 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 await tx.RollbackAsync();
                 throw;
             }
+
+            // Tự động thông báo cho Landlord khi có đánh giá mới
+            var notification = new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = property.LandlordId,
+                Type = NotificationType.Rating,
+                Content = $"Khách thuê {tenant.FullName} đã gửi đánh giá mới ({rating.Stars} sao) cho phòng \"{property.PropertyName}\".",
+                IsRead = false,
+                Timestamp = DateTime.UtcNow,
+                RelatedId = rating.Id
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
 
             return _mapper.Map<RatingResponse>(rating);
         }

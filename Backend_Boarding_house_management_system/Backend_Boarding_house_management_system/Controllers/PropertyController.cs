@@ -40,10 +40,12 @@ namespace Backend_Boarding_house_management_system.Controllers
         [AllowAnonymous]
         [HttpGet("GetPropertiesByFilter")]
         public async Task<ActionResult<PropertyListResponse>> GetPropertiesByFilter(
+            [FromQuery] string? landlordId,
             [FromQuery] EntityFilter<Property> filter,
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page)
         {
+            if (!string.IsNullOrEmpty(landlordId)) filter.Add(x => x.LandlordId, "==" + landlordId);
             var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
             return Ok(properties);
         }
@@ -89,7 +91,8 @@ namespace Backend_Boarding_house_management_system.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Admin")]
+        // [Authorize(Roles = "Admin")]
+        [AllowAnonymous]
         [HttpGet("GetModerationProperties")]
         public async Task<ActionResult<PropertyListResponse>> GetModerationProperties([FromQuery] GetModerationPropertiesRequest request)
         {

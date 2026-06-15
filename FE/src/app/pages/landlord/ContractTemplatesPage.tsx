@@ -4,7 +4,7 @@ export default function ContractTemplatesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+        <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
           Mẫu Hợp Đồng
         </h1>
         <p className="text-gray-500 mt-0.5" style={{ fontSize: "14px" }}>

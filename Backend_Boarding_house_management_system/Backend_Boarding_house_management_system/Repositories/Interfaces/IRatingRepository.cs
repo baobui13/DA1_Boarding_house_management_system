@@ -12,7 +12,7 @@ namespace Backend_Boarding_house_management_system.Repositories.Interfaces
         Task<(IEnumerable<Rating> Items, int TotalCount)> GetByFilterWithDetailsAsync(
             EntityFilter<Rating> filter,
             EntitySort<Rating> sort,
-            EntityPage page);
+            EntityPage page, string? landlordId = null);
         Task<bool> ExistsByTenantAndPropertyAsync(string tenantId, string propertyId, string? excludeId = null);
     }
 }

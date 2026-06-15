@@ -66,7 +66,7 @@ export default function NotificationsPage() {
     <div className="max-w-3xl mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-gray-900" style={{ fontSize: "22px", fontWeight: 700 }}>
+          <h1 className="text-gray-900" style={{ fontSize: "24px", fontWeight: 700 }}>
             Thông Báo
           </h1>
           <p className="text-gray-500 mt-0.5" style={{ fontSize: "14px" }}>

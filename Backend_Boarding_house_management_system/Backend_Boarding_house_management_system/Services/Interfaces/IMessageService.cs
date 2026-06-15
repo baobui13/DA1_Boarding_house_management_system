@@ -17,5 +17,7 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
         Task<MessageResponse> CreateAsync(CreateMessageRequest request);
         Task UpdateAsync(UpdateMessageRequest request);
         Task DeleteAsync(DeleteMessageRequest request);
+        Task<List<ConversationResponse>> GetConversationsAsync(string userId);
+        Task MarkConversationAsReadAsync(string currentUserId, string senderId);
     }
 }
