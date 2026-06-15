@@ -90,6 +90,9 @@ export default function SearchPage() {
   const [error, setError] = useState("");
   const [recType, setRecType] = useState<string | null>(null); // most_viewed | trending | recommended
 
+  const [boostAspects, setBoostAspects] = useState<string[]>([]);
+  const [recommendationMode, setRecommendationMode] = useState<string>("PersonalMatch");
+
   useEffect(() => {
     let cancelled = false;
 
@@ -102,15 +105,18 @@ export default function SearchPage() {
 
       try {
         let response;
+        const fetchQuery: Record<string, any> = { page: 1, pageSize: 100 };
+        if (boostAspects.length > 0) fetchQuery.boostAspect = boostAspects;
+        if (recommendationMode) fetchQuery.recommendationMode = recommendationMode;
 
         if (typeFromUrl === "most_viewed") {
-          response = await getMostViewedPropertyListings(token, { page: 1, pageSize: 100 });
+          response = await getMostViewedPropertyListings(token, fetchQuery);
         } else if (typeFromUrl === "trending") {
-          response = await getTrendingPropertyListings(token, { page: 1, pageSize: 100 });
+          response = await getTrendingPropertyListings(token, fetchQuery);
         } else if (typeFromUrl === "recommended" && token && currentUser) {
-          response = await getRecommendedPropertyListings(token, { page: 1, pageSize: 100 });
+          response = await getRecommendedPropertyListings(token, fetchQuery);
         } else {
-          response = await getPropertyListings({ page: 1, pageSize: 100 });
+          response = await getPropertyListings(fetchQuery, token);
         }
 
         if (!cancelled) {
@@ -130,7 +136,7 @@ export default function SearchPage() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, token, currentUser]);
+  }, [searchParams, token, currentUser, boostAspects, recommendationMode]);
 
   useEffect(() => {
     setPageNumber(1);
@@ -397,6 +403,59 @@ export default function SearchPage() {
                     style={{ fontSize: "13px" }}
                   >
                     {amenity}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-gray-600 mb-2" style={{ fontSize: "12px", fontWeight: 600 }}>
+                CHẾ ĐỘ ĐỀ CỬ (AI)
+              </p>
+              <select
+                value={recommendationMode}
+                onChange={(e) => setRecommendationMode(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:border-orange-300 text-gray-600 bg-white"
+                style={{ fontSize: "13px" }}
+              >
+                <option value="PersonalMatch">Cá nhân hoá</option>
+                <option value="HighAspectQuality">Ưu tiên chất lượng</option>
+                <option value="StrictFilter">Lọc nghiêm ngặt</option>
+              </select>
+            </div>
+
+            <div>
+              <p className="text-gray-600 mb-2" style={{ fontSize: "12px", fontWeight: 600 }}>
+                YẾU TỐ QUAN TÂM NHẤT
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "An ninh", value: "Security" },
+                  { label: "Wifi", value: "Wifi" },
+                  { label: "Chủ trọ", value: "Landlord" },
+                  { label: "Giá cả", value: "Price" },
+                  { label: "Tiếng ồn", value: "Noise" },
+                  { label: "Vệ sinh", value: "Cleanliness" },
+                  { label: "Vị trí", value: "Location" },
+                  { label: "Tiện ích", value: "Amenities" },
+                ].map((aspect) => (
+                  <button
+                    key={aspect.value}
+                    onClick={() => {
+                      setBoostAspects((prev) =>
+                        prev.includes(aspect.value)
+                          ? prev.filter((item) => item !== aspect.value)
+                          : [...prev, aspect.value]
+                      );
+                    }}
+                    className={`px-3 py-1 rounded-lg border transition-colors ${
+                      boostAspects.includes(aspect.value)
+                        ? "border-orange-400 bg-orange-50 text-orange-600"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    }`}
+                    style={{ fontSize: "13px" }}
+                  >
+                    {aspect.label}
                   </button>
                 ))}
               </div>

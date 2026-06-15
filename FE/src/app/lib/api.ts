@@ -75,7 +75,7 @@ async function getValidToken(originalAuthToken?: string | null): Promise<string 
   return originalAuthToken || null;
 }
 
-type QueryValue = string | number | boolean | null | undefined;
+type QueryValue = string | number | boolean | null | undefined | string[];
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -91,7 +91,11 @@ function buildUrl(path: string, query?: Record<string, QueryValue>) {
   if (query) {
     Object.entries(query).forEach(([key, value]) => {
       if (value === undefined || value === null || value === "") return;
-      url.searchParams.set(key, String(value));
+      if (Array.isArray(value)) {
+        value.forEach(v => url.searchParams.append(key, String(v)));
+      } else {
+        url.searchParams.set(key, String(value));
+      }
     });
   }
 

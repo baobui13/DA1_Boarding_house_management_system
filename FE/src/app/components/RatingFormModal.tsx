@@ -18,7 +18,7 @@ export function RatingFormModal({ propertyId, eligibleProperties, initialData, o
   );
   const [stars, setStars] = useState(initialData?.stars || 5);
   const [content, setContent] = useState(initialData?.content || "");
-  const [attitude, setAttitude] = useState(initialData?.aIAttitude || "Positive");
+  const [attitude, setAttitude] = useState(initialData?.aiAttitude || "Positive");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,7 +45,7 @@ export function RatingFormModal({ propertyId, eligibleProperties, initialData, o
           id: initialData.id,
           stars,
           content: content.trim(),
-          aIAttitude: attitude,
+          aiAttitude: attitude,
         });
       } else {
         await createRating(token, {
@@ -53,7 +53,7 @@ export function RatingFormModal({ propertyId, eligibleProperties, initialData, o
           tenantId: currentUser.id,
           stars,
           content: content.trim(),
-          aIAttitude: attitude,
+          aiAttitude: attitude,
         });
       }
       onSuccess();
@@ -114,18 +114,7 @@ export function RatingFormModal({ propertyId, eligibleProperties, initialData, o
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá chung (Thái độ)</label>
-            <select
-              value={attitude}
-              onChange={(e) => setAttitude(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none"
-            >
-              <option value="Positive">Tích cực</option>
-              <option value="Neutral">Bình thường</option>
-              <option value="Negative">Tiêu cực</option>
-            </select>
-          </div>
+
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nội dung</label>

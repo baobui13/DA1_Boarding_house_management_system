@@ -144,9 +144,17 @@ export function RoomRatings({ propertyId }: RoomRatingsProps) {
             {rating.content && (
               <p className="text-gray-600 text-sm leading-relaxed mt-2">{rating.content}</p>
             )}
-            {rating.aIAttitude && (
-              <div className="mt-3 inline-block px-2 py-1 rounded-md bg-gray-50 border border-gray-100 text-xs text-gray-500">
-                Thái độ: {rating.aIAttitude}
+            {rating.aiAttitude && (
+              <div className={`mt-3 inline-block px-2 py-1 rounded-md border text-xs ${
+                rating.aiAttitude.toLowerCase() === 'positive' ? 'bg-green-50 border-green-100 text-green-600' :
+                rating.aiAttitude.toLowerCase() === 'negative' ? 'bg-red-50 border-red-100 text-red-600' :
+                'bg-gray-50 border-gray-100 text-gray-500'
+              }`}>
+                Thái độ: {
+                  rating.aiAttitude.toLowerCase() === 'positive' ? 'Tích cực' :
+                  rating.aiAttitude.toLowerCase() === 'negative' ? 'Tiêu cực' :
+                  rating.aiAttitude.toLowerCase() === 'neutral' ? 'Bình thường' : rating.aiAttitude
+                }
               </div>
             )}
           </div>

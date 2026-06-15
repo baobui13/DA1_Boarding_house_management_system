@@ -78,7 +78,7 @@ function encodePropertyDescription(input: {
 }
 
 export async function getProperties(
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
   token?: string
 ) {
   // Map frontend 'status' to backend 'availabilityStatus' for EntityFilter
@@ -96,7 +96,7 @@ export async function getProperties(
 
 export async function getModerationProperties(
   token: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   return apiRequest<PagedResponse<PropertyResponse>>("Property/GetModerationProperties", {
     authToken: token,
@@ -253,7 +253,7 @@ export async function getPropertyListing(id: string): Promise<PropertyListing> {
 }
 
 export async function getPropertyListings(
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
   token?: string
 ) {
   const response = await getProperties(query, token);
@@ -267,7 +267,7 @@ export async function getPropertyListings(
 
 export async function getRecommendedProperties(
   token: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   return apiRequest<PagedResponse<PropertyResponse>>("Property/GetRecommendedProperties", {
     authToken: token,
@@ -277,7 +277,7 @@ export async function getRecommendedProperties(
 
 export async function getRecommendedPropertyListings(
   token: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   const response = await getRecommendedProperties(token, query);
   const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
@@ -290,7 +290,7 @@ export async function getRecommendedPropertyListings(
 
 export async function getMostViewedProperties(
   token?: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   return apiRequest<PagedResponse<PropertyResponse>>("Property/GetMostViewedProperties", {
     ...(token ? { authToken: token } : {}),
@@ -300,7 +300,7 @@ export async function getMostViewedProperties(
 
 export async function getMostViewedPropertyListings(
   token?: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   const response = await getMostViewedProperties(token, query);
   const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
@@ -313,7 +313,7 @@ export async function getMostViewedPropertyListings(
 
 export async function getTrendingProperties(
   token?: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   return apiRequest<PagedResponse<PropertyResponse>>("Property/GetTrendingProperties", {
     ...(token ? { authToken: token } : {}),
@@ -323,7 +323,7 @@ export async function getTrendingProperties(
 
 export async function getTrendingPropertyListings(
   token?: string,
-  query: Record<string, string | number | boolean | undefined> = {},
+  query: Record<string, string | number | boolean | undefined | string[]> = {},
 ) {
   const response = await getTrendingProperties(token, query);
   const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
