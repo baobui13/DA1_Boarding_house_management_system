@@ -116,6 +116,29 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return await GetPropertiesInternalAsync(filter, sort, page, personalizeIfPossible: true, searchAspectBoosts, recommendationMode);
         }
 
+        public async Task<PropertyListResponse> GetMyPropertiesAsync(
+            EntitySort<Property> sort,
+            EntityPage page)
+        {
+            var userId = GetCurrentUserId();
+            var filter = new EntityFilter<Property>();
+            filter.Add(x => x.LandlordId, "==" + userId);
+
+            var pageNumber = (int)(page.PageNumber ?? 1);
+            var pageSize = (int)(page.PageSize ?? 10);
+            page.PageNumber = (uint)pageNumber;
+            page.PageSize = (uint)pageSize;
+
+            var (items, dbTotalCount) = await _propertyRepository.GetByFilterWithDetailsAsync(filter, sort, page);
+            return new PropertyListResponse
+            {
+                Items = _mapper.Map<List<PropertyResponse>>(items),
+                TotalCount = dbTotalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<PropertyListResponse> GetRecommendedPropertiesAsync(
             EntityFilter<Property> filter,
             EntitySort<Property> sort,

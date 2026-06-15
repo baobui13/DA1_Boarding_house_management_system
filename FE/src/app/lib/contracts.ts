@@ -29,6 +29,13 @@ export async function getContracts(token: string, query: Record<string, string |
   });
 }
 
+export async function getMyContracts(token: string, query: Record<string, string | number | boolean | undefined> = {}) {
+  return apiRequest<PagedResponse<ContractResponse>>("Contract/GetMyContracts", {
+    authToken: token,
+    query: { pageSize: 10, ...query },
+  });
+}
+
 export async function getContractById(token: string, id: string) {
   return apiRequest<ContractResponse>("Contract/GetContractById", {
     authToken: token,

@@ -15,6 +15,10 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Invoice> filter,
             EntitySort<Invoice> sort,
             EntityPage page);
+        Task<InvoiceListResponse> GetMyInvoicesAsync(
+            EntitySort<Invoice> sort,
+            EntityPage page,
+            EntityFilter<Invoice>? filter = null);
         Task<InvoiceResponse> CreateAsync(CreateInvoiceRequest request);
         Task UpdateAsync(UpdateInvoiceRequest request);
         Task DeleteAsync(DeleteInvoiceRequest request);

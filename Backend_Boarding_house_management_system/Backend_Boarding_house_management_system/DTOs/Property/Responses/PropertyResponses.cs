@@ -31,6 +31,8 @@ namespace Backend_Boarding_house_management_system.DTOs.Property.Responses
         public DateTime? UpdatedAt { get; set; }
         public double AverageRating { get; set; }
         public int TotalRatings { get; set; }
+        public List<string> ImageUrls { get; set; } = new();
+        public List<string> AmenityNames { get; set; } = new();
     }
 
     public class PropertyListResponse : Backend_Boarding_house_management_system.DTOs.Base.PagedResponse<PropertyResponse>

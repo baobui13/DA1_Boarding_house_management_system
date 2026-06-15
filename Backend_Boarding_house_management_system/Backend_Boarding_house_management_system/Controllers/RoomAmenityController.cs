@@ -33,10 +33,12 @@ namespace Backend_Boarding_house_management_system.Controllers
         [AllowAnonymous]
         [HttpGet("GetRoomAmenitiesByFilter")]
         public async Task<ActionResult<RoomAmenityListResponse>> GetRoomAmenitiesByFilter(
+            [FromQuery] string? propertyId,
             [FromQuery] EntityFilter<RoomAmenity> filter,
             [FromQuery] EntitySort<RoomAmenity> sort,
             [FromQuery] EntityPage page)
         {
+            if (!string.IsNullOrEmpty(propertyId)) filter.Add(x => x.PropertyId, "==" + propertyId);
             var result = await _roomAmenityService.GetByFilterAsync(filter, sort, page);
             return Ok(result);
         }

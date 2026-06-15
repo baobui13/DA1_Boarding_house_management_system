@@ -31,6 +31,13 @@ export async function getInvoices(token: string, query: Record<string, string | 
   });
 }
 
+export async function getMyInvoices(token: string, query: Record<string, string | number | boolean | undefined> = {}) {
+  return apiRequest<PagedResponse<InvoiceResponse>>("Invoice/GetMyInvoices", {
+    authToken: token,
+    query: { pageSize: 12, ...query },
+  });
+}
+
 export async function getInvoiceById(token: string, id: string) {
   return apiRequest<InvoiceResponse>("Invoice/GetInvoiceById", {
     authToken: token,

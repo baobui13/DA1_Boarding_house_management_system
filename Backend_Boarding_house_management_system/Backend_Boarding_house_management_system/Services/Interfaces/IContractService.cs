@@ -14,6 +14,10 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             EntityFilter<Contract> filter,
             EntitySort<Contract> sort,
             EntityPage page);
+        Task<ContractListResponse> GetMyContractsAsync(
+            EntitySort<Contract> sort,
+            EntityPage page,
+            EntityFilter<Contract>? filter = null);
         Task<ContractResponse> CreateAsync(CreateContractRequest request);
         Task UpdateAsync(UpdateContractRequest request);
         Task DeleteAsync(DeleteContractRequest request);

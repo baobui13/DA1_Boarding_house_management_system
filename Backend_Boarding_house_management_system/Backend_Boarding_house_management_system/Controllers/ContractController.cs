@@ -42,6 +42,17 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [Authorize(Roles = "Landlord,Admin")]
+        [HttpGet("GetMyContracts")]
+        public async Task<ActionResult<ContractListResponse>> GetMyContracts(
+            [FromQuery] EntitySort<Contract> sort,
+            [FromQuery] EntityPage page,
+            [FromQuery] EntityFilter<Contract>? filter = null)
+        {
+            var result = await _contractService.GetMyContractsAsync(sort, page, filter);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateContract")]
         public async Task<ActionResult<ContractResponse>> CreateContract([FromBody] CreateContractRequest request)
         {

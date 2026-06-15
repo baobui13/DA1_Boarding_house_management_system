@@ -14,12 +14,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { createContract, getContracts, updateContract, type ContractResponse } from "../../lib/contracts";
+import { createContract, getMyContracts, updateContract, type ContractResponse } from "../../lib/contracts";
 import { isOccupyingContractStatus } from "../../lib/contractStatus";
-import { getPropertyListing, getPropertyListings } from "../../lib/properties";
+import { getMyPropertyListings } from "../../lib/properties";
 import { formatCurrency } from "../../lib/format";
-import { getUserByEmail, getUsers } from "../../lib/users";
-import { getAreas } from "../../lib/areas";
+import { getUsers } from "../../lib/users";
+import { getMyAreas } from "../../lib/areas";
 import type { AreaResponse, PropertyListing, UserResponse } from "../../lib/types";
 
 type StatusKey = "all" | "active" | "expired" | "terminated";
@@ -64,6 +64,7 @@ export default function ContractManagement() {
   const [areas, setAreas] = useState<AreaResponse[]>([]);
   const [tenants, setTenants] = useState<UserResponse[]>([]);
   const [pageNumber, setPageNumber] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusKey>("all");
@@ -74,6 +75,22 @@ export default function ContractManagement() {
   const [actingContractId, setActingContractId] = useState<string | null>(null);
   const [createError, setCreateError] = useState("");
   const [form, setForm] = useState<ContractFormState>(() => buildEmptyForm());
+
+  const loadContracts = async () => {
+    if (!token) return;
+    try {
+      const statusQuery = statusFilter === "all" ? {} : { "Status": `==${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}` };
+      const response = await getMyContracts(token, {
+        pageNumber,
+        pageSize: CONTRACT_PAGE_SIZE,
+        ...statusQuery,
+      });
+      setContracts(response.items);
+      setTotalCount(response.totalCount);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không tải được hợp đồng.");
+    }
+  };
 
   const loadReferenceData = async () => {
     if (!token || !currentUser) {
@@ -86,51 +103,15 @@ export default function ContractManagement() {
     setError("");
 
     try {
-      const landlord = currentUser.email ? await getUserByEmail(currentUser.email, token) : null;
-      const landlordId = landlord?.id || currentUser.id;
-
-      const [contractResponse, propertyResponse, userResponse, areaResponse] = await Promise.all([
-        // Load a generous page; server-side landlord role + client filter by owned properties
-        getContracts(token, { pageSize: 300 }),
-        getPropertyListings({ landlordId, pageSize: 300 }, token),
+      const [propertyResponse, userResponse, areaResponse] = await Promise.all([
+        getMyPropertyListings(token),
         getUsers({ role: "Tenant", pageSize: 300 }, token),
-        getAreas({ landlordId, pageSize: 300 }),
+        getMyAreas(token, { pageSize: 1000 }),
       ]);
 
-      const ownedPropertyIds = new Set(propertyResponse.items.map((item) => item.id));
-      const missingPropertyIds = Array.from(new Set(contractResponse.items.map((item) => item.propertyId))).filter((id) => !ownedPropertyIds.has(id));
-      const missingOwnedProperties = await Promise.all(
-        missingPropertyIds.map(async (id) => {
-          try {
-            const property = await getPropertyListing(id);
-            return property.landlordId === landlordId ? property : null;
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      const mergedProperties = [
-        ...propertyResponse.items,
-        ...missingOwnedProperties.filter((item): item is NonNullable<typeof item> => Boolean(item)),
-      ];
-      const mergedOwnedPropertyIds = new Set(mergedProperties.map((item) => item.id));
-      const scopedContracts = contractResponse.items.filter((item) => mergedOwnedPropertyIds.has(item.propertyId));
-      const refreshedAvailableProperties = await Promise.all(
-        mergedProperties.map(async (property) => {
-          try {
-            const latestProperty = await getPropertyListing(property.id);
-            return latestProperty.landlordId === landlordId ? latestProperty : property;
-          } catch {
-            return property;
-          }
-        }),
-      );
-
-      setContracts(scopedContracts);
-      setProperties(refreshedAvailableProperties);
-      setAreas(areaResponse.items);
+      setProperties(propertyResponse.items);
       setTenants(userResponse.items);
+      setAreas(areaResponse.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tải được hợp đồng.");
     } finally {
@@ -145,6 +126,10 @@ export default function ContractManagement() {
   useEffect(() => {
     setPageNumber(1);
   }, [statusFilter]);
+
+  useEffect(() => {
+    void loadContracts();
+  }, [token, pageNumber, statusFilter]);
 
   const areasById = useMemo(() => new Map(areas.map((item) => [item.id, item])), [areas]);
   const propertiesById = useMemo(() => new Map(properties.map((item) => [item.id, item])), [properties]);
@@ -184,14 +169,13 @@ export default function ContractManagement() {
   }, [areasById, contracts, currentUser?.name, propertiesById, tenantsById]);
 
   const filteredContracts = useMemo(
-    () => enrichedContracts.filter((item) => statusFilter === "all" || normalizeContractStatus(item.contract.status) === statusFilter),
-    [enrichedContracts, statusFilter],
+    () => enrichedContracts,
+    [enrichedContracts],
   );
 
   const paginatedContracts = useMemo(() => {
-    const start = (pageNumber - 1) * CONTRACT_PAGE_SIZE;
-    return filteredContracts.slice(start, start + CONTRACT_PAGE_SIZE);
-  }, [filteredContracts, pageNumber]);
+    return filteredContracts;
+  }, [filteredContracts]);
 
   const activeCount = enrichedContracts.filter((item) => normalizeContractStatus(item.contract.status) === "active").length;
   const expiredCount = enrichedContracts.filter((item) => normalizeContractStatus(item.contract.status) === "expired").length;
@@ -440,7 +424,7 @@ export default function ContractManagement() {
 
       <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
         <p className="text-gray-500" style={{ fontSize: "13px" }}>
-          {loading ? "Đang tải dữ liệu..." : `Trang ${pageNumber}/${Math.max(1, Math.ceil(filteredContracts.length / CONTRACT_PAGE_SIZE))} · hiển thị ${paginatedContracts.length} / ${filteredContracts.length} hợp đồng`}
+          {loading ? "Đang tải dữ liệu..." : `Trang ${pageNumber}/${Math.max(1, Math.ceil(totalCount / CONTRACT_PAGE_SIZE))} · hiển thị ${paginatedContracts.length} / ${totalCount} hợp đồng`}
         </p>
         <p className="text-gray-400" style={{ fontSize: "12px" }}>
           Hợp đồng đã được giới hạn theo các phòng thuộc tài khoản chủ trọ hiện tại
@@ -538,7 +522,7 @@ export default function ContractManagement() {
         )}
       </div>
 
-      {Math.ceil(filteredContracts.length / CONTRACT_PAGE_SIZE) > 1 ? (
+      {Math.ceil(totalCount / CONTRACT_PAGE_SIZE) > 1 ? (
         <div className="mt-4 flex items-center justify-center gap-2">
           <button
             onClick={() => {
@@ -554,17 +538,17 @@ export default function ContractManagement() {
             Trước
           </button>
           <span className="text-gray-500" style={{ fontSize: "13px" }}>
-            {pageNumber} / {Math.max(1, Math.ceil(filteredContracts.length / CONTRACT_PAGE_SIZE))}
+            {pageNumber} / {Math.max(1, Math.ceil(totalCount / CONTRACT_PAGE_SIZE))}
           </span>
           <button
             onClick={() => {
-              const totalPages = Math.max(1, Math.ceil(filteredContracts.length / CONTRACT_PAGE_SIZE));
+              const totalPages = Math.max(1, Math.ceil(totalCount / CONTRACT_PAGE_SIZE));
               if (pageNumber < totalPages) {
                 setPageNumber(pageNumber + 1);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }
             }}
-            disabled={pageNumber >= Math.max(1, Math.ceil(filteredContracts.length / CONTRACT_PAGE_SIZE))}
+            disabled={pageNumber >= Math.max(1, Math.ceil(totalCount / CONTRACT_PAGE_SIZE))}
             className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-gray-600 disabled:opacity-50"
             style={{ fontSize: "13px", fontWeight: 600 }}
           >

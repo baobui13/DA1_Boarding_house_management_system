@@ -49,6 +49,17 @@ namespace Backend_Boarding_house_management_system.Controllers
         }
 
         [Authorize(Roles = "Landlord,Admin")]
+        [HttpGet("GetMyInvoices")]
+        public async Task<ActionResult<InvoiceListResponse>> GetMyInvoices(
+            [FromQuery] EntitySort<Invoice> sort,
+            [FromQuery] EntityPage page,
+            [FromQuery] EntityFilter<Invoice>? filter = null)
+        {
+            var result = await _invoiceService.GetMyInvoicesAsync(sort, page, filter);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
         [HttpPost("CreateInvoice")]
         public async Task<ActionResult<InvoiceResponse>> CreateInvoice([FromBody] CreateInvoiceRequest request)
         {

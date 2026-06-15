@@ -66,6 +66,41 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             return response;
         }
 
+        public async Task<ContractListResponse> GetMyContractsAsync(
+            EntitySort<Contract> sort,
+            EntityPage page,
+            EntityFilter<Contract>? filter = null)
+        {
+            var userId = GetCurrentUserId();
+
+            var query = _context.Contracts
+                .AsNoTracking()
+                .Include(c => c.Property)
+                .Where(c => c.Property != null && c.Property.LandlordId == userId);
+
+            if (filter != null)
+                query = query.Where(filter);
+
+            query = query.OrderBy(sort);
+
+            var pageNumber = (int)(page.PageNumber ?? 1);
+            var pageSize = (int)(page.PageSize ?? 10);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new ContractListResponse
+            {
+                Items = _mapper.Map<List<ContractResponse>>(items),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<ContractResponse> CreateAsync(CreateContractRequest request)
         {
             var property = await _propertyRepository.GetByIdAsync(request.PropertyId);

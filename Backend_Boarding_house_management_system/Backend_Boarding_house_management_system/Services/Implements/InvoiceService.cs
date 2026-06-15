@@ -6,6 +6,7 @@ using Backend_Boarding_house_management_system.Data;
 using Backend_Boarding_house_management_system.Entities;
 using Backend_Boarding_house_management_system.Exceptions;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
@@ -65,6 +66,42 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 PageSize = (int)(page.PageSize ?? 10)
             };
             return response;
+        }
+
+        public async Task<InvoiceListResponse> GetMyInvoicesAsync(
+            EntitySort<Invoice> sort,
+            EntityPage page,
+            EntityFilter<Invoice>? filter = null)
+        {
+            var userId = GetCurrentUserId();
+
+            var query = _context.Invoices
+                .AsNoTracking()
+                .Include(i => i.Contract)
+                    .ThenInclude(c => c.Property)
+                .Where(i => i.Contract != null && i.Contract.Property != null && i.Contract.Property.LandlordId == userId);
+
+            if (filter != null)
+                query = query.Where(filter);
+
+            query = query.OrderBy(sort);
+
+            var pageNumber = (int)(page.PageNumber ?? 1);
+            var pageSize = (int)(page.PageSize ?? 10);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new InvoiceListResponse
+            {
+                Items = _mapper.Map<List<InvoiceResponse>>(items),
+                TotalCount = totalCount,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
         }
 
         public async Task<InvoiceResponse> CreateAsync(CreateInvoiceRequest request)

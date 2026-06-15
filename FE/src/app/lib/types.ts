@@ -64,6 +64,8 @@ export interface PropertyResponse {
   waterPrice?: number | null;
   averageRating?: number;
   totalRatings?: number;
+  imageUrls?: string[];
+  amenityNames?: string[];
 }
 
 export interface PropertyImageResponse {

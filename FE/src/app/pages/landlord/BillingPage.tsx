@@ -2,12 +2,12 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { CircleAlert, CircleCheck, Clock3, Droplets, Filter, LoaderCircle, Plus, X, Zap } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { formatCurrency } from "../../lib/format";
-import { createInvoice, getInvoices, updateInvoice, type InvoiceResponse } from "../../lib/invoices";
-import { getContracts } from "../../lib/contracts";
+import { createInvoice, getMyInvoices, updateInvoice, type InvoiceResponse } from "../../lib/invoices";
+import { getMyContracts } from "../../lib/contracts";
 import { isOccupyingContractStatus } from "../../lib/contractStatus";
-import { getUserByEmail, getUsers } from "../../lib/users";
-import { getPropertyListing, getPropertyListings } from "../../lib/properties";
-import { getAreas } from "../../lib/areas";
+import { getUsers } from "../../lib/users";
+import { getMyPropertyListings } from "../../lib/properties";
+import { getMyAreas } from "../../lib/areas";
 
 type InvoiceViewStatus = "all" | "unpaid" | "paid" | "overdue";
 
@@ -50,10 +50,10 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<InvoiceResponse[]>([]);
   const [latestInvoiceByContractId, setLatestInvoiceByContractId] = useState<Map<string, InvoiceResponse>>(new Map());
   const [billableRooms, setBillableRooms] = useState<BillableRoom[]>([]);
-  const [contractsById, setContractsById] = useState<Map<string, Awaited<ReturnType<typeof getContracts>>["items"][number]>>(new Map());
+  const [contractsById, setContractsById] = useState<Map<string, Awaited<ReturnType<typeof getMyContracts>>["items"][number]>>(new Map());
   const [usersById, setUsersById] = useState<Map<string, Awaited<ReturnType<typeof getUsers>>["items"][number]>>(new Map());
-  const [propertiesById, setPropertiesById] = useState<Map<string, Awaited<ReturnType<typeof getPropertyListings>>["items"][number]>>(new Map());
-  const [areasById, setAreasById] = useState<Map<string, Awaited<ReturnType<typeof getAreas>>["items"][number]>>(new Map());
+  const [propertiesById, setPropertiesById] = useState<Map<string, Awaited<ReturnType<typeof getMyPropertyListings>>["items"][number]>>(new Map());
+  const [areasById, setAreasById] = useState<Map<string, Awaited<ReturnType<typeof getMyAreas>>["items"][number]>>(new Map());
   const [pageNumber, setPageNumber] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,23 @@ export default function BillingPage() {
   const [draftPeriod, setDraftPeriod] = useState(getCurrentMonthValue());
   const [drafts, setDrafts] = useState<Record<string, DraftInvoiceForm>>({});
 
+  const loadInvoices = async () => {
+    if (!token) return;
+    try {
+      const statusQuery = statusFilter === "all" ? {} : { "Status": `==${statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}` };
+      const response = await getMyInvoices(token, {
+        pageNumber,
+        pageSize: INVOICE_PAGE_SIZE,
+        ...statusQuery,
+      });
+      setInvoices(response.items);
+      setTotalCount(response.totalCount);
+      setLatestInvoiceByContractId(buildLatestInvoiceByContractMap(response.items));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không tải được hóa đơn.");
+    }
+  };
+
   const loadReferenceData = async () => {
     if (!token || !currentUser) {
       setError("Thiếu thông tin đăng nhập để tải hóa đơn.");
@@ -78,76 +95,24 @@ export default function BillingPage() {
     setError("");
 
     try {
-      const landlord = currentUser.email ? await getUserByEmail(currentUser.email, token) : null;
-      const landlordId = landlord?.id || currentUser.id;
-
-      const [contractResponse, userResponse, propertyResponse, invoiceResponse] = await Promise.all([
-        // Generous but not unlimited page; we scope further client-side using owned properties
-        getContracts(token, { pageSize: 300 }),
+      const [contractResponse, userResponse, propertyResponse, areaResponse] = await Promise.all([
+        getMyContracts(token, { pageSize: 300 }),
         getUsers({ role: "Tenant", pageSize: 300 }, token),
-        getPropertyListings({ landlordId, pageSize: 300 }, token),
-        getInvoices(token, { page: 1, pageSize: 300 }),
+        getMyPropertyListings(token),
+        getMyAreas(token, { pageSize: 1000 }),
       ]);
-      const areaResponse = await getAreas({ landlordId, pageSize: 1000 });
 
-      const ownedPropertyIds = new Set(propertyResponse.items.map((item) => item.id));
-      const missingPropertyIds = Array.from(new Set(contractResponse.items.map((item) => item.propertyId))).filter((id) => !ownedPropertyIds.has(id));
-      const missingOwnedProperties = await Promise.all(
-        missingPropertyIds.map(async (id) => {
-          try {
-            const property = await getPropertyListing(id);
-            return property.landlordId === currentUser.id ? property : null;
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      const mergedProperties = [
-        ...propertyResponse.items,
-        ...missingOwnedProperties.filter((item): item is NonNullable<typeof item> => Boolean(item)),
-      ];
-      const mergedOwnedPropertyIds = new Set(mergedProperties.map((item) => item.id));
-      const scopedContracts = contractResponse.items.filter((item) => mergedOwnedPropertyIds.has(item.propertyId));
-      const scopedContractIds = new Set(scopedContracts.map((item) => item.id));
-      const scopedInvoices = invoiceResponse.items.filter((item) => scopedContractIds.has(item.contractId));
-
-      const nextContractsById = new Map(scopedContracts.map((item) => [item.id, item]));
+      const nextContractsById = new Map(contractResponse.items.map((item) => [item.id, item]));
       const nextUsersById = new Map(userResponse.items.map((item) => [item.id, item]));
-      const nextPropertiesById = new Map(mergedProperties.map((item) => [item.id, item]));
+      const nextPropertiesById = new Map(propertyResponse.items.map((item) => [item.id, item]));
       const nextAreasById = new Map(areaResponse.items.map((item) => [item.id, item]));
-      const nextLatestInvoiceByContractId = buildLatestInvoiceByContractMap(scopedInvoices);
-
-      const activeContracts = scopedContracts.filter((item) => isOccupyingContractStatus(item.status));
-      const refreshedActiveProperties = await Promise.all(
-        activeContracts.map(async (contract) => {
-          try {
-            const property = await getPropertyListing(contract.propertyId);
-            return property.landlordId === landlordId ? property : null;
-          } catch {
-            return nextPropertiesById.get(contract.propertyId) || null;
-          }
-        }),
-      );
-
-      const refreshedPropertyMap = new Map(
-        refreshedActiveProperties
-          .filter((item): item is NonNullable<typeof item> => Boolean(item))
-          .map((item) => [item.id, item]),
-      );
-
-      refreshedPropertyMap.forEach((property, propertyId) => {
-        nextPropertiesById.set(propertyId, property);
-      });
 
       setContractsById(nextContractsById);
       setUsersById(nextUsersById);
       setPropertiesById(nextPropertiesById);
       setAreasById(nextAreasById);
-      setLatestInvoiceByContractId(nextLatestInvoiceByContractId);
-      setInvoices(scopedInvoices);
-      setTotalCount(scopedInvoices.length);
 
+      const activeContracts = contractResponse.items.filter((item) => isOccupyingContractStatus(item.status));
       const nextBillableRooms = activeContracts
         .map((contract) => {
           const property = nextPropertiesById.get(contract.propertyId);
@@ -169,7 +134,10 @@ export default function BillingPage() {
         .filter((item): item is BillableRoom => Boolean(item));
 
       setBillableRooms(nextBillableRooms);
-      setDrafts(buildDrafts(nextBillableRooms, nextLatestInvoiceByContractId));
+      setDrafts(buildDrafts(nextBillableRooms, new Map()));
+
+      // Load first page of invoices
+      await loadInvoices();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không tải được hóa đơn.");
     } finally {
@@ -184,6 +152,12 @@ export default function BillingPage() {
   useEffect(() => {
     setPageNumber(1);
   }, [statusFilter]);
+
+  useEffect(() => {
+    if (!loading) {
+      void loadInvoices();
+    }
+  }, [token, pageNumber, statusFilter]);
 
   const rows = useMemo(
     () =>
@@ -204,14 +178,13 @@ export default function BillingPage() {
   );
 
   const filteredRows = useMemo(
-    () => rows.filter((row) => statusFilter === "all" || row.displayStatus === statusFilter),
-    [rows, statusFilter],
+    () => rows,
+    [rows],
   );
 
   const paginatedRows = useMemo(() => {
-    const start = (pageNumber - 1) * INVOICE_PAGE_SIZE;
-    return filteredRows.slice(start, start + INVOICE_PAGE_SIZE);
-  }, [filteredRows, pageNumber]);
+    return filteredRows;
+  }, [filteredRows]);
 
   const paidTotal = rows.filter((row) => row.displayStatus === "paid").reduce((sum, row) => sum + row.invoice.total, 0);
   const unpaidTotal = rows.filter((row) => row.displayStatus === "unpaid").reduce((sum, row) => sum + row.invoice.total, 0);
@@ -311,7 +284,7 @@ export default function BillingPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / INVOICE_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / INVOICE_PAGE_SIZE));
 
   const changePage = (nextPage: number) => {
     if (nextPage === pageNumber) {
@@ -380,7 +353,7 @@ export default function BillingPage() {
 
       <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3">
         <p className="text-gray-500" style={{ fontSize: "13px" }}>
-          {loading ? "Đang tải dữ liệu..." : `Trang ${pageNumber}/${totalPages} · hiển thị ${paginatedRows.length} / ${filteredRows.length} hóa đơn`}
+          {loading ? "Đang tải dữ liệu..." : `Trang ${pageNumber}/${totalPages} · hiển thị ${paginatedRows.length} / ${totalCount} hóa đơn`}
         </p>
         <p className="text-gray-400" style={{ fontSize: "12px" }}>
           Hóa đơn đã được lọc theo đúng tài khoản chủ trọ hiện tại
@@ -398,7 +371,7 @@ export default function BillingPage() {
               <div key={index} className="h-20 animate-pulse rounded-2xl bg-gray-100" />
             ))}
           </div>
-        ) : filteredRows.length === 0 ? (
+        ) : paginatedRows.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-6 py-16 text-center text-gray-400">
             <LoaderCircle className="mb-3 h-8 w-8" />
             <p style={{ fontSize: "14px", fontWeight: 600 }}>Không có hóa đơn khớp bộ lọc hiện tại</p>

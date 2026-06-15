@@ -20,6 +20,10 @@ namespace Backend_Boarding_house_management_system.Services.Interfaces
             IDictionary<ReviewAspect, double>? searchAspectBoosts = null,
             RecommendationMode recommendationMode = RecommendationMode.PersonalMatch);
 
+        Task<PropertyListResponse> GetMyPropertiesAsync(
+            EntitySort<Property> sort,
+            EntityPage page);
+
         /// <summary>
         /// Danh sách được ưu tiên đề cử theo lịch sử xem/tìm kiếm của user hiện tại (nếu đã đăng nhập).
         /// Hỗ trợ thêm aspect boosts từ search hiện tại.

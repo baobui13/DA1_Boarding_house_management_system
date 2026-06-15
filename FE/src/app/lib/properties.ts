@@ -270,11 +270,16 @@ export async function getMyPropertyListings(token: string) {
     authToken: token,
     query: { pageSize: 1000 },
   });
-  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  const items = response.items.map((item) => ({
+    ...item,
+    images: item.imageUrls || [],
+    amenities: item.amenityNames || [],
+  } as PropertyListing));
 
   return {
     ...response,
-    items: listings,
+    items,
   };
 }
 

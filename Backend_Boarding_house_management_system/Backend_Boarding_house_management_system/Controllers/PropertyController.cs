@@ -217,10 +217,7 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntitySort<Property> sort,
             [FromQuery] EntityPage page)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var filter = new EntityFilter<Property>();
-            filter.Add(x => x.LandlordId, "==" + userId);
-            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
+            var properties = await _propertyService.GetMyPropertiesAsync(sort, page);
             return Ok(properties);
         }
 
