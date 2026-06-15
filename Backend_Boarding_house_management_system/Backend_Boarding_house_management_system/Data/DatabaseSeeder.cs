@@ -82,6 +82,17 @@ namespace Backend_Boarding_house_management_system.Data
             SeedMessages(context, demoUsers, properties, contracts);
             SeedNotifications(context, new List<User> { demoUsers.Admin, demoUsers.Landlord, demoUsers.Tenant }, properties, contracts, invoices, context.Appointments.Local.ToList());
 
+            // === Bulk seed: 10 landlords, 100 tenants, 3 areas x 3 properties each, 50 contracts ===
+            var (extraLandlords, extraTenants) = SeedUsers(context, hasher, landlordCount: 10, tenantCount: 100);
+            await context.SaveChangesAsync();
+
+            var bulkAmenities = await context.Amenities.ToListAsync();
+            var extraAreas = SeedBulkAreas(context, extraLandlords);
+            var extraProperties = SeedBulkProperties(context, extraLandlords, extraAreas);
+            SeedBulkPropertyImages(context, extraProperties);
+            SeedBulkRoomAmenities(context, extraProperties, bulkAmenities);
+            SeedBulkContracts(context, extraProperties, extraTenants);
+
             // Lưu tất cả thay đổi vào database
             await context.SaveChangesAsync();
         }
@@ -211,27 +222,20 @@ namespace Backend_Boarding_house_management_system.Data
             SeedMessages(context, demoUsers, properties, contracts);
             SeedNotifications(context, new List<User> { demoUsers.Admin, demoUsers.Landlord, demoUsers.Tenant }, properties, contracts, invoices, context.Appointments.Local.ToList());
 
+            // === Bulk seed ===
+            var (extraLandlords, extraTenants) = SeedUsers(context, hasher, landlordCount: 10, tenantCount: 100);
+            var bulkAmenities = await context.Amenities.ToListAsync();
+            var extraAreas = SeedBulkAreas(context, extraLandlords);
+            var extraProperties = SeedBulkProperties(context, extraLandlords, extraAreas);
+            SeedBulkPropertyImages(context, extraProperties);
+            SeedBulkRoomAmenities(context, extraProperties, bulkAmenities);
+            SeedBulkContracts(context, extraProperties, extraTenants);
+
             await context.SaveChangesAsync();
         }
 
-        private static List<User> SeedUsers(AppDbContext context, PasswordHasher<User> hasher)
+        private static (List<User> Landlords, List<User> Tenants) SeedUsers(AppDbContext context, PasswordHasher<User> hasher, int landlordCount, int tenantCount)
         {
-            var users = new List<User>();
-            
-            var admin = new User
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = "admin@test.com",
-                Email = "admin@test.com",
-                NormalizedEmail = "ADMIN@TEST.COM",
-                NormalizedUserName = "ADMIN@TEST.COM",
-                FullName = "System Admin",
-                Role = "Admin",
-                EmailConfirmed = true
-            };
-            admin.PasswordHash = hasher.HashPassword(admin, "Password123!");
-            users.Add(admin);
-
             var landlords = new Faker<User>("vi")
                 .RuleFor(u => u.Id, f => Guid.NewGuid().ToString())
                 .RuleFor(u => u.UserName, f => f.Internet.Email())
@@ -240,12 +244,14 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
+                .RuleFor(u => u.PhoneNumber, f => f.Phone.PhoneNumber("090#######"))
                 .RuleFor(u => u.Role, "Landlord")
                 .RuleFor(u => u.EmailConfirmed, true)
                 .RuleFor(u => u.ReputationScore, f => f.Random.Int(50, 100))
-                .Generate(15);
+                .RuleFor(u => u.CreatedAt, DateTime.UtcNow)
+                .RuleFor(u => u.UpdatedAt, DateTime.UtcNow)
+                .Generate(landlordCount);
             foreach (var l in landlords) l.PasswordHash = hasher.HashPassword(l, "Password123!");
-            users.AddRange(landlords);
 
             var tenants = new Faker<User>("vi")
                 .RuleFor(u => u.Id, f => Guid.NewGuid().ToString())
@@ -255,14 +261,17 @@ namespace Backend_Boarding_house_management_system.Data
                 .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email?.ToUpper())
                 .RuleFor(u => u.FullName, f => f.Name.FullName())
                 .RuleFor(u => u.Address, f => f.Address.FullAddress())
+                .RuleFor(u => u.PhoneNumber, f => f.Phone.PhoneNumber("090#######"))
                 .RuleFor(u => u.Role, "Tenant")
                 .RuleFor(u => u.EmailConfirmed, true)
-                .Generate(35);
+                .RuleFor(u => u.CreatedAt, DateTime.UtcNow)
+                .RuleFor(u => u.UpdatedAt, DateTime.UtcNow)
+                .Generate(tenantCount);
             foreach (var t in tenants) t.PasswordHash = hasher.HashPassword(t, "Password123!");
-            users.AddRange(tenants);
 
-            context.Users.AddRange(users);
-            return users;
+            context.Users.AddRange(landlords);
+            context.Users.AddRange(tenants);
+            return (landlords, tenants);
         }
 
         private static List<Area> SeedAreas(AppDbContext context, User landlord)
@@ -893,6 +902,259 @@ namespace Backend_Boarding_house_management_system.Data
             }
 
             context.Notifications.AddRange(notifications);
+        }
+
+        // ========== BULK SEEDING METHODS ==========
+
+        private static readonly string[] AreaNamePrefixes = { "Khu trọ", "Nhà trọ", "Chung cư mini", "Phòng trọ", "Khu nhà trọ" };
+        private static readonly string[] StreetNames = {
+            "Nguyễn Văn Linh", "Lê Văn Việt", "Hoàng Diệu", "Phạm Văn Đồng", "Trường Chinh",
+            "Cách Mạng Tháng 8", "Nguyễn Thị Minh Khai", "Điện Biên Phủ", "Xô Viết Nghệ Tĩnh", "Bạch Đằng",
+            "Hai Bà Trưng", "Lý Thường Kiệt", "Nguyễn Đình Chiểu", "Võ Văn Ngân", "Tô Hiệu",
+            "Nguyễn Trãi", "Lê Lợi", "Trần Hưng Đạo", "Phan Đình Phùng", "Ngô Gia Tự"
+        };
+        private static readonly string[] WardNames = {
+            "Phường 1", "Phường 2", "Phường 3", "Phường 4", "Phường 5", "Phường 6",
+            "Phường 7", "Phường 8", "Phường 9", "Phường 10", "Phường 11", "Phường 12"
+        };
+        private static readonly string[] DistrictNames = {
+            "Quận Bình Thạnh", "Quận 7", "TP. Thủ Đức", "Quận Tân Bình", "Quận Gò Vấp",
+            "Quận 1", "Quận 3", "Quận 5", "Quận 10", "Quận Tân Phú", "Quận Bình Tân", "Quận Phú Nhuận"
+        };
+        private static readonly string[] PropertyNamePrefixes = { "Studio", "Phòng", "Căn hộ mini", "Phòng trọ" };
+        private static readonly string[] PropertyAdjectives = {
+            "máy lạnh", "ban công", "full nội thất", "cửa sổ lớn", "gác lửng", "giá tốt",
+            "yên tĩnh", "mới sửa", "thoáng mát", "có bếp riêng"
+        };
+        private static readonly string[] ImageUrls = {
+            "https://images.unsplash.com/photo-1737737196308-e5b848160b78?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200",
+            "https://images.unsplash.com/photo-1764836168197-3aa3a890a0f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200",
+            "https://images.unsplash.com/photo-1661796428175-55423b19409f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200",
+            "https://images.unsplash.com/photo-1602646994030-464f98de5e5c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200",
+            "https://images.unsplash.com/photo-1771337744364-e7dd00c2921c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1200"
+        };
+
+        private static List<Area> SeedBulkAreas(AppDbContext context, List<User> landlords)
+        {
+            var faker = new Faker("vi");
+            var areas = new List<Area>();
+            var usedAreaNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var landlord in landlords)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    var district = faker.PickRandom(DistrictNames);
+                    var ward = faker.PickRandom(WardNames);
+                    var street = faker.PickRandom(StreetNames);
+                    var houseNumber = faker.Random.Int(1, 999);
+                    var prefix = faker.PickRandom(AreaNamePrefixes);
+                    var name = $"{prefix} {street.Split(' ').Last()} {faker.Random.AlphaNumeric(2).ToUpper()}";
+                    while (!usedAreaNames.Add(name))
+                        name = $"{prefix} {street.Split(' ').Last()} {faker.Random.AlphaNumeric(3).ToUpper()}";
+
+                    areas.Add(new Area
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Name = name,
+                        Address = $"{houseNumber} {street}, {ward}, {district}, TP. Hồ Chí Minh",
+                        Latitude = faker.Random.Decimal(10.70m, 10.90m),
+                        Longitude = faker.Random.Decimal(106.60m, 106.80m),
+                        RoomCount = faker.Random.Int(2, 8),
+                        Description = $"Khu trọ tại {district}, phù hợp sinh viên và người đi làm.",
+                        LandlordId = landlord.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            context.Areas.AddRange(areas);
+            return areas;
+        }
+
+        private static List<Property> SeedBulkProperties(AppDbContext context, List<User> landlords, List<Area> areas)
+        {
+            var faker = new Faker("vi");
+            var properties = new List<Property>();
+            var areaByLandlord = areas.GroupBy(a => a.LandlordId).ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var landlord in landlords)
+            {
+                if (!areaByLandlord.TryGetValue(landlord.Id, out var landlordAreas))
+                    continue;
+
+                foreach (var area in landlordAreas)
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        var prefix = faker.PickRandom(PropertyNamePrefixes);
+                        var adjective = faker.PickRandom(PropertyAdjectives);
+                        var street = area.Address?.Split(',')[0].Trim() ?? "";
+                        var propName = $"{prefix} {adjective} {street}";
+
+                        var price = faker.Random.Decimal(2500000m, 8000000m);
+                        price = Math.Round(price / 100000) * 100000;
+
+                        var statuses = new[] { AvailabilityStatusEnum.Available, AvailabilityStatusEnum.Rented, AvailabilityStatusEnum.Maintenance };
+                        var modStatuses = new[] { ModerationStatusEnum.Approved, ModerationStatusEnum.Approved, ModerationStatusEnum.Approved, ModerationStatusEnum.Pending };
+                        var modStatus = faker.PickRandom(modStatuses);
+
+                        properties.Add(new Property
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            LandlordId = landlord.Id,
+                            AreaId = area.Id,
+                            PropertyName = propName,
+                            Address = area.Address,
+                            Latitude = area.Latitude + faker.Random.Decimal(-0.005m, 0.005m),
+                            Longitude = area.Longitude + faker.Random.Decimal(-0.005m, 0.005m),
+                            Size = faker.Random.Decimal(18m, 45m),
+                            Description = $"{prefix} tại {area.Address}, {adjective}, giá {price:N0}đ/tháng.",
+                            Price = price,
+                            ElectricPrice = faker.Random.Decimal(2800m, 4000m),
+                            WaterPrice = faker.Random.Decimal(12000m, 20000m),
+                            AvailabilityStatus = faker.PickRandom(statuses),
+                            ModerationStatus = modStatus,
+                            ApprovedAt = modStatus == ModerationStatusEnum.Approved ? DateTime.UtcNow : null,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            context.Properties.AddRange(properties);
+            return properties;
+        }
+
+        private static void SeedBulkPropertyImages(AppDbContext context, List<Property> properties)
+        {
+            var faker = new Faker();
+            var images = new List<PropertyImage>();
+            foreach (var property in properties)
+            {
+                var count = faker.Random.Int(2, 4);
+                for (int i = 0; i < count; i++)
+                {
+                    images.Add(new PropertyImage
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        PropertyId = property.Id,
+                        ImageUrl = ImageUrls[i % ImageUrls.Length],
+                        PublicId = $"bulk-{property.Id}-{i + 1}",
+                        IsPrimary = i == 0,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+            context.PropertyImages.AddRange(images);
+        }
+
+        private static void SeedBulkRoomAmenities(AppDbContext context, List<Property> properties, List<Amenity> amenities)
+        {
+            var faker = new Faker();
+            var roomAmenities = new List<RoomAmenity>();
+            foreach (var property in properties)
+            {
+                var picked = faker.PickRandom(amenities, faker.Random.Int(3, Math.Min(6, amenities.Count)));
+                foreach (var amenity in picked)
+                {
+                    roomAmenities.Add(new RoomAmenity
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        PropertyId = property.Id,
+                        AmenityId = amenity.Id,
+                        Status = faker.PickRandom(new[] { AmenityStatus.Working, AmenityStatus.Working, AmenityStatus.Working, AmenityStatus.Broken, AmenityStatus.Repairing })
+                    });
+                }
+            }
+            context.RoomAmenities.AddRange(roomAmenities);
+        }
+
+        private static void SeedBulkContracts(AppDbContext context, List<Property> properties, List<User> tenants)
+        {
+            var faker = new Faker("vi");
+            var contracts = new List<Contract>();
+            var usedPropertyIds = new HashSet<string>();
+
+            var propertyPool = properties
+                .Where(p => p.ModerationStatus == ModerationStatusEnum.Approved && p.AvailabilityStatus != AvailabilityStatusEnum.Maintenance)
+                .OrderBy(_ => faker.Random.Int())
+                .ToList();
+
+            if (propertyPool.Count == 0) return;
+
+            var statuses = new[] { ContractStatus.Active, ContractStatus.Active, ContractStatus.Active, ContractStatus.Expired, ContractStatus.Terminated };
+
+            for (int i = 0; i < 50 && propertyPool.Count > 0; i++)
+            {
+                var property = propertyPool[i % propertyPool.Count];
+                var tenant = tenants[faker.Random.Int(0, tenants.Count - 1)];
+                var status = faker.PickRandom(statuses);
+
+                var startDate = faker.Date.Between(new DateTime(2025, 6, 1), new DateTime(2026, 5, 1)).ToUniversalTime();
+                var endDate = startDate.AddMonths(faker.Random.Int(1, 12));
+                var deposit = Math.Round(property.Price * faker.Random.Decimal(1.5m, 2.5m) / 100000) * 100000;
+
+                DateOnly? actualEndDate = null;
+                string? handoverNote = null;
+                decimal deductionAmount = 0;
+                string? deductionReason = null;
+                decimal refundAmount = 0;
+                string? handoverConfirmedBy = null;
+                DateTime? handoverConfirmedAt = null;
+
+                if (status == ContractStatus.Expired)
+                {
+                    actualEndDate = DateOnly.FromDateTime(endDate);
+                    handoverNote = "Đã bàn giao đúng hạn, phòng sạch và hoàn trả đủ trang thiết bị.";
+                    refundAmount = deposit;
+                    handoverConfirmedBy = "System Admin";
+                    handoverConfirmedAt = DateTime.UtcNow;
+                }
+                else if (status == ContractStatus.Terminated)
+                {
+                    var termDate = faker.Date.Between(startDate.AddMonths(1), endDate.AddDays(-1)).ToUniversalTime();
+                    actualEndDate = DateOnly.FromDateTime(termDate);
+                    handoverNote = "Khách thuê chấm dứt sớm, đã bàn giao phòng.";
+                    deductionAmount = faker.Random.Decimal(200000m, 800000m);
+                    deductionReason = "Khấu trừ vệ sinh và sửa chữa nhẹ.";
+                    refundAmount = Math.Max(0, deposit - deductionAmount);
+                    handoverConfirmedBy = "System Admin";
+                    handoverConfirmedAt = DateTime.UtcNow;
+                }
+                else if (status == ContractStatus.Active)
+                {
+                    if (faker.Random.Bool(0.7f))
+                        property.AvailabilityStatus = AvailabilityStatusEnum.Rented;
+                }
+
+                contracts.Add(new Contract
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    PropertyId = property.Id,
+                    TenantId = tenant.Id,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Deposit = deposit,
+                    Terms = $"Thanh toán vào ngày 5 hàng tháng. Không hút thuốc trong phòng. Giữ yên tĩnh sau 22h.",
+                    Status = status,
+                    CreatedAt = startDate.AddDays(-7),
+                    UpdatedAt = DateTime.UtcNow,
+                    ActualEndDate = actualEndDate,
+                    HandoverNote = handoverNote,
+                    DeductionAmount = deductionAmount,
+                    DeductionReason = deductionReason,
+                    RefundAmount = refundAmount,
+                    HandoverConfirmedBy = handoverConfirmedBy,
+                    HandoverConfirmedAt = handoverConfirmedAt
+                });
+
+                usedPropertyIds.Add(property.Id);
+            }
+
+            context.Contracts.AddRange(contracts);
         }
 
         private static List<SeedAreaDefinition> GetSeedAreaDefinitions()

@@ -7,6 +7,7 @@ using Plainquire.Filter;
 using Plainquire.Sort;
 using Plainquire.Page;
 using Backend_Boarding_house_management_system.Entities;
+using System.Security.Claims;
 
 namespace Backend_Boarding_house_management_system.Controllers
 {
@@ -44,6 +45,19 @@ namespace Backend_Boarding_house_management_system.Controllers
             [FromQuery] EntitySort<Area> sort,
             [FromQuery] EntityPage page)
         {
+            var areas = await _areaService.GetAreasByFilterAsync(filter, sort, page);
+            return Ok(areas);
+        }
+
+        [Authorize(Roles = "Landlord,Admin")]
+        [HttpGet("GetMyAreas")]
+        public async Task<ActionResult<AreaListResponse>> GetMyAreas(
+            [FromQuery] EntitySort<Area> sort,
+            [FromQuery] EntityPage page)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var filter = new EntityFilter<Area>();
+            filter.Add(x => x.LandlordId, "==" + userId);
             var areas = await _areaService.GetAreasByFilterAsync(filter, sort, page);
             return Ok(areas);
         }

@@ -7,6 +7,13 @@ export async function getAreas(query: Record<string, string | number | boolean |
   });
 }
 
+export async function getMyAreas(token: string, query: Record<string, string | number | boolean | undefined> = {}) {
+  return apiRequest<PagedResponse<AreaResponse>>("Area/GetMyAreas", {
+    authToken: token,
+    query: { pageSize: 1000, ...query },
+  });
+}
+
 export async function createArea(
   token: string,
   input: {

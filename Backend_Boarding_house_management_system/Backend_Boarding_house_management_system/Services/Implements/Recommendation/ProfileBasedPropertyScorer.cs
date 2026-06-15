@@ -198,7 +198,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements.Recommend
             int matchCount = 0;
             foreach (var ra in property.RoomAmenities)
             {
-                if (string.Equals(ra.Status, "Working", StringComparison.OrdinalIgnoreCase) &&
+                if (string.Equals(ra.Status.ToString(), "Working", StringComparison.OrdinalIgnoreCase) &&
                     pref.AmenityIds.Contains(ra.AmenityId))
                     matchCount++;
             }

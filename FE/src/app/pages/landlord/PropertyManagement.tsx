@@ -44,7 +44,7 @@ function MapUpdater({ center }: { center: [number, number] }) {
   return null;
 }
 import { getAmenities } from "../../lib/amenities";
-import { createArea, getAreas, updateArea } from "../../lib/areas";
+import { createArea, getMyAreas, updateArea } from "../../lib/areas";
 import {
   createProperty,
   createPropertyAmenity,
@@ -54,7 +54,7 @@ import {
   deletePropertyAmenity,
   getPropertyImages,
   getPropertyAmenities,
-  getPropertyListings,
+  getMyPropertyListings,
   replacePropertyImage,
   updatePropertyImage,
   updateProperty,
@@ -140,8 +140,8 @@ export default function PropertyManagement() {
 
     try {
       const [areaResponse, propertyResponse, amenityResponse] = await Promise.all([
-        getAreas({ landlordId: currentUser.id, pageSize: 1000 }),
-        getPropertyListings({ landlordId: currentUser.id, pageSize: 1000 }, token),
+        getMyAreas(token),
+        getMyPropertyListings(token),
         getAmenities(),
       ]);
 

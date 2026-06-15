@@ -211,6 +211,19 @@ namespace Backend_Boarding_house_management_system.Controllers
             }
         }
 
+        [Authorize(Roles = "Landlord,Admin")]
+        [HttpGet("GetMyProperties")]
+        public async Task<ActionResult<PropertyListResponse>> GetMyProperties(
+            [FromQuery] EntitySort<Property> sort,
+            [FromQuery] EntityPage page)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var filter = new EntityFilter<Property>();
+            filter.Add(x => x.LandlordId, "==" + userId);
+            var properties = await _propertyService.GetPropertiesByFilterAsync(filter, sort, page);
+            return Ok(properties);
+        }
+
         [AllowAnonymous]
         [HttpGet("GetPopularPriceRanges")]
         public async Task<ActionResult<PopularPriceRangesResponse>> GetPopularPriceRanges()

@@ -265,6 +265,19 @@ export async function getPropertyListings(
   };
 }
 
+export async function getMyPropertyListings(token: string) {
+  const response = await apiRequest<PagedResponse<PropertyResponse>>("Property/GetMyProperties", {
+    authToken: token,
+    query: { pageSize: 1000 },
+  });
+  const listings = await Promise.all(response.items.map((item) => getPropertyListing(item.id)));
+
+  return {
+    ...response,
+    items: listings,
+  };
+}
+
 export async function getRecommendedProperties(
   token: string,
   query: Record<string, string | number | boolean | undefined | string[]> = {},
