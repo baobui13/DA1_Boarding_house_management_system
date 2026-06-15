@@ -37,7 +37,12 @@ namespace Backend_Boarding_house_management_system.Repositories.Implements
             EntityPage page)
         {
             page = EnsurePage(page);
-            var query = GetQueryWithIncludes().AsNoTracking();
+            var query = _dbSet
+                .Include(p => p.Ratings)
+                .Include(p => p.PropertyImages)
+                .Include(p => p.RoomAmenities)
+                    .ThenInclude(ra => ra.Amenity)
+                .AsNoTracking();
 
             // Enforce that only Approved and Available properties can be listed publicly
             query = query.Where(p => p.ModerationStatus == ModerationStatusEnum.Approved && p.AvailabilityStatus == AvailabilityStatusEnum.Available);

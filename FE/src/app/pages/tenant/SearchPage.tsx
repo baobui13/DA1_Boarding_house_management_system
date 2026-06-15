@@ -420,7 +420,10 @@ export default function SearchPage() {
               >
                 <option value="PersonalMatch">Cá nhân hoá</option>
                 <option value="HighAspectQuality">Ưu tiên chất lượng</option>
-                <option value="StrictFilter">Lọc nghiêm ngặt</option>
+                <option value="Balanced">Cân bằng</option>
+                <option value="PriceSensitive">Nhạy cảm giá</option>
+                <option value="Explore">Khám phá</option>
+                <option value="AvoidNegatives">Tránh điểm yếu</option>
               </select>
             </div>
 
@@ -428,17 +431,19 @@ export default function SearchPage() {
               <p className="text-gray-600 mb-2" style={{ fontSize: "12px", fontWeight: 600 }}>
                 YẾU TỐ QUAN TÂM NHẤT
               </p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "An ninh", value: "Security" },
-                  { label: "Wifi", value: "Wifi" },
-                  { label: "Chủ trọ", value: "Landlord" },
-                  { label: "Giá cả", value: "Price" },
-                  { label: "Tiếng ồn", value: "Noise" },
-                  { label: "Vệ sinh", value: "Cleanliness" },
-                  { label: "Vị trí", value: "Location" },
-                  { label: "Tiện ích", value: "Amenities" },
-                ].map((aspect) => (
+<div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "Chất lượng phòng", value: "RoomQuality" },
+                    { label: "Tiếng ồn", value: "Noise" },
+                    { label: "Wifi", value: "Wifi" },
+                    { label: "Điện nước", value: "Utilities" },
+                    { label: "Chỗ đậu xe", value: "Parking" },
+                    { label: "An ninh", value: "Security" },
+                    { label: "Môi trường", value: "Environment" },
+                    { label: "Chủ trọ", value: "Landlord" },
+                    { label: "Vị trí", value: "Location" },
+                    { label: "Giá cả", value: "Price" },
+                  ].map((aspect) => (
                   <button
                     key={aspect.value}
                     onClick={() => {
