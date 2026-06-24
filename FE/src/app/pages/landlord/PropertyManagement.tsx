@@ -1015,10 +1015,6 @@ function ImagePicker({
         </label>
       </div>
 
-      <InfoPanel tone="amber">
-        Backend hiện có ảnh cho phòng qua `PropertyImage`. Ảnh khu vẫn chưa có API riêng.
-      </InfoPanel>
-
       {visibleImages.length === 0 && pendingFiles.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 px-4 py-8 text-center text-gray-400" style={{ fontSize: "12px" }}>
           Chưa có ảnh nào cho phòng này.

@@ -34,6 +34,12 @@ namespace Backend_Boarding_house_management_system.Services.Implements
             PropertyNameCaseInsensitive = true
         };
 
+        // JSON options when serializing requests TO the Python service (Pydantic expects camelCase)
+        private static readonly JsonSerializerOptions _requestJsonOpts = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         private record AbsaRequest(string Content, int? Stars);
         private record AbsaAspect(string Aspect, string Sentiment, decimal? Confidence);
         private record AbsaResponse(List<AbsaAspect> Aspects);
@@ -115,7 +121,7 @@ namespace Backend_Boarding_house_management_system.Services.Implements
                 using var cts = new System.Threading.CancellationTokenSource(timeout);
 
                 var req = new AbsaRequest(content ?? string.Empty, stars);
-                var json = JsonSerializer.Serialize(req);
+                var json = JsonSerializer.Serialize(req, _requestJsonOpts);
                 using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await httpClient.PostAsync(_options.PythonServiceUrl, httpContent, cts.Token);

@@ -850,6 +850,8 @@ function ContractCard({
   item,
   expanded,
   onToggle,
+  setShowRatingModal,
+  setEditingRating,
 }: {
   item: EnrichedContract;
   expanded: boolean;
